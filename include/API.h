@@ -1,3 +1,3 @@
 #pragma once
 
-__declspec(dllexport) void generateImage();
+extern "C" __declspec(dllexport) void generateImage();

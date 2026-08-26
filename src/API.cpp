@@ -1,7 +1,7 @@
 #include <iostream>
 #include <Image.h>
 
-__declspec(dllexport) void generateImage()
+extern "C" __declspec(dllexport) void generateImage()
 {
 	Image dummyImage;
 	dummyImage.setAsWrite(1920, 1080);

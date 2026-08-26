@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 
+##################################   Image Writer ##################################
 project(ImageWriter)
 
 set(PROJECT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
@@ -24,13 +25,29 @@ set(HEADER_FILES
 set(SRC_FILES
 	"${PROJECT_SRC_DIR}/Image.cpp"
 	"${PROJECT_SRC_DIR}/API.cpp"
-	"${PROJECT_SRC_DIR}/main.cpp"
 )
 
-
-add_executable(ImageWriter ${HEADER_FILES} ${SRC_FILES})
-
+add_library(ImageWriter SHARED ${SRC_FILES} ${HEADER_FILES})
 
 set_target_properties(ImageWriter PROPERTIES FOLDER "ImageWriter")
 target_compile_features(ImageWriter PRIVATE cxx_std_20)
 target_include_directories(ImageWriter PRIVATE ${ALL_INCLUDE_DIRS})
+
+
+##################################   Test App ##################################
+project(TestApp)
+
+set(TEST_APP_SRC_FILES
+	"${PROJECT_SRC_DIR}/main.cpp"
+)
+
+add_executable(TestApp ${TEST_APP_SRC_FILES})
+
+
+target_compile_features(TestApp PRIVATE cxx_std_20)
+set_target_properties(TestApp PROPERTIES FOLDER "TestApp")
+target_include_directories(TestApp PRIVATE ${ALL_INCLUDE_DIRS})
+
+target_link_libraries(TestApp ImageWriter)
+
+project(TopLevel)
