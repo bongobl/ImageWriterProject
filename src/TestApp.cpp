@@ -3,6 +3,6 @@
 
 int main(void)
 {
-	generateImage();
+	GenImage();
 	return EXIT_SUCCESS;
 }

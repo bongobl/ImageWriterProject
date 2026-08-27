@@ -1,3 +1,3 @@
-#pragma once
+#include <stdio.h>
 
-extern "C" __declspec(dllexport) void generateImage();
+extern "C" __declspec(dllexport) void GenImage();
