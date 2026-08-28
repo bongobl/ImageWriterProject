@@ -22,7 +22,7 @@ extern "C" __declspec(dllexport) void generateImage(int width, int height)
 			dummyImage.setPixel(x, y, Pixel(red * 255.0f,green * 255.0f,blue * 255.0f));
 		}
 	}
-	dummyImage.exportPNG("DummyImage.png");
+	dummyImage.exportPNG("C:\\Dev\\Practice\\BasicClaude\\ImageWriter\\buildGNU\\DummyImage.png");
 	dummyImage.dispose();
-	system("DummyImage.png");
+	system("C:\\Dev\\Practice\\BasicClaude\\ImageWriter\\buildGNU\\DummyImage.png");
 }
