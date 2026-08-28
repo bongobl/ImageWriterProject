@@ -2,17 +2,17 @@
 #include <CoreEntry.h>
 #include <stdio.h>
 
-extern "C" __declspec(dllexport) void generateImage()
+extern "C" __declspec(dllexport) void generateImage(int width, int height)
 {
 	//printf("called this C function\n");
 	Image dummyImage;
-	dummyImage.setAsWrite(1920, 1080);
+	dummyImage.setAsWrite(width, height);
 
-	for(int y = 0; y < 1080; ++y){
-		for(int x = 0; x < 1920; ++x){
+	for(int y = 0; y < height; ++y){
+		for(int x = 0; x < width; ++x){
 
-			float r = (float)x / 1920.0f;
-			float d = (float)y / 1080.0f;
+			float r = (float)x / width;
+			float d = (float)y / height;
 			float l = 1 - r;
 			float u = 1 - d;
 

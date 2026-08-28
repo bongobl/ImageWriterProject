@@ -1,9 +1,9 @@
 #include <API.h>
 #include <windows.h>
 
-typedef void (*PfnGenerateImage)();
+typedef void (*PfnGenerateImage)(int, int);
 
-extern "C" __declspec(dllexport) void GenImage()
+extern "C" __declspec(dllexport) void GenImage(int width, int height)
 {
     HMODULE hDll = LoadLibrary("ImageWriterCore");
 
@@ -14,7 +14,7 @@ extern "C" __declspec(dllexport) void GenImage()
         FreeLibrary(hDll);
         return;
     }
-    fnGenerateImage();
+    fnGenerateImage(width, height);
 
     FreeLibrary(hDll);
 }
