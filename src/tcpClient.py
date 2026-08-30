@@ -12,14 +12,14 @@ def runClient():
     while True:
 
         # configure socket (similarly to server socket)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as clientSocket:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connToServer:
 
             logger.info(f"Connecting to server at {HOST_IP}:{PORT}...")
 
             # connecting state: continually loop trying to connect to server
             while True:
                 try:
-                    clientSocket.connect((HOST_IP, PORT))
+                    connToServer.connect((HOST_IP, PORT))
                     break
                 except (TimeoutError, ConnectionRefusedError) as e:
                     logger.info(f"Connection attempt failed: {e}\nTrying again...")
@@ -40,7 +40,7 @@ def runClient():
 
                 # send message to server
                 try:
-                    clientSocket.sendall(serverMessageBuffer)
+                    connToServer.sendall(serverMessageBuffer)
 
                 # will fail if server had disconnected at time of sending message
                 # return to connecting state
@@ -52,32 +52,13 @@ def runClient():
                 if playerName == "Close":
                     return
 
-
-                bufferValid = True
                 clientMessageBuffer = bytearray()
 
-                # read client message from server
-                try:
-                    while len(clientMessageBuffer) < CLIENT_MESSAGE_SIZE:
-                        fragmentReceived = clientSocket.recv(CLIENT_MESSAGE_SIZE - len(clientMessageBuffer))
-
-                        # error check on data received
-                        if not fragmentReceived:
-                            logger.info("Client error: failed to receive data from server\n\n")
-                            bufferValid = False
-                            break
-
-                        clientMessageBuffer.extend(fragmentReceived)
-
-                    # sanity check buffer
-                    # if not valid, return to connecting state
-                    if not bufferValid:
-                        break
-                    
-                # will fail if server disconnects while we were waiting to receive its reply
-                # return to connecting state
-                except (ConnectionResetError, ConnectionAbortedError) as e:
-                    logger.info(f"recv error: {e}\n\n")
+                # wait here and receive message from client
+                status, errorMessage = receiveMessage(buffer = clientMessageBuffer, connection = connToServer, size = CLIENT_MESSAGE_SIZE)
+                if not status:
+                    # print error message and return to connecting state
+                    logger.info(errorMessage)
                     break
                 
                 # deserialize client message and print

@@ -25,31 +25,13 @@ def runServer():
                 # continually listen for new messages from client
                 while True:
 
-                    bufferValid = True
                     serverMessageBuffer = bytearray()
 
-                    # read server message from client
-                    try:
-                        while len(serverMessageBuffer) < SERVER_MESSAGE_SIZE:
-                            fragmentReceived = connToClient.recv(SERVER_MESSAGE_SIZE - len(serverMessageBuffer))
-
-                            # error check on data received
-                            if not fragmentReceived:
-                                print("Server error: failed to receive data from client\n\n")
-                                bufferValid = False
-                                break
-                            
-                            serverMessageBuffer.extend(fragmentReceived)
-
-                        # sanity check buffer
-                        # return to listening state
-                        if not bufferValid:
-                            break
-
-                    # will fail if client disconnects without gracefully telling us
-                    # return to listening state
-                    except (ConnectionResetError, ConnectionAbortedError) as e:
-                        print(f"recv error: {e}\n\n")
+                    # wait here and receive message from client
+                    status, errorMessage = receiveMessage(buffer = serverMessageBuffer, connection = connToClient, size=SERVER_MESSAGE_SIZE)
+                    if not status:
+                        # print error message and return to listening state
+                        print(errorMessage)
                         break
                     
                     # deserialize server message and print
@@ -68,7 +50,7 @@ def runServer():
 
                     # serialize client message
                     clientMessageBuffer = bytes(clientMessage)
-
+                    
                     # send message to client
                     try:
                         connToClient.sendall(clientMessageBuffer)

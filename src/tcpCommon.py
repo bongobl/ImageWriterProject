@@ -1,5 +1,5 @@
 import ctypes
-
+import socket
 HOST_IP = '127.0.0.1'
 PORT = 65432
 MAX_RECV_BUFFER_SIZE = 1024
@@ -33,3 +33,24 @@ class ClientMessage(ctypes.Structure):
         return f"ClientMessage:length = {self.length}, width = {self.width}, height = {self.height}, resources = {self.resources}"
 
 CLIENT_MESSAGE_SIZE = ctypes.sizeof(ClientMessage)
+
+def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:
+
+    # read server message from client
+    try:
+        while len(buffer) < size:
+            fragmentReceived = connection.recv(size - len(buffer))
+
+            # error check on data received
+            if not fragmentReceived:
+                # sanity check buffer
+                return (False, "receiveMessage: failed to receive data from client")
+            
+            buffer.extend(fragmentReceived)
+
+    # will fail if client disconnects without gracefully telling us
+    # return to listening state
+    except (ConnectionResetError, ConnectionAbortedError) as e:
+        return (False, f"receiveMessage: {e}")
+
+    return (True, "")
