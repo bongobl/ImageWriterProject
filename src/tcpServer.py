@@ -1,5 +1,6 @@
 import tcpCommon, socket
 from tcpCommon import *
+
 def runServer():
 
     # set up listening socket (IPv4 + TCP)
@@ -25,35 +26,85 @@ def runServer():
                 # continually listen for new messages from client
                 while True:
 
-                    serverMessageBuffer = bytearray()
-
                     # wait here and receive message from client
-                    status, errorMessage = receiveMessage(buffer = serverMessageBuffer, connection = connToClient, size=SERVER_MESSAGE_SIZE)
+                    commandBuffer = bytearray()
+                    status, errorMessage = receiveMessage(buffer = commandBuffer, connection = connToClient, size = COMMAND_SIZE)
                     if not status:
                         # print error message and return to listening state
                         print(errorMessage)
                         break
+
+                    command = Command(int.from_bytes(commandBuffer))
+
+                    # wait here and receive message from client
+                    paramsBuffer = bytearray()
                     
-                    # deserialize server message and print
-                    serverMessage = ServerMessage.from_buffer_copy(serverMessageBuffer)
-                    print(f"Out: {serverMessage.toString()}")
                     
-                    # a playerName of "Close" means client gracefully disconnected
-                    # return to listening state
-                    if serverMessage.playerName.decode('utf-8') == "Close":
-                        print(f"Server: Client at {clientAddr} gracefully disconnected\n\n")
-                        break
+                    match command:
+                        
+                        case Command.InitImage:
+
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(InitImageParams))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+                            # deserialize drawCircle params
+                            initImageParams = InitImageParams.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {initImageParams.toString()}")
+
+                        case Command.DrawCircle:
+
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(DrawCircleParams))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+                            # deserialize drawCircle params
+                            circleParams = DrawCircleParams.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {circleParams.toString()}")
+
+                        case Command.DrawRectangle:
+
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(DrawRectangleParams))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+                            # deserialize drawRectangle params
+                            rectangleParams = DrawRectangleParams.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {rectangleParams.toString()}")
+
+                        case Command.ExportImage:
+
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(ExportImageParams))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+                            # deserialize exportImage params
+                            exportImageParams = ExportImageParams.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {exportImageParams.toString()}")
+
+                        case Command.Disconnecting:
+                            
+                            print(f"Client at {clientAddr} gracefully disconnected\n\n")
+                            break
+                            
+                        case _:
+                            print("Unrecognized command")
+
 
                     # create a dummy client message
-                    clientMessage = ClientMessage(length = 24.6, width = 35.6, height = 32.1, resources = 56)
-                    print(f"In: {clientMessage.toString()}")
+                    reply = DummyReply(length = 24.6, width = 35.6, height = 32.1, resources = 56)
+                    print(f"To client: {reply.toString()}")
 
                     # serialize client message
-                    clientMessageBuffer = bytes(clientMessage)
-                    
-                    # send message to client
+                    replyBuffer = bytes(reply)
+
+                    # send reply to client
                     try:
-                        connToClient.sendall(clientMessageBuffer)
+                        connToClient.sendall(replyBuffer)
                     except ConnectionResetError as e:
                         print(f"ConnectionResetError: {e}\n\n")
                         break
@@ -61,5 +112,6 @@ def runServer():
 
 # main
 if __name__ == "__main__":
+
     runServer()
 

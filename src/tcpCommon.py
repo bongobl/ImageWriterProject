@@ -1,27 +1,62 @@
 import ctypes
 import socket
+from enum import IntEnum
+
 HOST_IP = '127.0.0.1'
 PORT = 65432
-MAX_RECV_BUFFER_SIZE = 1024
-MAX_PLAYER_NAME_LENGTH = 32
+MAX_IMAGE_FILENAME_LENGTH = 64
+COMMAND_SIZE = 1
+
+class Command(IntEnum):
+
+    InitImage = 1
+    DrawCircle = 2
+    DrawRectangle = 3
+    ExportImage = 4
+    Disconnecting = 5
 
 # Message to server
-class ServerMessage(ctypes.Structure):
+class InitImageParams(ctypes.Structure):
     _fields_ = [
-        ("playerName", ctypes.c_char * MAX_PLAYER_NAME_LENGTH),
-        ("health", ctypes.c_float),
-        ("powerLevel", ctypes.c_int),
-        ("age", ctypes.c_int),
-        ("strength", ctypes.c_float),
+        ("width", ctypes.c_int),
+        ("height", ctypes.c_int),
     ]
 
     def toString(self):
-        return f"ServerMessage:playerName = {self.playerName.decode('utf-8')}, health = {self.health}, powerLevel = {self.powerLevel}, age = {self.age}, strength = {self.strength}"
+        return f"InitImage params: width = {self.width}, height = {self.height}"
+    
+class DrawCircleParams(ctypes.Structure):
+    _fields_ = [
+        ("centerX", ctypes.c_int),
+        ("centerY", ctypes.c_int),
+        ("radius", ctypes.c_int),
+    ]
 
-SERVER_MESSAGE_SIZE = ctypes.sizeof(ServerMessage)
+    def toString(self):
+        return f"Circle params: centerX = {self.centerX}, centerY = {self.centerY}, radius = {self.radius}"
+
+class DrawRectangleParams(ctypes.Structure):
+    _fields_ = [
+        ("centerX", ctypes.c_int),
+        ("centerY", ctypes.c_int),
+        ("halfExtentX", ctypes.c_int),
+        ("halfExtentY", ctypes.c_int),
+    ]
+
+    def toString(self):
+        return f"Rectange params: centerX = {self.centerX}, centerY = {self.centerY}, halfExtentX = {self.halfExtentX}, halfExtentY = {self.halfExtentY}"
+
+class ExportImageParams(ctypes.Structure):
+    _fields_ = [
+        ("imageName", ctypes.c_char * MAX_IMAGE_FILENAME_LENGTH),
+    ]
+
+    def toString(self):
+        return f"ExportImage params: imageName = {self.imageName.decode('utf-8')}"
+
 
 # Message to client
-class ClientMessage(ctypes.Structure):
+class DummyReply(ctypes.Structure):
     _fields_ = [
         ("length", ctypes.c_float),
         ("width", ctypes.c_float),
@@ -30,9 +65,8 @@ class ClientMessage(ctypes.Structure):
     ]
 
     def toString(self):
-        return f"ClientMessage:length = {self.length}, width = {self.width}, height = {self.height}, resources = {self.resources}"
+        return f"DummyReply:length = {self.length}, width = {self.width}, height = {self.height}, resources = {self.resources}"
 
-CLIENT_MESSAGE_SIZE = ctypes.sizeof(ClientMessage)
 
 def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:
 
