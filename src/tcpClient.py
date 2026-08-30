@@ -28,12 +28,19 @@ def runClient():
             logger.info(f"Connection successful!")
             while True:
 
-                # read message from console
-                message = input("Enter message for server: ")
+                # read player name from console
+                playerName = input("Enter a name for the player: ")
+
+                # create dummy server message
+                serverMessage = ServerMessage(playerName = playerName.encode('utf-8'), health = 3.5, powerLevel = 8, age = 27, strength = 34.75)
+                logger.info(f"In: {serverMessage.toString()}")
+
+                # serialize server message
+                serverMessageBuffer = bytes(serverMessage)
 
                 # send message to server
                 try:
-                    clientSocket.sendall(message.encode('utf-8'))
+                    clientSocket.sendall(serverMessageBuffer)
 
                 # will fail if server had disconnected at time of sending message
                 # return to connecting state
@@ -42,26 +49,40 @@ def runClient():
                     break
 
                 # if we sent "Close", terminate client app
-                if message == "Close":
+                if playerName == "Close":
                     return
 
-                # receive reply from server and print it
-                try:
-                    replyFromServer = clientSocket.recv(MAX_RECV_BUFFER_SIZE)
 
+                bufferValid = True
+                clientMessageBuffer = bytearray()
+
+                # read client message from server
+                try:
+                    while len(clientMessageBuffer) < CLIENT_MESSAGE_SIZE:
+                        fragmentReceived = clientSocket.recv(CLIENT_MESSAGE_SIZE - len(clientMessageBuffer))
+
+                        # error check on data received
+                        if not fragmentReceived:
+                            logger.info("Client error: failed to receive data from server\n\n")
+                            bufferValid = False
+                            break
+
+                        clientMessageBuffer.extend(fragmentReceived)
+
+                    # sanity check buffer
+                    # if not valid, return to connecting state
+                    if not bufferValid:
+                        break
+                    
                 # will fail if server disconnects while we were waiting to receive its reply
                 # return to connecting state
-                except ConnectionResetError as e:
-                    logger.info(f"ConnectionResetError: {e}\n\n")
+                except (ConnectionResetError, ConnectionAbortedError) as e:
+                    logger.info(f"recv error: {e}\n\n")
                     break
                 
-                # error check message, failure likely means pipe is broken
-                # return to connecting state
-                if not replyFromServer:
-                    logger.info("Error: failed to receive message from server\n\n")
-                    break
-                
-                logger.info(f"Received reply: {replyFromServer.decode('utf-8')}")
+                # deserialize client message and print
+                clientMessage = ClientMessage.from_buffer_copy(clientMessageBuffer)
+                logger.info(f"Out: {clientMessage.toString()}")
 
 if __name__ == "__main__":
     runClient()

@@ -25,36 +25,53 @@ def runServer():
                 # continually listen for new messages from client
                 while True:
 
-                    # read message from client
+                    bufferValid = True
+                    serverMessageBuffer = bytearray()
+
+                    # read server message from client
                     try:
-                        rawDataReceived = connToClient.recv(MAX_RECV_BUFFER_SIZE)
+                        while len(serverMessageBuffer) < SERVER_MESSAGE_SIZE:
+                            fragmentReceived = connToClient.recv(SERVER_MESSAGE_SIZE - len(serverMessageBuffer))
+
+                            # error check on data received
+                            if not fragmentReceived:
+                                print("Server error: failed to receive data from client\n\n")
+                                bufferValid = False
+                                break
+                            
+                            serverMessageBuffer.extend(fragmentReceived)
+
+                        # sanity check buffer
+                        # return to listening state
+                        if not bufferValid:
+                            break
 
                     # will fail if client disconnects without gracefully telling us
                     # return to listening state
-                    except ConnectionResetError as e:
-                        print(f"ConnectionResetError: {e}\n\n")
+                    except (ConnectionResetError, ConnectionAbortedError) as e:
+                        print(f"recv error: {e}\n\n")
                         break
-
-                    # error check message
-                    if not rawDataReceived:
-                        print("Server error: failed to receive message from client\n\n")
-                        break
-
-                    # display message in console
-                    messageReceived = rawDataReceived.decode('utf-8')
-                    print(f"Server: Received data: {messageReceived}")
-
-                    # a message value of "Close" means client gracefully disconnected
+                    
+                    # deserialize server message and print
+                    serverMessage = ServerMessage.from_buffer_copy(serverMessageBuffer)
+                    print(f"Out: {serverMessage.toString()}")
+                    
+                    # a playerName of "Close" means client gracefully disconnected
                     # return to listening state
-                    if messageReceived == "Close":
+                    if serverMessage.playerName.decode('utf-8') == "Close":
                         print(f"Server: Client at {clientAddr} gracefully disconnected\n\n")
                         break
 
-                    # sent reply to client
-                    reply = "Nice to hear from you lol!"
+                    # create a dummy client message
+                    clientMessage = ClientMessage(length = 24.6, width = 35.6, height = 32.1, resources = 56)
+                    print(f"In: {clientMessage.toString()}")
 
+                    # serialize client message
+                    clientMessageBuffer = bytes(clientMessage)
+
+                    # send message to client
                     try:
-                        connToClient.sendall(reply.encode('utf-8'))
+                        connToClient.sendall(clientMessageBuffer)
                     except ConnectionResetError as e:
                         print(f"ConnectionResetError: {e}\n\n")
                         break
