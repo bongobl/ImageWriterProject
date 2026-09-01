@@ -3,6 +3,11 @@
 
 int main(void)
 {
-	GenImage(1920, 1080);
+	HImageWriterInstance imageWriterInstance = {};
+	CreateImageWriterInstance(&imageWriterInstance);
+
+	SetupImage(imageWriterInstance, 1920, 1080);
+	ExportImage(imageWriterInstance);
+	DestroyImageWriterInstance(&imageWriterInstance);
 	return EXIT_SUCCESS;
 }

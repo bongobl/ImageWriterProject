@@ -3,8 +3,6 @@
 #include <iostream>
 #include <fstream>
 
-using namespace std;
-
 //Used to store RGB values for image to be written
 //Use Vec3 instead for all in-app purposes
 struct Pixel {
