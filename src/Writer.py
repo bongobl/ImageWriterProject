@@ -27,6 +27,9 @@ instance = HImageWriterInstance()
 
 
 framework.CreateImageWriterInstance(ctypes.byref(instance))
-framework.SetupImage(instance, 1280, 720)
-framework.ExportImage(instance)
-framework.DestroyImageWriterInstance(instance)
+
+framework.SetupImage(instance, 1280, 720);
+framework.DrawCircle(instance, 800, 300, 70);
+framework.DrawCircle(instance, 300, 550, 150);
+framework.DrawRectangle(instance, 500, 300, 400, 10);
+framework.ExportImage(instance);

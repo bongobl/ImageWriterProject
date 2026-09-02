@@ -11,8 +11,12 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
     pInstance->pData = (InstanceData*)malloc(sizeof(InstanceData));
     InstanceData* pInstanceData = (InstanceData*)pInstance->pData;
 
-    HMODULE hDll = LoadLibrary("C:\\Dev\\Practice\\BasicClaude\\ImageWriter\\buildGNU\\ImageWriterCore");
+    HMODULE hDll = LoadLibrary("ImageWriterCore");
 
+    if(!hDll){
+        fprintf(stderr, "CreateImageWriterInstance: ImageWriterCore library could not load\n");
+    }
+    
     PfnCoreInitialize pfnCoreInitialize = (PfnCoreInitialize)GetProcAddress(hDll, "initialize");
 
     if(pfnCoreInitialize == NULL){
@@ -25,6 +29,22 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
 
     if (pfnCoreSetupImage == NULL) {
         fprintf(stderr, "CreateImageWriterInstance: CoreEntry function setupImage could not load\n");
+        FreeLibrary(hDll);
+        return;
+    }
+
+    PfnCoreDrawCircle pfnCoreDrawCircle = (PfnCoreDrawCircle)GetProcAddress(hDll, "drawCircle");
+
+    if (pfnCoreDrawCircle == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function pfnCoreDrawCircle could not load\n");
+        FreeLibrary(hDll);
+        return;
+    }
+
+    PfnCoreDrawRectangle pfnCoreDrawRectangle = (PfnCoreDrawRectangle)GetProcAddress(hDll, "drawRectangle");
+
+    if (pfnCoreDrawRectangle == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function pfnCoreDrawRectangle could not load\n");
         FreeLibrary(hDll);
         return;
     }
@@ -50,6 +70,8 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
         .hDll = hDll,
         .pfnCoreInitialize = pfnCoreInitialize,
         .pfnCoreSetupImage = pfnCoreSetupImage,
+        .pfnCoreDrawCircle = pfnCoreDrawCircle,
+        .pfnCoreDrawRectangle = pfnCoreDrawRectangle,
         .pfnCoreExportImage = pfnCoreExportImage,
         .pfnCoreDispose = pfnCoreDispose,
     };
@@ -67,6 +89,28 @@ extern "C" __declspec(dllexport) void SetupImage(HImageWriterInstance instance, 
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pfnCoreSetupImage(*pInstanceData, width, height);
+}
+
+extern "C" __declspec(dllexport) void DrawCircle(HImageWriterInstance instance, int centerX, int centerY, int radius)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "DrawCircle: instance.pData was null\n");
+        return;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pfnCoreDrawCircle(*pInstanceData, centerX, centerY, radius);
+}
+
+extern "C" __declspec(dllexport) void DrawRectangle(HImageWriterInstance instance, int centerX, int centerY, int halfExtentX, int halfExtentY)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "DrawCircle: instance.pData was null\n");
+        return;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pfnCoreDrawRectangle(*pInstanceData, centerX, centerY, halfExtentX, halfExtentY);
 }
 
 extern "C" __declspec(dllexport) void ExportImage(HImageWriterInstance instance)

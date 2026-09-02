@@ -38,7 +38,7 @@ Image::Image(){
 }
 
 Image::~Image(){
-	
+	dispose();
 }
 
 void Image::dispose() {
@@ -48,6 +48,15 @@ void Image::dispose() {
 	}
 	mode = NONE;
 	width = height = 0;
+}
+
+int Image::getWidth()
+{
+	return width;
+}
+int Image::getHeight()
+{
+	return height;
 }
 void Image::setAsRead(std::string inFileName){
 

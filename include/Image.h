@@ -28,6 +28,8 @@ public:
 	~Image();
 	void dispose();
 
+	int getWidth();
+	int getHeight();
 	void setAsRead(std::string inFileName);
 	void setAsWrite(int image_width, int image_height);
 	
