@@ -6,6 +6,9 @@ should print to stdout directly (that stream is the protocol channel). Use the
 `logging` module, which writes to stderr, for any diagnostics.
 """
 
+import tcpCommon, socket
+from tcpCommon import *
+
 import logging
 import ctypes
 from ctypes import *
@@ -15,6 +18,13 @@ from mcp.server.fastmcp import FastMCP
 # Logs go to stderr; stdout is reserved for the MCP protocol.
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("imagewriter")
+
+# TODOs
+# rename this file to ImageWriterMCP.py
+# rename tcpServer.py and tcpClient.py to something more meaningful
+#   - server is being used in production, client is just for testing
+# let user specify image name during export
+# Rename DummyReply, should mainly contain status
 
 
 mcp = FastMCP(
@@ -26,13 +36,35 @@ mcp = FastMCP(
     ),
 )
 
+def connectToImageWriterApp() -> bool:
 
-# TODO: Mirror API.h: move to common header
-class HImageWriterInstance(ctypes.Structure):
-    _fields_ = [
-        ("pData", ctypes.c_void_p),
-    ]
+    global connToServer
+    
+    try:
+        connToServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        connToServer.connect((HOST_IP, PORT))
+        logger.info(f"Establised connection to image writer app!")
+    except (TimeoutError, ConnectionRefusedError) as e:
+        logger.info(f"Connection attempt failed: {e}\nTrying again...")
+        connToServer.close()
+        return False
+    
+    return True
 
+def disconnectFromImageWriter():
+
+    commIn = Command.Disconnecting
+    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
+
+    try:
+        connToServer.sendall(commandBuffer)
+    except ConnectionResetError as e:
+        logger.error(f"Note: disconnecting failed: ConnectionResetError: {e}\n\n")
+    finally:
+        connToServer.close()
+
+
+            
 @mcp.tool()
 def setupImage(width: int, height: int) -> bool:
     """Sets up a blank image canvas for drawing things to
@@ -41,14 +73,47 @@ def setupImage(width: int, height: int) -> bool:
     various Draw* commands are issued.
     Returns True on success, False on failure
     """
+    if not connectToImageWriterApp():
+        return False
 
-    global setupCalled
+    commIn = Command.SetupImage
+    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
-    framework.SetupImage(instance, width, height)
+    # create setupImage command params
+    setupImageParams = SetupImageParams(width = width, height = height)
+    logger.info(f"To server: {setupImageParams.toString()}")
 
-    setupCalled = True
+    # serialize params
+    paramsBuffer = bytes(setupImageParams)
 
-    return True
+    # send message to server
+    try:
+        logger.info(f"setupImage: sending command buffer")
+        connToServer.sendall(commandBuffer)
+        logger.info(f"setupImage: sending param buffer")
+        connToServer.sendall(paramsBuffer)
+
+    # will fail if server had disconnected at time of sending message
+    # return to connecting state
+    except ConnectionResetError as e:
+        logger.error(f"ConnectionResetError: {e}\n\n")
+        exit(1) # todo: kick off reconnect
+
+    replyBuffer = bytearray()
+    
+    # wait here and receive message from client
+    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(DummyReply))
+    if not status:
+        # log error message and return to connecting state
+        logger.error(errorMessage)
+        exit(1) # todo: kick off reconnect
+    
+    # deserialize client message and log
+    reply = DummyReply.from_buffer_copy(replyBuffer)
+    logger.info(f"From server: {reply.toString()}")
+
+    disconnectFromImageWriter()
+    return reply.status
 
 @mcp.tool()
 def drawCircle(centerX: int, centerY: int, radius: int) -> bool:
@@ -57,7 +122,50 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> bool:
     Returns True on success, False on failure
     """
 
-    return framework.DrawCircle(instance, centerX, centerY, radius)
+    if not connectToImageWriterApp():
+        return False
+
+    commIn = Command.DrawCircle
+    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
+
+    # create drawCircle command params
+    circleParams = DrawCircleParams(centerX = centerX, centerY = centerY, radius = radius)
+    logger.info(f"To server: {circleParams.toString()}")
+
+    # serialize params
+    paramsBuffer = bytes(circleParams)
+
+    # send message to server
+    try:
+        connToServer.sendall(commandBuffer)
+        connToServer.sendall(paramsBuffer)
+
+    # will fail if server had disconnected at time of sending message
+    # return to connecting state
+    except ConnectionResetError as e:
+        logger.error(f"ConnectionResetError: {e}\n\n")
+        exit(1) # todo: kick off reconnect
+
+    replyBuffer = bytearray()
+    
+    # wait here and receive message from client
+    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(DummyReply))
+    if not status:
+        # log error message and return to connecting state
+        logger.error(errorMessage)
+        exit(1) # todo: kick off reconnect
+    
+    # deserialize client message and log
+    reply = DummyReply.from_buffer_copy(replyBuffer)
+    logger.info(f"From server: {reply.toString()}")
+
+    # serialize params
+    paramsBuffer = bytes(circleParams)
+
+
+    disconnectFromImageWriter()
+
+    return reply.status
 
 @mcp.tool()
 def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int) -> bool:
@@ -67,7 +175,48 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
     Returns True on success, False on failure
     """
 
-    return framework.DrawRectangle(instance, centerX, centerY, halfExtentX, halfExtentY)
+    if not connectToImageWriterApp():
+        return False
+
+    commIn = Command.DrawRectangle
+    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
+
+    # create drawRectangle command params
+    rectangleParams = DrawRectangleParams(centerX = centerX, centerY = centerY, halfExtentX = halfExtentX, halfExtentY = halfExtentY)
+    logger.info(f"To server: {rectangleParams.toString()}")
+
+    # serialize params
+    paramsBuffer = bytes(rectangleParams)
+    # send message to server
+    try:
+        connToServer.sendall(commandBuffer)
+        connToServer.sendall(paramsBuffer)
+
+    # will fail if server had disconnected at time of sending message
+    # return to connecting state
+    except ConnectionResetError as e:
+        logger.error(f"ConnectionResetError: {e}\n\n")
+        exit(1) # todo: kick off reconnect
+
+    replyBuffer = bytearray()
+    
+    # wait here and receive message from client
+    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(DummyReply))
+    if not status:
+        # log error message and return to connecting state
+        logger.error(errorMessage)
+        exit(1) # todo: kick off reconnect
+    
+    # deserialize client message and log
+    reply = DummyReply.from_buffer_copy(replyBuffer)
+    logger.info(f"From server: {reply.toString()}")
+
+    # serialize params
+    paramsBuffer = bytes(rectangleParams)
+
+    disconnectFromImageWriter()
+
+    return reply.status
 
 
 @mcp.tool()
@@ -78,40 +227,48 @@ def exportImage() -> bool:
     Returns True on success, False on failure
     """
 
-    return framework.ExportImage(instance)
+    if not connectToImageWriterApp():
+        return False
+    
+    commIn = Command.ExportImage
+    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
+    # create exportImage command params
+    imageName = "SomeDumbImage"
+    exportImageParams = ExportImageParams(imageName = imageName.encode('utf-8'))
+    logger.info(f"To server: {exportImageParams.toString()}")
+
+    # serialize params
+    paramsBuffer = bytes(exportImageParams)
+
+    # send message to server
+    try:
+        connToServer.sendall(commandBuffer)
+        connToServer.sendall(paramsBuffer)
+
+    # will fail if server had disconnected at time of sending message
+    # return to connecting state
+    except ConnectionResetError as e:
+        logger.error(f"ConnectionResetError: {e}\n\n")
+        exit(1) # todo: kick off reconnect
+
+    replyBuffer = bytearray()
+    
+    # wait here and receive message from client
+    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(DummyReply))
+    if not status:
+        # log error message and return to connecting state
+        logger.error(errorMessage)
+        exit(1) # todo: kick off reconnect
+    
+    # deserialize client message and log
+    reply = DummyReply.from_buffer_copy(replyBuffer)
+    logger.info(f"From server: {reply.toString()}")
+
+    disconnectFromImageWriter()
+    return reply.status
 
 
 if __name__ == "__main__":
 
-    # load image writer library and functions
-    framework = ctypes.CDLL("C:\\Dev\\Practice\\BasicClaude\\ImageWriter\\buildGNU\\ImageWriterAPI.dll")
-
-    framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-    framework.CreateImageWriterInstance.restype = ctypes.c_bool
-
-    framework.SetupImage.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int]
-    framework.SetupImage.restype = ctypes.c_bool
-
-    framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-    framework.DrawCircle.restype = ctypes.c_bool
-
-    framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-    framework.DrawRectangle.restype = ctypes.c_bool
-
-    framework.ExportImage.argtypes = [HImageWriterInstance]
-    framework.ExportImage.restype = ctypes.c_bool
-
-    framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-    framework.DestroyImageWriterInstance.restype = ctypes.c_bool
-
-    # create instance
-    instance = HImageWriterInstance()
-    framework.CreateImageWriterInstance(ctypes.byref(instance))
-
-    # Runs the server over stdio, the transport the Claude host app uses.
     mcp.run()
-
-    # todo, move to server "destructor"
-    framework.DestroyImageWriterInstance(instance)
-

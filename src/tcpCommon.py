@@ -79,7 +79,7 @@ def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> t
             # error check on data received
             if not fragmentReceived:
                 # sanity check buffer
-                return (False, "receiveMessage: failed to receive data from client")
+                return (False, "receiveMessage: failed to receive data")
             
             buffer.extend(fragmentReceived)
 
