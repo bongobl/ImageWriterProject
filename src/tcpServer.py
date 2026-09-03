@@ -1,5 +1,14 @@
 import tcpCommon, socket
 from tcpCommon import *
+import ctypes
+from ctypes import *
+
+
+# TODO: Mirror API.h: move to common header
+class HImageWriterInstance(ctypes.Structure):
+    _fields_ = [
+        ("pData", ctypes.c_void_p),
+    ]
 
 def runServer():
 
@@ -39,19 +48,21 @@ def runServer():
                     # wait here and receive message from client
                     paramsBuffer = bytearray()
                     
-                    
+                    frameworkFunctionStatus = False
                     match command:
                         
-                        case Command.InitImage:
+                        case Command.SetupImage:
 
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(InitImageParams))
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(SetupImageParams))
                             if not status:
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
+                            
                             # deserialize drawCircle params
-                            initImageParams = InitImageParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {initImageParams.toString()}")
+                            setupImageParams = SetupImageParams.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {setupImageParams.toString()}")
+                            frameworkFunctionStatus = framework.SetupImage(instance, setupImageParams.width, setupImageParams.height)
 
                         case Command.DrawCircle:
 
@@ -63,6 +74,7 @@ def runServer():
                             # deserialize drawCircle params
                             circleParams = DrawCircleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {circleParams.toString()}")
+                            frameworkFunctionStatus = framework.DrawCircle(instance, circleParams.centerX, circleParams.centerY, circleParams.radius);
 
                         case Command.DrawRectangle:
 
@@ -74,6 +86,7 @@ def runServer():
                             # deserialize drawRectangle params
                             rectangleParams = DrawRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams.toString()}")
+                            frameworkFunctionStatus = framework.DrawRectangle(instance, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY);
 
                         case Command.ExportImage:
 
@@ -85,6 +98,7 @@ def runServer():
                             # deserialize exportImage params
                             exportImageParams = ExportImageParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {exportImageParams.toString()}")
+                            frameworkFunctionStatus = framework.ExportImage(instance);
 
                         case Command.Disconnecting:
                             
@@ -96,7 +110,7 @@ def runServer():
 
 
                     # create a dummy client message
-                    reply = DummyReply(length = 24.6, width = 35.6, height = 32.1, resources = 56)
+                    reply = DummyReply(status = frameworkFunctionStatus, length = 24.6, width = 35.6, height = 32.1, resources = 56)
                     print(f"To client: {reply.toString()}")
 
                     # serialize client message
@@ -113,5 +127,35 @@ def runServer():
 # main
 if __name__ == "__main__":
 
+    # load image writer library and functions
+    framework = ctypes.CDLL("C:\\Dev\\Practice\\BasicClaude\\ImageWriter\\buildGNU\\ImageWriterAPI.dll")
+
+    framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
+    framework.CreateImageWriterInstance.restype = ctypes.c_bool
+
+    framework.SetupImage.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int]
+    framework.SetupImage.restype = ctypes.c_bool
+
+    framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+    framework.DrawCircle.restype = ctypes.c_bool
+
+    framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+    framework.DrawRectangle.restype = ctypes.c_bool
+
+    framework.ExportImage.argtypes = [HImageWriterInstance]
+    framework.ExportImage.restype = ctypes.c_bool
+
+    framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
+    framework.DestroyImageWriterInstance.restype = ctypes.c_bool
+
+    # create instance
+    instance = HImageWriterInstance()
+    if not framework.CreateImageWriterInstance(ctypes.byref(instance)):
+        print("Failed to create image writer instance")
+        exit(1)
+
     runServer()
+
+    # Todo: figure out where to put this when we find a way to gracefully kill the server
+    framework.DestroyImageWriterInstance(instance)
 

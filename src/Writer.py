@@ -34,7 +34,7 @@ instance = HImageWriterInstance()
 
 if not framework.CreateImageWriterInstance(ctypes.byref(instance)):
     print("Failed to create image writer instance")
-    exit(0)
+    exit(1)
 
 framework.SetupImage(instance, 1280, 720);
 framework.DrawCircle(instance, 800, 300, 70);

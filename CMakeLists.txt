@@ -73,6 +73,8 @@ target_link_libraries(TestApp ImageWriterAPI)
 
 set(PYTHON_FILES
     "${PROJECT_SRC_DIR}/Writer.py"
+    "${PROJECT_SRC_DIR}/tcpCommon.py"
+    "${PROJECT_SRC_DIR}/tcpServer.py"
 )
 
 foreach(file ${PYTHON_FILES})

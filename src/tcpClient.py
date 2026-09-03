@@ -30,7 +30,7 @@ def runClient():
                 # read in command
                 while True:
                     commandInt = int(input("What would you like to do?\n" \
-                    " - (1) = to initialize image\n" \
+                    " - (1) = to setup image\n" \
                     " - (2) = to draw a circle\n" \
                     " - (3) = draw a rectangle\n" \
                     " - (4) = export image\n" \
@@ -48,9 +48,9 @@ def runClient():
                 paramsBuffer = bytearray()
                 match commIn:
 
-                    case Command.InitImage:
+                    case Command.SetupImage:
 
-                        # obtain initImage params
+                        # obtain setupImage params
                         while True:
                             inputArgs = input("Enter the width and height of the image: ").split()
                             if len(inputArgs) == 2:
@@ -60,11 +60,11 @@ def runClient():
                         width, height = tuple(int(x) for x in inputArgs)
         
                         # create drawCircle command params
-                        initImageParams = InitImageParams(width = width, height = height)
-                        logger.info(f"To server: {initImageParams.toString()}")
+                        setupImageParams = SetupImageParams(width = width, height = height)
+                        logger.info(f"To server: {setupImageParams.toString()}")
 
                         # serialize params
-                        paramsBuffer = bytes(initImageParams)
+                        paramsBuffer = bytes(setupImageParams)
                     case Command.DrawCircle:
 
                         # obtain drawCircle params
