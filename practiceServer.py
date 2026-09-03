@@ -16,8 +16,6 @@ from mcp.server.fastmcp import FastMCP
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("imagewriter")
 
-# TODO: Move chronology guarding to Core layer
-setupCalled = False
 
 mcp = FastMCP(
     "ImageWriter",
@@ -55,41 +53,32 @@ def setupImage(width: int, height: int) -> bool:
 @mcp.tool()
 def drawCircle(centerX: int, centerY: int, radius: int) -> bool:
     """draws a circle on an image
-    Importantly, this should not be called before an image is set up
+    Importantly, this should not be called before an image is set up or it will fail
     Returns True on success, False on failure
     """
 
-    if setupCalled:
-        framework.DrawCircle(instance, centerX, centerY, radius)
-
-    
-    return setupCalled
+    return framework.DrawCircle(instance, centerX, centerY, radius)
 
 @mcp.tool()
 def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int) -> bool:
     """draws a rectangle on an image
 
-    Importantly, this should not be called before an image is set up
+    Importantly, this should not be called before an image is set up or it will fail
     Returns True on success, False on failure
     """
 
-    if setupCalled:
-        framework.DrawRectangle(instance, centerX, centerY, halfExtentX, halfExtentY)
+    return framework.DrawRectangle(instance, centerX, centerY, halfExtentX, halfExtentY)
 
-    return setupCalled
 
 @mcp.tool()
 def exportImage() -> bool:
     """exports the image to disk
 
-    Importantly, this should not be called before an image is set up
+    Importantly, this should not be called before an image is set up or it will fail
     Returns True on success, False on failure
     """
 
-    if setupCalled:
-        framework.ExportImage(instance)
-
-    return setupCalled
+    return framework.ExportImage(instance)
 
 
 
@@ -99,22 +88,22 @@ if __name__ == "__main__":
     framework = ctypes.CDLL("C:\\Dev\\Practice\\BasicClaude\\ImageWriter\\buildGNU\\ImageWriterAPI.dll")
 
     framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-    framework.CreateImageWriterInstance.restype = None
+    framework.CreateImageWriterInstance.restype = ctypes.c_bool
 
     framework.SetupImage.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int]
-    framework.SetupImage.restype = None
+    framework.SetupImage.restype = ctypes.c_bool
 
     framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-    framework.DrawCircle.restype = None
+    framework.DrawCircle.restype = ctypes.c_bool
 
     framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-    framework.DrawRectangle.restype = None
+    framework.DrawRectangle.restype = ctypes.c_bool
 
     framework.ExportImage.argtypes = [HImageWriterInstance]
-    framework.ExportImage.restype = None
+    framework.ExportImage.restype = ctypes.c_bool
 
     framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-    framework.DestroyImageWriterInstance.restype = None
+    framework.DestroyImageWriterInstance.restype = ctypes.c_bool
 
     # create instance
     instance = HImageWriterInstance()

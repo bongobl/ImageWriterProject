@@ -6,12 +6,12 @@ struct HImageWriterInstance
 {
     void* pData;
 };
-extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInstance* pInstance);
-extern "C" __declspec(dllexport) void SetupImage(HImageWriterInstance instance, int width, int height);
-extern "C" __declspec(dllexport) void DrawCircle(HImageWriterInstance instance, int centerX, int centerY, int radius);
-extern "C" __declspec(dllexport) void DrawRectangle(HImageWriterInstance instance, int centerX, int centerY, int halfExtentX, int halfExtentY);
-extern "C" __declspec(dllexport) void ExportImage(HImageWriterInstance instance);
-extern "C" __declspec(dllexport) void DestroyImageWriterInstance(HImageWriterInstance* instance);
+extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInstance* pInstance);
+extern "C" __declspec(dllexport) bool SetupImage(HImageWriterInstance instance, int width, int height);
+extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, int centerX, int centerY, int radius);
+extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, int centerX, int centerY, int halfExtentX, int halfExtentY);
+extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance);
+extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance);
 
 // Private
 // TODO: 
@@ -20,12 +20,12 @@ extern "C" __declspec(dllexport) void DestroyImageWriterInstance(HImageWriterIns
 // - remember to keep C++ constructs out of it
 
 struct InstanceData;
-typedef void (*PfnCoreInitialize)(InstanceData*);
-typedef void (*PfnCoreSetupImage)(InstanceData, int, int);
-typedef void (*PfnCoreDrawCircle)(InstanceData, int, int, int);
-typedef void (*PfnCoreDrawRectangle)(InstanceData, int, int, int, int);
-typedef void (*PfnCoreExportImage)(InstanceData);
-typedef void (*PfnCoreDispose)(InstanceData*);
+typedef bool (*PfnCoreInitialize)(InstanceData*);
+typedef bool (*PfnCoreSetupImage)(InstanceData, int, int);
+typedef bool (*PfnCoreDrawCircle)(InstanceData, int, int, int);
+typedef bool (*PfnCoreDrawRectangle)(InstanceData, int, int, int, int);
+typedef bool (*PfnCoreExportImage)(InstanceData);
+typedef bool (*PfnCoreDispose)(InstanceData*);
 
 struct InstanceData
 {

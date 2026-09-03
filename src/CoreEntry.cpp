@@ -6,19 +6,24 @@
 // TODO: move to core private header
 struct CoreData {
 	Image image;
+	bool setupCalled = false; // needs to be called at least once before we can draw to image
 };
 
-extern "C" __declspec(dllexport) void initialize(InstanceData* pInstanceData)
+extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 {
 	if (!pInstanceData) {
 		std::cerr << "initialize: pInstanceData was null" << std::endl;
+		return false;
 	}
 	pInstanceData->pCoreData = new CoreData();
+
+	return true;
 }
-extern "C" __declspec(dllexport) void setupImage(InstanceData instanceData, int width, int height)
+extern "C" __declspec(dllexport) bool setupImage(InstanceData instanceData, int width, int height)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "setupImage: instanceData.pCoreData was null" << std::endl;
+		return false;
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
@@ -29,17 +34,25 @@ extern "C" __declspec(dllexport) void setupImage(InstanceData instanceData, int 
 		image.dispose();
 	}
 	image.setAsWrite(width, height);
-
 	image.setSolidColor(Pixel(0, 0, 0));
+
+	pCoreData->setupCalled = true;
+	return true;
 }
 
-extern "C" __declspec(dllexport) void drawCircle(InstanceData instanceData, int centerX, int centerY, int radius)
+extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, int centerX, int centerY, int radius)
 {
 	if (!instanceData.pCoreData) {
-		std::cerr << "setupImage: instanceData.pCoreData was null" << std::endl;
+		std::cerr << "drawCircle: instanceData.pCoreData was null" << std::endl;
+		return false;
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	if (!pCoreData->setupCalled) {
+		std::cerr << "drawCircle: an image must be created via setupImage() before drawing is allowed" << std::endl;
+		return false;
+	}
 
 	Image& image = pCoreData->image;
 
@@ -57,15 +70,23 @@ extern "C" __declspec(dllexport) void drawCircle(InstanceData instanceData, int 
 			}
 		}
 	}
+
+	return true;
 }
 
-extern "C" __declspec(dllexport) void drawRectangle(InstanceData instanceData, int centerX, int centerY, int halfExtentX, int halfExtentY)
+extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, int centerX, int centerY, int halfExtentX, int halfExtentY)
 {
 	if (!instanceData.pCoreData) {
-		std::cerr << "setupImage: instanceData.pCoreData was null" << std::endl;
+		std::cerr << "drawRectangle: instanceData.pCoreData was null" << std::endl;
+		return false;
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	if (!pCoreData->setupCalled) {
+		std::cerr << "drawRectangle: an image must be created via setupImage() before drawing is allowed" << std::endl;
+		return false;
+	}
 
 	Image& image = pCoreData->image;
 
@@ -81,31 +102,45 @@ extern "C" __declspec(dllexport) void drawRectangle(InstanceData instanceData, i
 			}
 		}
 	}
+
+	return true;
 }
 
-extern "C" __declspec(dllexport) void exportImage(InstanceData instanceData)
+extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "exportImage: instanceData.pCoreData was null" << std::endl;
+		return false;
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-	Image& dummyImage = pCoreData->image;
 
-	dummyImage.exportPNG("DummyImage.png");
+	if (!pCoreData->setupCalled) {
+		std::cerr << "exportImage: an image must be created via setupImage() before drawing is allowed" << std::endl;
+		return false;
+	}
+
+	Image& image = pCoreData->image;
+
+	image.exportPNG("DummyImage.png");
 	system("DummyImage.png");
+
+	return true;
 }
 
-extern "C" __declspec(dllexport) void dispose(InstanceData* pInstanceData)
+extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData)
 {
 	if (!pInstanceData) {
 		std::cerr << "dispose: pInstanceData was null" << std::endl;
+		return false;
 	}
 
 	if (!pInstanceData->pCoreData) {
 		std::cerr << "dispose: pInstanceData->pCoreData was null" << std::endl;
+		return false;
 	}
 
 	delete static_cast<CoreData*>(pInstanceData->pCoreData);
 	pInstanceData->pCoreData = nullptr;
+	return true;
 }

@@ -12,21 +12,29 @@ class HImageWriterInstance(ctypes.Structure):
 framework = ctypes.CDLL("./ImageWriterAPI.dll")
 
 framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-framework.CreateImageWriterInstance.restype = None
+framework.CreateImageWriterInstance.restype = ctypes.c_bool
 
 framework.SetupImage.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int]
-framework.SetupImage.restype = None
+framework.SetupImage.restype = ctypes.c_bool
+
+framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+framework.DrawCircle.restype = ctypes.c_bool
+
+framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+framework.DrawRectangle.restype = ctypes.c_bool
 
 framework.ExportImage.argtypes = [HImageWriterInstance]
-framework.ExportImage.restype = None
+framework.ExportImage.restype = ctypes.c_bool
 
 framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-framework.DestroyImageWriterInstance.restype = None
+framework.DestroyImageWriterInstance.restype = ctypes.c_bool
 
 instance = HImageWriterInstance()
 
 
-framework.CreateImageWriterInstance(ctypes.byref(instance))
+if not framework.CreateImageWriterInstance(ctypes.byref(instance)):
+    print("Failed to create image writer instance")
+    exit(0)
 
 framework.SetupImage(instance, 1280, 720);
 framework.DrawCircle(instance, 800, 300, 70);

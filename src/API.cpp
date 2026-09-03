@@ -1,11 +1,11 @@
 #include <API.h>
 
 
-extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInstance* pInstance)
+extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInstance* pInstance)
 {
     if(!pInstance){
         fprintf(stderr, "CreateImageWriterInstance: pInstance was null\n");
-        return;
+        return false;
     }
     
     pInstance->pData = (InstanceData*)malloc(sizeof(InstanceData));
@@ -15,6 +15,7 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
 
     if(!hDll){
         fprintf(stderr, "CreateImageWriterInstance: ImageWriterCore library could not load\n");
+        return false;
     }
     
     PfnCoreInitialize pfnCoreInitialize = (PfnCoreInitialize)GetProcAddress(hDll, "initialize");
@@ -22,7 +23,7 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
     if(pfnCoreInitialize == NULL){
         fprintf(stderr, "CreateImageWriterInstance: CoreEntry function initialize could not load\n");
         FreeLibrary(hDll);
-        return;
+        return false;
     }
 
     PfnCoreSetupImage pfnCoreSetupImage = (PfnCoreSetupImage)GetProcAddress(hDll, "setupImage");
@@ -30,7 +31,7 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
     if (pfnCoreSetupImage == NULL) {
         fprintf(stderr, "CreateImageWriterInstance: CoreEntry function setupImage could not load\n");
         FreeLibrary(hDll);
-        return;
+        return false;
     }
 
     PfnCoreDrawCircle pfnCoreDrawCircle = (PfnCoreDrawCircle)GetProcAddress(hDll, "drawCircle");
@@ -38,7 +39,7 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
     if (pfnCoreDrawCircle == NULL) {
         fprintf(stderr, "CreateImageWriterInstance: CoreEntry function pfnCoreDrawCircle could not load\n");
         FreeLibrary(hDll);
-        return;
+        return false;
     }
 
     PfnCoreDrawRectangle pfnCoreDrawRectangle = (PfnCoreDrawRectangle)GetProcAddress(hDll, "drawRectangle");
@@ -46,7 +47,7 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
     if (pfnCoreDrawRectangle == NULL) {
         fprintf(stderr, "CreateImageWriterInstance: CoreEntry function pfnCoreDrawRectangle could not load\n");
         FreeLibrary(hDll);
-        return;
+        return false;
     }
 
     PfnCoreExportImage pfnCoreExportImage = (PfnCoreExportImage)GetProcAddress(hDll, "exportImage");
@@ -54,7 +55,7 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
     if (pfnCoreExportImage == NULL) {
         fprintf(stderr, "CreateImageWriterInstance: CoreEntry function exportImage could not load\n");
         FreeLibrary(hDll);
-        return;
+        return false;
     }
 
     PfnCoreDispose pfnCoreDispose = (PfnCoreDispose)GetProcAddress(hDll, "dispose");
@@ -62,7 +63,7 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
     if (pfnCoreDispose == NULL) {
         fprintf(stderr, "CreateImageWriterInstance: CoreEntry function dispose could not load\n");
         FreeLibrary(hDll);
-        return;
+        return false;
     }
 
 
@@ -77,64 +78,66 @@ extern "C" __declspec(dllexport) void CreateImageWriterInstance(HImageWriterInst
     };
 
     // initialize core
-    pInstanceData->pfnCoreInitialize(pInstanceData);
+    return pInstanceData->pfnCoreInitialize(pInstanceData);
 }
 
-extern "C" __declspec(dllexport) void SetupImage(HImageWriterInstance instance, int width, int height)
+extern "C" __declspec(dllexport) bool SetupImage(HImageWriterInstance instance, int width, int height)
 {
 	if (!instance.pData) {
 		fprintf(stderr, "SetupImage: instance.pData was null\n");
-		return;
+		return false;
 	}
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pfnCoreSetupImage(*pInstanceData, width, height);
+    return pInstanceData->pfnCoreSetupImage(*pInstanceData, width, height);
 }
 
-extern "C" __declspec(dllexport) void DrawCircle(HImageWriterInstance instance, int centerX, int centerY, int radius)
+extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, int centerX, int centerY, int radius)
 {
     if (!instance.pData) {
         fprintf(stderr, "DrawCircle: instance.pData was null\n");
-        return;
+        return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pfnCoreDrawCircle(*pInstanceData, centerX, centerY, radius);
+    return pInstanceData->pfnCoreDrawCircle(*pInstanceData, centerX, centerY, radius);
 }
 
-extern "C" __declspec(dllexport) void DrawRectangle(HImageWriterInstance instance, int centerX, int centerY, int halfExtentX, int halfExtentY)
+extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, int centerX, int centerY, int halfExtentX, int halfExtentY)
 {
     if (!instance.pData) {
         fprintf(stderr, "DrawCircle: instance.pData was null\n");
-        return;
+        return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pfnCoreDrawRectangle(*pInstanceData, centerX, centerY, halfExtentX, halfExtentY);
+    return pInstanceData->pfnCoreDrawRectangle(*pInstanceData, centerX, centerY, halfExtentX, halfExtentY);
 }
 
-extern "C" __declspec(dllexport) void ExportImage(HImageWriterInstance instance)
+extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance)
 {
     if (!instance.pData) {
         fprintf(stderr, "ExportImage: instance.pData was null\n");
-        return;
+        return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pfnCoreExportImage(*pInstanceData);
+    return pInstanceData->pfnCoreExportImage(*pInstanceData);
 }
-extern "C" __declspec(dllexport) void DestroyImageWriterInstance(HImageWriterInstance* instance)
+extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance)
 {
 	if (!instance || !instance->pData) {
 		fprintf(stderr, "DestroyImageWriterInstance: instance or instance->pData was null\n");
-		return;
+		return false;
 	}
 	InstanceData* pInstanceData = (InstanceData*)instance->pData;
 
-    pInstanceData->pfnCoreDispose(pInstanceData);
+    bool coreDisposeResult = pInstanceData->pfnCoreDispose(pInstanceData);
 
 	FreeLibrary(pInstanceData->hDll);
 
 	free(instance->pData);
 	instance->pData = nullptr;
+
+    return coreDisposeResult;
 }

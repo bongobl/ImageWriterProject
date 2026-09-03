@@ -4,7 +4,10 @@
 int main(void)
 {
 	HImageWriterInstance instance = {};
-	CreateImageWriterInstance(&instance);
+
+	if (!CreateImageWriterInstance(&instance)) {
+		return EXIT_FAILURE;
+	}
 
 	system("pause");
 	SetupImage(instance, 1920, 1080);
