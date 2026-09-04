@@ -98,7 +98,7 @@ def runServer():
                             # deserialize exportImage params
                             exportImageParams = ExportImageParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {exportImageParams.toString()}")
-                            frameworkFunctionStatus = framework.ExportImage(instance);
+                            frameworkFunctionStatus = framework.ExportImage(instance, cast(exportImageParams.imageName, c_char_p));
 
                         case Command.Disconnecting:
                             

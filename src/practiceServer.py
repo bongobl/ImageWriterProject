@@ -220,8 +220,8 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
 
 
 @mcp.tool()
-def exportImage() -> bool:
-    """exports the image to disk
+def exportImage(filename: str) -> bool:
+    """exports the image png to disk with a specified name, do not include the ".png" suffix
 
     Importantly, this should not be called before an image is set up or it will fail
     Returns True on success, False on failure
@@ -234,8 +234,7 @@ def exportImage() -> bool:
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
     # create exportImage command params
-    imageName = "SomeDumbImage"
-    exportImageParams = ExportImageParams(imageName = imageName.encode('utf-8'))
+    exportImageParams = ExportImageParams(imageName = filename.encode('utf-8'))
     logger.info(f"To server: {exportImageParams.toString()}")
 
     # serialize params

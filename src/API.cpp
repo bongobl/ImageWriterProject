@@ -114,7 +114,7 @@ extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instanc
     return pInstanceData->pfnCoreDrawRectangle(*pInstanceData, centerX, centerY, halfExtentX, halfExtentY);
 }
 
-extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance)
+extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance, const char* pImageName)
 {
     if (!instance.pData) {
         fprintf(stderr, "ExportImage: instance.pData was null\n");
@@ -122,7 +122,7 @@ extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance)
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    return pInstanceData->pfnCoreExportImage(*pInstanceData);
+    return pInstanceData->pfnCoreExportImage(*pInstanceData, pImageName);
 }
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance)
 {

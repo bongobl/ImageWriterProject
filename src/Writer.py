@@ -9,6 +9,11 @@ class HImageWriterInstance(ctypes.Structure):
         ("pData", ctypes.c_void_p),
     ]
 
+def cString(pyString):
+    charArray = ctypes.create_string_buffer(pyString.encode('utf-8'))
+    ptrToFirstChar = cast(charArray, c_char_p)
+    return ptrToFirstChar
+
 framework = ctypes.CDLL("./ImageWriterAPI.dll")
 
 framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
@@ -29,6 +34,7 @@ framework.ExportImage.restype = ctypes.c_bool
 framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
 framework.DestroyImageWriterInstance.restype = ctypes.c_bool
 
+
 instance = HImageWriterInstance()
 
 
@@ -36,8 +42,9 @@ if not framework.CreateImageWriterInstance(ctypes.byref(instance)):
     print("Failed to create image writer instance")
     exit(1)
 
+imageName = "MyPythonImage"
 framework.SetupImage(instance, 1280, 720);
 framework.DrawCircle(instance, 800, 300, 70);
 framework.DrawCircle(instance, 300, 550, 150);
 framework.DrawRectangle(instance, 500, 300, 400, 10);
-framework.ExportImage(instance);
+framework.ExportImage(instance, cString(imageName));

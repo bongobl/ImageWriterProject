@@ -106,7 +106,7 @@ extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, i
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData)
+extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData, const char* pImageName)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "exportImage: instanceData.pCoreData was null" << std::endl;
@@ -122,8 +122,9 @@ extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData)
 
 	Image& image = pCoreData->image;
 
-	image.exportPNG("DummyImage.png");
-	system("DummyImage.png");
+	std::string fullName = pImageName + std::string(".png");
+	image.exportPNG(pImageName + std::string(".png"));
+	system(fullName.c_str());
 
 	return true;
 }
