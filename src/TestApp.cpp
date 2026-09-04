@@ -1,32 +1,36 @@
 #include <ImageWriter/API.h>
 #include <cstdlib>
+#include <iostream>
 
 int main(void)
 {
 	HImageWriterInstance instance = {};
 
+	char statusMessage[256] = "Command executed successfully";
 	if (!CreateImageWriterInstance(&instance)) {
 		return EXIT_FAILURE;
 	}
 
-	system("pause");
-	SetupImage(instance, 1920, 1080);
-	DrawCircle(instance, 350, 200, 100);
-	DrawRectangle(instance, 1500, 700, 200, 150);
-	ExportImage(instance, "ImageLarge");
 
 	system("pause");
-	SetupImage(instance, 640, 480);
-	DrawCircle(instance, 400, 200, 80);
-	DrawRectangle(instance, 100, 150, 75, 120);
-	ExportImage(instance, "ImageSmall");
+	SetupImage(instance, statusMessage, 1920, 1080);
+	DrawCircle(instance, statusMessage, 350, 200, 100);
+	DrawRectangle(instance, statusMessage, 1500, 700, 200, 150);
+	ExportImage(instance, statusMessage, "ImageLarge");
+	printf("%s\n", statusMessage);
 
 	system("pause");
-	SetupImage(instance, 1280, 720);
-	DrawCircle(instance, 800, 300, 70);
-	DrawCircle(instance, 300, 550, 150);
-	DrawRectangle(instance, 500, 300, 400, 10);
-	ExportImage(instance, "ImageMedium");
+	SetupImage(instance, statusMessage, 640, 480);
+	DrawCircle(instance, statusMessage, 400, 200, 80);
+	DrawRectangle(instance, statusMessage, 100, 150, 75, 120);
+	ExportImage(instance, statusMessage, "ImageSmall");
+
+	system("pause");
+	SetupImage(instance, statusMessage, 1280, 720);
+	DrawCircle(instance, statusMessage, 800, 300, 70);
+	DrawCircle(instance, statusMessage, 300, 550, 150);
+	DrawRectangle(instance, statusMessage, 500, 300, 400, 10);
+	ExportImage(instance, statusMessage, "ImageMedium");
 
 	DestroyImageWriterInstance(&instance);
 	return EXIT_SUCCESS;

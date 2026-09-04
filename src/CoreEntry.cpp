@@ -15,6 +15,7 @@ extern "C" __declspec(dllexport) bool setupImage(InstanceData instanceData, int 
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "setupImage: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on setupImage()");
 		return false;
 	}
 
@@ -36,6 +37,7 @@ extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, int 
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "drawCircle: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on drawCircle()");
 		return false;
 	}
 
@@ -43,6 +45,7 @@ extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, int 
 
 	if (!pCoreData->setupCalled) {
 		std::cerr << "drawCircle: an image must be created via setupImage() before drawing is allowed" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Must set up an image before trying to draw a circle");
 		return false;
 	}
 
@@ -70,6 +73,7 @@ extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, i
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "drawRectangle: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on drawRectangle()");
 		return false;
 	}
 
@@ -77,6 +81,7 @@ extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, i
 
 	if (!pCoreData->setupCalled) {
 		std::cerr << "drawRectangle: an image must be created via setupImage() before drawing is allowed" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Must set up an image before trying to draw a rectangle");
 		return false;
 	}
 
@@ -102,6 +107,7 @@ extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData, con
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "exportImage: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on exportImage()");
 		return false;
 	}
 
@@ -109,6 +115,7 @@ extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData, con
 
 	if (!pCoreData->setupCalled) {
 		std::cerr << "exportImage: an image must be created via setupImage() before drawing is allowed" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Must set up an image before trying to export it");
 		return false;
 	}
 

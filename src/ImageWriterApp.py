@@ -49,6 +49,7 @@ def runNetworkService():
                     paramsBuffer = bytearray()
                     
                     frameworkFunctionStatus = False
+                    frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
                     match command:
                         
                         case Command.SetupImage:
@@ -62,7 +63,7 @@ def runNetworkService():
                             # deserialize drawCircle params
                             setupImageParams = SetupImageParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {setupImageParams.toString()}")
-                            frameworkFunctionStatus = framework.SetupImage(instance, setupImageParams.width, setupImageParams.height)
+                            frameworkFunctionStatus = framework.SetupImage(instance, frameworkFunctionMessage, setupImageParams.width, setupImageParams.height)
 
                         case Command.DrawCircle:
 
@@ -74,7 +75,7 @@ def runNetworkService():
                             # deserialize drawCircle params
                             circleParams = DrawCircleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {circleParams.toString()}")
-                            frameworkFunctionStatus = framework.DrawCircle(instance, circleParams.centerX, circleParams.centerY, circleParams.radius);
+                            frameworkFunctionStatus = framework.DrawCircle(instance, frameworkFunctionMessage, circleParams.centerX, circleParams.centerY, circleParams.radius);
 
                         case Command.DrawRectangle:
 
@@ -86,7 +87,7 @@ def runNetworkService():
                             # deserialize drawRectangle params
                             rectangleParams = DrawRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams.toString()}")
-                            frameworkFunctionStatus = framework.DrawRectangle(instance, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY);
+                            frameworkFunctionStatus = framework.DrawRectangle(instance, frameworkFunctionMessage, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY);
 
                         case Command.ExportImage:
 
@@ -98,7 +99,7 @@ def runNetworkService():
                             # deserialize exportImage params
                             exportImageParams = ExportImageParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {exportImageParams.toString()}")
-                            frameworkFunctionStatus = framework.ExportImage(instance, cast(exportImageParams.imageName, c_char_p));
+                            frameworkFunctionStatus = framework.ExportImage(instance, frameworkFunctionMessage, cast(exportImageParams.imageName, c_char_p));
 
                         case Command.Disconnecting:
                             
@@ -109,9 +110,7 @@ def runNetworkService():
                             print("Unrecognized command")
 
 
-                    # create a dummy client message
-                    dummyMessage = "Some dummy message for testing"
-                    reply = Reply(status = frameworkFunctionStatus, message = dummyMessage.encode('utf-8'))
+                    reply = Reply(status = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
                     print(f"To client: {reply.toString()}")
 
                     # serialize client message
@@ -134,16 +133,16 @@ if __name__ == "__main__":
     framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
     framework.CreateImageWriterInstance.restype = ctypes.c_bool
 
-    framework.SetupImage.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int]
+    framework.SetupImage.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int]
     framework.SetupImage.restype = ctypes.c_bool
 
-    framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+    framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int]
     framework.DrawCircle.restype = ctypes.c_bool
 
-    framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+    framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
     framework.DrawRectangle.restype = ctypes.c_bool
 
-    framework.ExportImage.argtypes = [HImageWriterInstance]
+    framework.ExportImage.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_char_p]
     framework.ExportImage.restype = ctypes.c_bool
 
     framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]

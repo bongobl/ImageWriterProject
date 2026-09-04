@@ -84,47 +84,55 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     return pInstanceData->pfnCoreInitialize(pInstanceData);
 }
 
-extern "C" __declspec(dllexport) bool SetupImage(HImageWriterInstance instance, int width, int height)
+extern "C" __declspec(dllexport) bool SetupImage(HImageWriterInstance instance, char* pStatusMessage, int width, int height)
 {
 	if (!instance.pData) {
 		fprintf(stderr, "SetupImage: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call SetupImage() from its underlying framework correctly");
 		return false;
 	}
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
     return pInstanceData->pfnCoreSetupImage(*pInstanceData, width, height);
 }
 
-extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, int centerX, int centerY, int radius)
+extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, int centerX, int centerY, int radius)
 {
     if (!instance.pData) {
         fprintf(stderr, "DrawCircle: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call DrawCircle() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
     return pInstanceData->pfnCoreDrawCircle(*pInstanceData, centerX, centerY, radius);
 }
 
-extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, int centerX, int centerY, int halfExtentX, int halfExtentY)
+extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, char* pStatusMessage, int centerX, int centerY, int halfExtentX, int halfExtentY)
 {
     if (!instance.pData) {
         fprintf(stderr, "DrawCircle: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call DrawRectangle() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
     return pInstanceData->pfnCoreDrawRectangle(*pInstanceData, centerX, centerY, halfExtentX, halfExtentY);
 }
 
-extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance, const char* pImageName)
+extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance, char* pStatusMessage, const char* pImageName)
 {
     if (!instance.pData) {
         fprintf(stderr, "ExportImage: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call ExportImage() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
     return pInstanceData->pfnCoreExportImage(*pInstanceData, pImageName);
 }
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance)

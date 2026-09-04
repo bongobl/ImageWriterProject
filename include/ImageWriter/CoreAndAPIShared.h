@@ -23,4 +23,5 @@ struct InstanceData
     PfnCoreExportImage pfnCoreExportImage;
     PfnCoreDispose pfnCoreDispose;
     void* pCoreData;
+    char* pPublicStatusMessage;
 };
