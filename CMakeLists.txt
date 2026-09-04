@@ -77,7 +77,7 @@ target_link_libraries(TestApp ImageWriterAPI)
 set(PYTHON_FILES
     "${PROJECT_SRC_DIR}/Writer.py"
     "${PROJECT_SRC_DIR}/ImageWriterProtocol.py"
-    "${PROJECT_SRC_DIR}/ImageWriterServer.py"
+    "${PROJECT_SRC_DIR}/ImageWriterApp.py"
 )
 
 foreach(file ${PYTHON_FILES})

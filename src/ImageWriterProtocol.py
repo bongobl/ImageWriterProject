@@ -1,10 +1,11 @@
-import ctypes
-import socket
+import ctypes, socket
+from pydantic import BaseModel
 from enum import IntEnum
 
 HOST_IP = '127.0.0.1'
 PORT = 65432
 MAX_IMAGE_FILENAME_LENGTH = 64
+MAX_REPLY_MESSAGE_LENGTH = 256
 COMMAND_SIZE = 1
 
 class Command(IntEnum):
@@ -54,15 +55,23 @@ class ExportImageParams(ctypes.Structure):
     def toString(self):
         return f"ExportImage params: imageName = {self.imageName.decode('utf-8')}"
 
+class MCPOutcome(BaseModel):
+    success: bool = False
+    message: str = ""
 
 # Server reply to client after each command
 class Reply(ctypes.Structure):
     _fields_ = [
-        ("status", ctypes.c_bool)
+        ("status", ctypes.c_bool),
+        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
     ]
 
     def toString(self):
-        return f"Reply: status = {self.status}"
+        return f"Reply: status = {self.status}, message = {self.message.decode('utf-8')}"
+
+    def toMCPOutcome(self) -> MCPOutcome:
+        return MCPOutcome(success = self.status, message = self.message.decode('utf-8'))
+
 
 
 def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:

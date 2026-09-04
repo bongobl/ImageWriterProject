@@ -10,7 +10,7 @@ class HImageWriterInstance(ctypes.Structure):
         ("pData", ctypes.c_void_p),
     ]
 
-def runServer():
+def runNetworkService():
 
     # set up listening socket (IPv4 + TCP)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
@@ -110,7 +110,8 @@ def runServer():
 
 
                     # create a dummy client message
-                    reply = Reply(status = frameworkFunctionStatus)
+                    dummyMessage = "Some dummy message for testing"
+                    reply = Reply(status = frameworkFunctionStatus, message = dummyMessage.encode('utf-8'))
                     print(f"To client: {reply.toString()}")
 
                     # serialize client message
@@ -154,7 +155,7 @@ if __name__ == "__main__":
         print("Failed to create image writer instance")
         exit(1)
 
-    runServer()
+    runNetworkService()
 
     # Todo: figure out where to put this when we find a way to gracefully kill the server
     framework.DestroyImageWriterInstance(instance)

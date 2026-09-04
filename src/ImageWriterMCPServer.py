@@ -59,7 +59,7 @@ def disconnectFromImageWriter():
 
             
 @mcp.tool()
-def setupImage(width: int, height: int) -> bool:
+def setupImage(width: int, height: int) -> MCPOutcome:
     """Sets up a blank image canvas for drawing things to
 
     Image starts off as black and will get contents written to it as
@@ -67,7 +67,7 @@ def setupImage(width: int, height: int) -> bool:
     Returns True on success, False on failure
     """
     if not connectToImageWriterApp():
-        return False
+        raise RuntimeError("setupImage(): Failed to connect to ImageWriter app")
 
     commIn = Command.SetupImage
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
@@ -90,7 +90,7 @@ def setupImage(width: int, height: int) -> bool:
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        return False
+        raise RuntimeError("setupImage(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
@@ -100,24 +100,24 @@ def setupImage(width: int, height: int) -> bool:
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        return False
+        raise RuntimeError("setupImage(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
     reply = Reply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()
-    return reply.status
+    return reply.toMCPOutcome()
 
 @mcp.tool()
-def drawCircle(centerX: int, centerY: int, radius: int) -> bool:
+def drawCircle(centerX: int, centerY: int, radius: int) -> MCPOutcome:
     """draws a circle on an image
     Importantly, this should not be called before an image is set up or it will fail
     Returns True on success, False on failure
     """
 
     if not connectToImageWriterApp():
-        return False
+        raise RuntimeError("drawCircle(): Failed to connect to ImageWriter app")
 
     commIn = Command.DrawCircle
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
@@ -138,7 +138,7 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> bool:
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        return False
+        raise RuntimeError("drawCircle(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
@@ -148,7 +148,7 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> bool:
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        return False
+        raise RuntimeError("drawCircle(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
     reply = Reply.from_buffer_copy(replyBuffer)
@@ -160,10 +160,10 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> bool:
 
     disconnectFromImageWriter()
 
-    return reply.status
+    return reply.toMCPOutcome()
 
 @mcp.tool()
-def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int) -> bool:
+def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int) -> MCPOutcome:
     """draws a rectangle on an image
 
     Importantly, this should not be called before an image is set up or it will fail
@@ -171,7 +171,7 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
     """
 
     if not connectToImageWriterApp():
-        return False
+        raise RuntimeError("drawRectangle(): Failed to connect to ImageWriter app")
 
     commIn = Command.DrawRectangle
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
@@ -191,7 +191,7 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        return False
+        raise RuntimeError("drawRectangle(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
@@ -201,7 +201,7 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        return False
+        raise RuntimeError("drawRectangle(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
     reply = Reply.from_buffer_copy(replyBuffer)
@@ -212,11 +212,11 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
 
     disconnectFromImageWriter()
 
-    return reply.status
+    return reply.toMCPOutcome()
 
 
 @mcp.tool()
-def exportImage(filename: str) -> bool:
+def exportImage(filename: str) -> MCPOutcome:
     """exports the image png to disk with a specified name, do not include the ".png" suffix
 
     Importantly, this should not be called before an image is set up or it will fail
@@ -224,7 +224,7 @@ def exportImage(filename: str) -> bool:
     """
 
     if not connectToImageWriterApp():
-        return False
+        raise RuntimeError("exportImage(): Failed to connect to ImageWriter app")
     
     commIn = Command.ExportImage
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
@@ -246,7 +246,7 @@ def exportImage(filename: str) -> bool:
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        return False
+        raise RuntimeError("exportImage(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
@@ -256,14 +256,14 @@ def exportImage(filename: str) -> bool:
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        return False
+        raise RuntimeError("exportImage(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
     reply = Reply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()
-    return reply.status
+    return reply.toMCPOutcome()
 
 
 if __name__ == "__main__":
