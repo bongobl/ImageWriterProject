@@ -1,5 +1,7 @@
 #pragma once
-#include <API.h>
+#include <ImageWriter/API.h>
+#include <ImageWriter/CoreAndAPIShared.h>
+#include <ImageWriter/CoreCommon.h>
 
 extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData);
 extern "C" __declspec(dllexport) bool setupImage(InstanceData instanceData, int width, int height);

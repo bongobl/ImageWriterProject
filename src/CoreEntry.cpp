@@ -1,13 +1,5 @@
-#include <Image.h>
 #include <iostream>
-#include <CoreEntry.h>
-
-
-// TODO: move to core private header
-struct CoreData {
-	Image image;
-	bool setupCalled = false; // needs to be called at least once before we can draw to image
-};
+#include <ImageWriter/CoreEntry.h>
 
 extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 {

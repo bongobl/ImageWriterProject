@@ -17,9 +17,11 @@ set(ALL_INCLUDE_DIRS
 
 set(PROJECT_SRC_DIR "${CMAKE_SOURCE_DIR}/src")
 
-set(COTE_HEADER_FILES
-	"${PROJECT_INCLUDE_DIR}/Image.h"
-	"${PROJECT_INCLUDE_DIR}/CoreEntry.h"
+set(CORE_HEADER_FILES
+	"${PROJECT_INCLUDE_DIR}/ImageWriter/Image.h"
+	"${PROJECT_INCLUDE_DIR}/ImageWriter/CoreEntry.h"
+    "${PROJECT_INCLUDE_DIR}/ImageWriter/CoreCommon.h"
+    "${PROJECT_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
 )
 
 set(CORE_SRC_FILES
@@ -27,7 +29,7 @@ set(CORE_SRC_FILES
 	"${PROJECT_SRC_DIR}/CoreEntry.cpp"
 )
 
-add_library(ImageWriterCore SHARED ${CORE_SRC_FILES} ${COTE_HEADER_FILES})
+add_library(ImageWriterCore SHARED ${CORE_SRC_FILES} ${CORE_HEADER_FILES})
 
 set_target_properties(ImageWriterCore PROPERTIES FOLDER "ImageWriter")
 set_target_properties(ImageWriterCore PROPERTIES PREFIX  "")
@@ -38,7 +40,8 @@ target_include_directories(ImageWriterCore PRIVATE ${ALL_INCLUDE_DIRS})
 project(ImageWriterAPI)
 
 set(API_HEADER_FILES
-	"${PROJECT_INCLUDE_DIR}/API.h"
+	"${PROJECT_INCLUDE_DIR}/ImageWriter/API.h"
+    "${PROJECT_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
 )
 
 set(API_SRC_FILES

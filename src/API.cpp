@@ -1,5 +1,8 @@
-#include <API.h>
+#include <ImageWriter/API.h>
+#include <ImageWriter/CoreAndAPIShared.h>
 
+// Note: It is important that this file remains free of any C++ constructs or else GNU won't
+// be able to build it into a dll that python can load
 
 extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInstance* pInstance)
 {

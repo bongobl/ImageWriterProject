@@ -1,5 +1,5 @@
 #include <vector>
-#include <Image.h>
+#include <ImageWriter/Image.h>
 
 // For reading images
 #ifndef STB_IMAGE_IMPLEMENTATION
