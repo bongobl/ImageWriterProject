@@ -6,8 +6,8 @@ should print to stdout directly (that stream is the protocol channel). Use the
 `logging` module, which writes to stderr, for any diagnostics.
 """
 
-import tcpCommon, socket
-from tcpCommon import *
+import socket
+from ImageWriterProtocol import *
 
 import logging
 import ctypes
@@ -18,13 +18,6 @@ from mcp.server.fastmcp import FastMCP
 # Logs go to stderr; stdout is reserved for the MCP protocol.
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("imagewriter")
-
-# TODOs
-# rename this file to ImageWriterMCP.py
-# rename tcpServer.py and tcpClient.py to something more meaningful
-#   - server is being used in production, client is just for testing
-# let user specify image name during export
-# Rename DummyReply, should mainly contain status
 
 
 mcp = FastMCP(
@@ -94,22 +87,23 @@ def setupImage(width: int, height: int) -> bool:
         connToServer.sendall(paramsBuffer)
 
     # will fail if server had disconnected at time of sending message
-    # return to connecting state
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
-        exit(1) # todo: kick off reconnect
+        disconnectFromImageWriter()
+        return False
 
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(DummyReply))
+    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
     if not status:
         # log error message and return to connecting state
         logger.error(errorMessage)
-        exit(1) # todo: kick off reconnect
+        disconnectFromImageWriter()
+        return False
     
     # deserialize client message and log
-    reply = DummyReply.from_buffer_copy(replyBuffer)
+    reply = Reply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()
@@ -141,22 +135,23 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> bool:
         connToServer.sendall(paramsBuffer)
 
     # will fail if server had disconnected at time of sending message
-    # return to connecting state
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
-        exit(1) # todo: kick off reconnect
+        disconnectFromImageWriter()
+        return False
 
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(DummyReply))
+    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
     if not status:
         # log error message and return to connecting state
         logger.error(errorMessage)
-        exit(1) # todo: kick off reconnect
+        disconnectFromImageWriter()
+        return False
     
     # deserialize client message and log
-    reply = DummyReply.from_buffer_copy(replyBuffer)
+    reply = Reply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     # serialize params
@@ -193,22 +188,23 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
         connToServer.sendall(paramsBuffer)
 
     # will fail if server had disconnected at time of sending message
-    # return to connecting state
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
-        exit(1) # todo: kick off reconnect
+        disconnectFromImageWriter()
+        return False
 
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(DummyReply))
+    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
     if not status:
         # log error message and return to connecting state
         logger.error(errorMessage)
-        exit(1) # todo: kick off reconnect
+        disconnectFromImageWriter()
+        return False
     
     # deserialize client message and log
-    reply = DummyReply.from_buffer_copy(replyBuffer)
+    reply = Reply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     # serialize params
@@ -249,19 +245,21 @@ def exportImage(filename: str) -> bool:
     # return to connecting state
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
-        exit(1) # todo: kick off reconnect
+        disconnectFromImageWriter()
+        return False
 
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(DummyReply))
+    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
     if not status:
         # log error message and return to connecting state
         logger.error(errorMessage)
-        exit(1) # todo: kick off reconnect
+        disconnectFromImageWriter()
+        return False
     
     # deserialize client message and log
-    reply = DummyReply.from_buffer_copy(replyBuffer)
+    reply = Reply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()

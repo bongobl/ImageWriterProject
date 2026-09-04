@@ -1,5 +1,5 @@
-import tcpCommon, socket
-from tcpCommon import *
+import ImageWriterProtocol, socket
+from ImageWriterProtocol import *
 import ctypes
 from ctypes import *
 
@@ -110,7 +110,7 @@ def runServer():
 
 
                     # create a dummy client message
-                    reply = DummyReply(status = frameworkFunctionStatus, length = 24.6, width = 35.6, height = 32.1, resources = 56)
+                    reply = Reply(status = frameworkFunctionStatus)
                     print(f"To client: {reply.toString()}")
 
                     # serialize client message

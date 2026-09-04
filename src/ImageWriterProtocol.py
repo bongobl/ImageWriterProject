@@ -55,18 +55,14 @@ class ExportImageParams(ctypes.Structure):
         return f"ExportImage params: imageName = {self.imageName.decode('utf-8')}"
 
 
-# Message to client
-class DummyReply(ctypes.Structure):
+# Server reply to client after each command
+class Reply(ctypes.Structure):
     _fields_ = [
-        ("status", ctypes.c_bool),
-        ("length", ctypes.c_float),
-        ("width", ctypes.c_float),
-        ("height", ctypes.c_float),
-        ("resources", ctypes.c_int),
+        ("status", ctypes.c_bool)
     ]
 
     def toString(self):
-        return f"DummyReply: status = {self.status}, length = {self.length}, width = {self.width}, height = {self.height}, resources = {self.resources}"
+        return f"Reply: status = {self.status}"
 
 
 def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:

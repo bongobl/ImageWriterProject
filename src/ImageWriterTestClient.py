@@ -1,5 +1,5 @@
-import tcpCommon, socket
-from tcpCommon import *
+import socket
+from ImageWriterProtocol import *
 import logging
 
 
@@ -144,14 +144,14 @@ def runClient():
                 replyBuffer = bytearray()
 
                 # wait here and receive message from client
-                status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(DummyReply))
+                status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
                 if not status:
                     # print error message and return to connecting state
                     logger.error(errorMessage)
                     break
                 
                 # deserialize client message and print
-                reply = DummyReply.from_buffer_copy(replyBuffer)
+                reply = Reply.from_buffer_copy(replyBuffer)
                 logger.info(f"From server: {reply.toString()}")
 
 if __name__ == "__main__":
