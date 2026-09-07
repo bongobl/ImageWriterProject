@@ -4,34 +4,37 @@ cmake_minimum_required(VERSION 3.22)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 
+set(FRAMEWORK_DIR "${CMAKE_SOURCE_DIR}/framework")
+set(APP_DIR "${CMAKE_SOURCE_DIR}/app")
+
 ##################################   Core   ##################################
 project(ImageWriterCore)
 
-set(PROJECT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
+set(FRAMEWORK_INCLUDE_DIR "${FRAMEWORK_DIR}/include")
 set(STB_IMAGE_DIR "${CMAKE_SOURCE_DIR}/external/stb")
 
 set(ALL_INCLUDE_DIRS
-	"${PROJECT_INCLUDE_DIR}"
+	"${FRAMEWORK_INCLUDE_DIR}"
 	"${STB_IMAGE_DIR}"
 )
 
-set(PROJECT_SRC_DIR "${CMAKE_SOURCE_DIR}/src")
+set(FRAMEWORK_SRC_DIR "${FRAMEWORK_DIR}/src")
 
 set(CORE_HEADER_FILES
-	"${PROJECT_INCLUDE_DIR}/ImageWriter/Image.h"
-	"${PROJECT_INCLUDE_DIR}/ImageWriter/CoreEntry.h"
-    "${PROJECT_INCLUDE_DIR}/ImageWriter/CoreCommon.h"
-    "${PROJECT_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
+	"${FRAMEWORK_INCLUDE_DIR}/ImageWriter/Image.h"
+	"${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreEntry.h"
+    "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreCommon.h"
+    "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
 )
 
 set(CORE_SRC_FILES
-	"${PROJECT_SRC_DIR}/Image.cpp"
-	"${PROJECT_SRC_DIR}/CoreEntry.cpp"
+	"${FRAMEWORK_SRC_DIR}/Image.cpp"
+	"${FRAMEWORK_SRC_DIR}/CoreEntry.cpp"
 )
 
 add_library(ImageWriterCore SHARED ${CORE_SRC_FILES} ${CORE_HEADER_FILES})
 
-set_target_properties(ImageWriterCore PROPERTIES FOLDER "ImageWriter")
+set_target_properties(ImageWriterCore PROPERTIES FOLDER "ImageWriterFramework")
 set_target_properties(ImageWriterCore PROPERTIES PREFIX  "")
 target_compile_features(ImageWriterCore PRIVATE cxx_std_20)
 target_include_directories(ImageWriterCore PRIVATE ${ALL_INCLUDE_DIRS})
@@ -40,17 +43,17 @@ target_include_directories(ImageWriterCore PRIVATE ${ALL_INCLUDE_DIRS})
 project(ImageWriterAPI)
 
 set(API_HEADER_FILES
-	"${PROJECT_INCLUDE_DIR}/ImageWriter/API.h"
-    "${PROJECT_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
+	"${FRAMEWORK_INCLUDE_DIR}/ImageWriter/API.h"
+    "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
 )
 
 set(API_SRC_FILES
-	"${PROJECT_SRC_DIR}/API.cpp"
+	"${FRAMEWORK_SRC_DIR}/API.cpp"
 )
 
 add_library(ImageWriterAPI SHARED ${API_SRC_FILES} ${API_HEADER_FILES})
 
-set_target_properties(ImageWriterAPI PROPERTIES FOLDER "ImageWriter")
+set_target_properties(ImageWriterAPI PROPERTIES FOLDER "ImageWriterFramework")
 set_target_properties(ImageWriterAPI PROPERTIES PREFIX  "")
 target_compile_features(ImageWriterAPI PRIVATE cxx_std_20)
 target_include_directories(ImageWriterAPI PRIVATE ${ALL_INCLUDE_DIRS})
@@ -59,25 +62,25 @@ target_include_directories(ImageWriterAPI PRIVATE ${ALL_INCLUDE_DIRS})
 project(TestApp)
 
 set(TEST_APP_SRC_FILES
-	"${PROJECT_SRC_DIR}/TestApp.cpp"
+	"${FRAMEWORK_SRC_DIR}/TestApp.cpp"
 )
 
 add_executable(TestApp ${TEST_APP_SRC_FILES})
 
 
 target_compile_features(TestApp PRIVATE cxx_std_20)
-set_target_properties(TestApp PROPERTIES FOLDER "TestApp")
+set_target_properties(TestApp PROPERTIES FOLDER "ImageWriterFramework/TestApp")
 target_include_directories(TestApp PRIVATE ${ALL_INCLUDE_DIRS})
 
 target_link_libraries(TestApp ImageWriterAPI)
 
 
-##################################   Python App ##################################
+##################################   Python Files ##################################
 
 set(PYTHON_FILES
-    "${PROJECT_SRC_DIR}/Writer.py"
-    "${PROJECT_SRC_DIR}/ImageWriterProtocol.py"
-    "${PROJECT_SRC_DIR}/ImageWriterApp.py"
+    "${FRAMEWORK_SRC_DIR}/TestApp.py"
+    "${APP_DIR}/ImageWriterProtocol.py"
+    "${APP_DIR}/ImageWriterApp.py"
 )
 
 foreach(file ${PYTHON_FILES})
