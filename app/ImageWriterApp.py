@@ -1,6 +1,5 @@
-import ImageWriterProtocol, socket
+import socket, ctypes, threading
 from ImageWriterProtocol import *
-import ctypes
 from ctypes import *
 
 
@@ -10,7 +9,7 @@ class HImageWriterInstance(ctypes.Structure):
         ("pData", ctypes.c_void_p),
     ]
 
-def runNetworkService():
+def runNetworkService(instance: HImageWriterInstance):
 
     # set up listening socket (IPv4 + TCP)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
@@ -145,6 +144,9 @@ if __name__ == "__main__":
     framework.ExportImage.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_char_p]
     framework.ExportImage.restype = ctypes.c_bool
 
+    framework.TEMP_RunSFMLWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.TEMP_RunSFMLWindow.restype = ctypes.c_bool
+    
     framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
     framework.DestroyImageWriterInstance.restype = ctypes.c_bool
 
@@ -154,7 +156,14 @@ if __name__ == "__main__":
         print("Failed to create image writer instance")
         exit(1)
 
-    runNetworkService()
+    networkServiceThread = threading.Thread(target = runNetworkService, args=(instance,))
+    networkServiceThread.start()
+    
+    frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
+
+    framework.TEMP_RunSFMLWindow(instance, frameworkFunctionMessage)
+    
+    networkServiceThread.join()
 
     # Todo: figure out where to put this when we find a way to gracefully kill the server
     framework.DestroyImageWriterInstance(instance)

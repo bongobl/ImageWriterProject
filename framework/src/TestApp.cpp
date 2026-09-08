@@ -1,15 +1,10 @@
 #include <ImageWriter/API.h>
 #include <cstdlib>
 #include <iostream>
+#include <thread>
 
-int main(void)
+void runImageWriterFlow(HImageWriterInstance instance)
 {
-	HImageWriterInstance instance = {};
-
-	if (!CreateImageWriterInstance(&instance)) {
-		return EXIT_FAILURE;
-	}
-
 	char statusMessage[256] = "Command executed successfully";
 
 	system("pause");
@@ -31,10 +26,26 @@ int main(void)
 	DrawCircle(instance, statusMessage, 300, 550, 150);
 	DrawRectangle(instance, statusMessage, 500, 300, 400, 10);
 	ExportImage(instance, statusMessage, "ImageMedium");
+}
+int main(void)
+{
+	HImageWriterInstance instance = {};
+
+	if (!CreateImageWriterInstance(&instance)) {
+		return EXIT_FAILURE;
+	}
+
+	std::thread imageWriterThread(runImageWriterFlow, instance);
+
+	char statusMessage[256] = "Command executed successfully";
 
 	TEMP_RunSFMLWindow(instance, statusMessage);
 
+	if (imageWriterThread.joinable()) {
+		imageWriterThread.join();
+	}
 	DestroyImageWriterInstance(&instance);
+	
 	
 	return EXIT_SUCCESS;
 }
