@@ -1,5 +1,6 @@
 #include <iostream>
 #include <ImageWriter/CoreEntry.h>
+#include <SFML/Graphics.hpp>
 
 extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 {
@@ -142,5 +143,36 @@ extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData)
 
 	delete static_cast<CoreData*>(pInstanceData->pCoreData);
 	pInstanceData->pCoreData = nullptr;
+	return true;
+}
+
+extern "C" __declspec(dllexport) bool temp_RunSFMLWindow(InstanceData instanceData)
+{
+	sf::RenderWindow window(sf::VideoMode({ 1280, 720 }), "SFML works!");
+	window.setKeyRepeatEnabled(false);
+	window.setFramerateLimit(120);
+	sf::RectangleShape shape(sf::Vector2f(300, 100));
+	shape.setFillColor(sf::Color::Green);
+	shape.setOrigin(sf::Vector2f(150, 50));
+	shape.setPosition(sf::Vector2f(640, 360));
+
+	sf::Clock clock;
+	while (window.isOpen())
+	{
+		while (const std::optional event = window.pollEvent())
+		{
+			if (event->is<sf::Event::Closed>())
+				window.close();
+
+		}
+
+		sf::Time deltaTime = clock.restart();
+		shape.rotate(sf::radians(deltaTime.asMilliseconds() / 1000.0f));
+
+		window.clear();
+		window.draw(shape);
+		window.display();
+	}
+
 	return true;
 }

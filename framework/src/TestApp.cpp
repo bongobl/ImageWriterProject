@@ -6,11 +6,11 @@ int main(void)
 {
 	HImageWriterInstance instance = {};
 
-	char statusMessage[256] = "Command executed successfully";
 	if (!CreateImageWriterInstance(&instance)) {
 		return EXIT_FAILURE;
 	}
 
+	char statusMessage[256] = "Command executed successfully";
 
 	system("pause");
 	SetupImage(instance, statusMessage, 1920, 1080);
@@ -32,6 +32,9 @@ int main(void)
 	DrawRectangle(instance, statusMessage, 500, 300, 400, 10);
 	ExportImage(instance, statusMessage, "ImageMedium");
 
+	TEMP_RunSFMLWindow(instance, statusMessage);
+
 	DestroyImageWriterInstance(&instance);
+	
 	return EXIT_SUCCESS;
 }

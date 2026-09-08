@@ -61,6 +61,14 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         return false;
     }
 
+    PfnCoreTemp_RunSFMLWindow pfnCoreTemp_RunSFMLWindow = (PfnCoreTemp_RunSFMLWindow)GetProcAddress(hDll, "temp_RunSFMLWindow");
+
+    if (pfnCoreTemp_RunSFMLWindow == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function temp_RunSFMLWindow could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
+
     PfnCoreDispose pfnCoreDispose = (PfnCoreDispose)GetProcAddress(hDll, "dispose");
 
     if (pfnCoreDispose == NULL) {
@@ -77,6 +85,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         .pfnCoreDrawCircle = pfnCoreDrawCircle,
         .pfnCoreDrawRectangle = pfnCoreDrawRectangle,
         .pfnCoreExportImage = pfnCoreExportImage,
+        .pfnCoreTemp_RunSFMLWindow = pfnCoreTemp_RunSFMLWindow,
         .pfnCoreDispose = pfnCoreDispose,
     };
 
@@ -135,6 +144,21 @@ extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance,
     pInstanceData->pPublicStatusMessage = pStatusMessage;
     return pInstanceData->pfnCoreExportImage(*pInstanceData, pImageName);
 }
+
+extern "C" __declspec(dllexport) bool TEMP_RunSFMLWindow(HImageWriterInstance instance, char* pStatusMessage)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "TEMP_RunSFMLWindow: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call DrawRectangle() from its underlying framework correctly");
+        return false;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
+
+    return pInstanceData->pfnCoreTemp_RunSFMLWindow(*pInstanceData);
+}
+
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance)
 {
 	if (!instance || !instance->pData) {

@@ -9,4 +9,6 @@ extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, int 
 extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, int centerX, int centerY, int halfExtentX, int halfExtentY);
 extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData, const char* pImageName);
 
+extern "C" __declspec(dllexport) bool temp_RunSFMLWindow(InstanceData instanceData);
+
 extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData);

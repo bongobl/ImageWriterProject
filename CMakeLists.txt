@@ -7,6 +7,22 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 set(FRAMEWORK_DIR "${CMAKE_SOURCE_DIR}/framework")
 set(APP_DIR "${CMAKE_SOURCE_DIR}/app")
 
+
+##################################   SFML   ##################################
+
+set(BUILD_SHARED_LIBS       ON CACHE BOOL "")
+set(SFML_BUILD_AUDIO        OFF CACHE BOOL "")
+set(SFML_BUILD_DOC          OFF CACHE BOOL "")
+set(SFML_BUILD_EXAMPLES     OFF CACHE BOOL "")
+set(SFML_BUILD_GRAPHICS     ON CACHE BOOL "")
+set(SFML_BUILD_NETWORK      OFF CACHE BOOL "")
+set(SFML_BUILD_TEST_SUITE   OFF CACHE BOOL "")
+set(SFML_BUILD_TEST_WINDOW  OFF CACHE BOOL "")
+
+add_subdirectory(external/SFML)
+
+set(SFML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/external/SFML/include")
+
 ##################################   Core   ##################################
 project(ImageWriterCore)
 
@@ -16,6 +32,7 @@ set(STB_IMAGE_DIR "${CMAKE_SOURCE_DIR}/external/stb")
 set(ALL_INCLUDE_DIRS
 	"${FRAMEWORK_INCLUDE_DIR}"
 	"${STB_IMAGE_DIR}"
+    "${SFML_INCLUDE_DIR}"
 )
 
 set(FRAMEWORK_SRC_DIR "${FRAMEWORK_DIR}/src")
@@ -39,6 +56,8 @@ set_target_properties(ImageWriterCore PROPERTIES PREFIX  "")
 target_compile_features(ImageWriterCore PRIVATE cxx_std_20)
 target_include_directories(ImageWriterCore PRIVATE ${ALL_INCLUDE_DIRS})
 
+target_link_libraries(ImageWriterCore sfml-graphics)
+
 ##################################   API   ##################################
 project(ImageWriterAPI)
 
@@ -57,6 +76,8 @@ set_target_properties(ImageWriterAPI PROPERTIES FOLDER "ImageWriterFramework")
 set_target_properties(ImageWriterAPI PROPERTIES PREFIX  "")
 target_compile_features(ImageWriterAPI PRIVATE cxx_std_20)
 target_include_directories(ImageWriterAPI PRIVATE ${ALL_INCLUDE_DIRS})
+
+target_link_libraries(ImageWriterAPI)
 
 ##################################   Test App   ##################################
 project(TestApp)
@@ -95,6 +116,17 @@ foreach(file ${PYTHON_FILES})
             COMMENT "Copying ${filename} to ${CMAKE_CURRENT_BINARY_DIR}"
     )
 endforeach()
+
+if(WIN32) # This command is specific to Windows
+    add_custom_command(
+        TARGET ImageWriterCore POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_RUNTIME_DLLS:ImageWriterCore> # Generator expression to get all runtime DLLs linked by ImageWriterCore
+            $<TARGET_FILE_DIR:ImageWriterCore>     # Generator expression for the output directory of ImageWriterCore
+        COMMAND_EXPAND_LISTS # Expands the list of DLLs
+        COMMENT "Copying runtime DLLs to app directory"
+    )
+endif()
 
 # this will name the VS solution
 project(TopLevel)
