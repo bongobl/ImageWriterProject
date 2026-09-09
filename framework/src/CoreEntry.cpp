@@ -49,6 +49,15 @@ extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, int 
 		return false;
 	}
 
+
+	sf::CircleShape* pCircleShape = new sf::CircleShape(radius);
+	pCircleShape->setFillColor(sf::Color::Green);
+	pCircleShape->setOrigin(sf::Vector2f(radius, radius));
+	pCircleShape->setPosition(sf::Vector2f(centerX, centerY));
+
+	pCoreData->m_Shapes.addShape(pCircleShape);
+
+
 	Image& image = pCoreData->image;
 
 	for (int y = 0; y < image.getHeight(); ++y) {
@@ -84,6 +93,13 @@ extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, i
 		strcpy(instanceData.pPublicStatusMessage, "Must set up an image before trying to draw a rectangle");
 		return false;
 	}
+
+	sf::RectangleShape* pRectShape = new sf::RectangleShape(sf::Vector2f(halfExtentX * 2, halfExtentY * 2));
+	pRectShape->setFillColor(sf::Color::Magenta);
+	pRectShape->setOrigin(sf::Vector2f(halfExtentX, halfExtentY));
+	pRectShape->setPosition(sf::Vector2f(centerX, centerY));
+
+	pCoreData->m_Shapes.addShape(pRectShape);
 
 	Image& image = pCoreData->image;
 
@@ -138,17 +154,12 @@ extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
-	pCoreData->pWindow = new sf::RenderWindow(sf::VideoMode({ 1280, 720 }), "SFML works!");
-	pCoreData->pRectangleShape = new sf::RectangleShape(sf::Vector2f(300, 100));
+	pCoreData->pWindow = new sf::RenderWindow(sf::VideoMode({ 1920, 1080 }), "SFML works!");
 
 	sf::RenderWindow& window = *pCoreData->pWindow;
 	window.setKeyRepeatEnabled(false);
 	window.setFramerateLimit(120);
 
-	sf::RectangleShape& shape = *pCoreData->pRectangleShape;
-	shape.setFillColor(sf::Color::Green);
-	shape.setOrigin(sf::Vector2f(150, 50));
-	shape.setPosition(sf::Vector2f(640, 360));
 
 	return true;
 }
@@ -163,7 +174,6 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
 	sf::RenderWindow& window = *pCoreData->pWindow;
-	sf::RectangleShape& shape = *pCoreData->pRectangleShape;
 
 	while (const std::optional event = window.pollEvent())
 	{
@@ -172,10 +182,9 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 
 	}
 
-	shape.rotate(sf::radians(deltaTime));
 
 	window.clear();
-	window.draw(shape);
+	pCoreData->m_Shapes.drawShapes(window);
 	window.display();
 
 	return true;
@@ -192,8 +201,9 @@ extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceD
 
 	delete pCoreData->pWindow;
 	pCoreData->pWindow = nullptr;
-	delete pCoreData->pRectangleShape;
-	pCoreData->pRectangleShape = nullptr;
+	
+	pCoreData->m_Shapes.destroyAllShapes();
+
 	return true;
 }
 
