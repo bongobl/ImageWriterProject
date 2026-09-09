@@ -43,14 +43,13 @@ int main(void)
 	auto prevTime = std::chrono::steady_clock::now();
 
 	InitRenderWindow(instance, statusMessage);
-	while (true) {
+	while (TEMP_IsRenderWindowOpen(instance, statusMessage)) {
 		auto currentTime = std::chrono::steady_clock::now();
 
 		std::chrono::duration<float> elapsed = currentTime - prevTime;
 
 		float deltaTime = elapsed.count();
 
-		std::cout << deltaTime << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
 		UpdateRenderWindow(instance, statusMessage, deltaTime);

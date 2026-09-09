@@ -13,4 +13,5 @@ extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance,
 extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance instance, char* pStatusMessage);
 extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, char* pStatusMessage, float deltaTime);
 extern "C" __declspec(dllexport) bool DisposeRenderWindow(HImageWriterInstance instance, char* pStatusMessage);
+extern "C" __declspec(dllexport) bool TEMP_IsRenderWindowOpen(HImageWriterInstance instance, char* pStatusMessage);
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance);

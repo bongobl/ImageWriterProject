@@ -9,6 +9,5 @@ struct CoreData {
 	bool setupCalled = false; // needs to be called at least once before we can draw to image
 
 	sf::RenderWindow* pWindow = nullptr;
-
 	sf::RectangleShape* pRectangleShape = nullptr;
 };

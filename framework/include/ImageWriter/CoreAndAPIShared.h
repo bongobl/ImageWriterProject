@@ -13,6 +13,7 @@ typedef bool (*PfnCoreExportImage)(InstanceData, const char*);
 typedef bool (*PfnCoreInitRenderWindow)(InstanceData);
 typedef bool (*PfnCoreUpdateRenderWindow)(InstanceData, float);
 typedef bool (*PfnCoreDisposeRenderWindow)(InstanceData);
+typedef bool (*PfnTemp_IsRenderWindowOpen)(InstanceData);
 typedef bool (*PfnCoreDispose)(InstanceData*);
 
 struct InstanceData
@@ -27,6 +28,7 @@ struct InstanceData
     PfnCoreInitRenderWindow pfnCoreInitRenderWindow;
     PfnCoreUpdateRenderWindow pfnCoreUpdateRenderWindow;
     PfnCoreDisposeRenderWindow pfnCoreDisposeRenderWindow;
+    PfnTemp_IsRenderWindowOpen pfnTemp_IsRenderWindowOpen;
     PfnCoreDispose pfnCoreDispose;
 
     void* pCoreData;

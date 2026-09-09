@@ -153,6 +153,9 @@ if __name__ == "__main__":
     framework.DisposeRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
     framework.DisposeRenderWindow.restype = ctypes.c_bool
     
+    framework.TEMP_IsRenderWindowOpen.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.TEMP_IsRenderWindowOpen.restype = ctypes.c_bool
+
     framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
     framework.DestroyImageWriterInstance.restype = ctypes.c_bool
 
@@ -170,12 +173,12 @@ if __name__ == "__main__":
     framework.InitRenderWindow(instance, frameworkFunctionMessage)
 
     clock = pygame.time.Clock()
-    while True:
+    while framework.TEMP_IsRenderWindowOpen(instance, frameworkFunctionMessage):
         deltaSeconds = clock.tick(120) / 1000.0      
         framework.UpdateRenderWindow(instance, frameworkFunctionMessage, deltaSeconds)
 
     framework.DisposeRenderWindow(instance, frameworkFunctionMessage)
-
+    print("Disposed RenderWindow")
     
     networkServiceThread.join()
 

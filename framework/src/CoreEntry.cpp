@@ -197,6 +197,20 @@ extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceD
 	return true;
 }
 
+extern "C" __declspec(dllexport) bool temp_IsRenderWindowOpen(InstanceData instanceData)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "temp_IsRenderWindowOpen: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on temp_IsRenderWindowOpen()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	sf::RenderWindow& window = *pCoreData->pWindow;
+	return window.isOpen();
+
+}
 extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData)
 {
 	if (!pInstanceData) {

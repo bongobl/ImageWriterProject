@@ -12,5 +12,6 @@ extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData, con
 extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData);
 extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceData, float deltaTime);
 extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceData);
+extern "C" __declspec(dllexport) bool temp_IsRenderWindowOpen(InstanceData instanceData);
 
 extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData);

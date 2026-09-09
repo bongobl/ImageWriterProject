@@ -64,7 +64,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     PfnCoreInitRenderWindow pfnCoreInitRenderWindow = (PfnCoreInitRenderWindow)GetProcAddress(hDll, "initRenderWindow");
 
     if (pfnCoreInitRenderWindow == NULL) {
-        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function initWindow could not load\n");
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function initRenderWindow could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -72,7 +72,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     PfnCoreUpdateRenderWindow pfnCoreUpdateRenderWindow = (PfnCoreUpdateRenderWindow)GetProcAddress(hDll, "updateRenderWindow");
 
     if (pfnCoreUpdateRenderWindow == NULL) {
-        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function updateWindow could not load\n");
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function updateRenderWindow could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -80,7 +80,15 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     PfnCoreDisposeRenderWindow pfnCoreDisposeRenderWindow = (PfnCoreDisposeRenderWindow)GetProcAddress(hDll, "disposeRenderWindow");
 
     if (pfnCoreDisposeRenderWindow == NULL) {
-        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function disposeWindow could not load\n");
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function disposeRenderWindow could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
+
+    PfnTemp_IsRenderWindowOpen pfnTemp_IsRenderWindowOpen = (PfnTemp_IsRenderWindowOpen)GetProcAddress(hDll, "temp_IsRenderWindowOpen");
+
+    if (pfnTemp_IsRenderWindowOpen == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function pfnTemp_IsRenderWindowOpen could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -105,6 +113,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         .pfnCoreInitRenderWindow = pfnCoreInitRenderWindow,
         .pfnCoreUpdateRenderWindow = pfnCoreUpdateRenderWindow,
         .pfnCoreDisposeRenderWindow = pfnCoreDisposeRenderWindow,
+        .pfnTemp_IsRenderWindowOpen = pfnTemp_IsRenderWindowOpen,
         .pfnCoreDispose = pfnCoreDispose,
     };
 
@@ -206,6 +215,19 @@ extern "C" __declspec(dllexport) bool DisposeRenderWindow(HImageWriterInstance i
     return pInstanceData->pfnCoreDisposeRenderWindow(*pInstanceData);
 }
 
+extern "C" __declspec(dllexport) bool TEMP_IsRenderWindowOpen(HImageWriterInstance instance, char* pStatusMessage)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "TEMP_IsRenderWindowOpen: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call TEMP_IsRenderWindowOpen() from its underlying framework correctly");
+        return false;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
+
+    return pInstanceData->pfnTemp_IsRenderWindowOpen(*pInstanceData);
+}
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance)
 {
 	if (!instance || !instance->pData) {
