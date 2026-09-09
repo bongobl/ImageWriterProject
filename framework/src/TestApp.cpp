@@ -39,7 +39,9 @@ int main(void)
 
 	char statusMessage[256] = "Command executed successfully";
 
-	TEMP_RunSFMLWindow(instance, statusMessage);
+	InitRenderWindow(instance, statusMessage);
+	UpdateRenderWindow(instance, statusMessage);
+	DisposeRenderWindow(instance, statusMessage);
 
 	if (imageWriterThread.joinable()) {
 		imageWriterThread.join();

@@ -10,7 +10,9 @@ typedef bool (*PfnCoreSetupImage)(InstanceData, int, int);
 typedef bool (*PfnCoreDrawCircle)(InstanceData, int, int, int);
 typedef bool (*PfnCoreDrawRectangle)(InstanceData, int, int, int, int);
 typedef bool (*PfnCoreExportImage)(InstanceData, const char*);
-typedef bool (*PfnCoreTemp_RunSFMLWindow)(InstanceData);
+typedef bool (*PfnCoreInitRenderWindow)(InstanceData);
+typedef bool (*PfnCoreUpdateRenderWindow)(InstanceData);
+typedef bool (*PfnCoreDisposeRenderWindow)(InstanceData);
 typedef bool (*PfnCoreDispose)(InstanceData*);
 
 struct InstanceData
@@ -22,7 +24,9 @@ struct InstanceData
     PfnCoreDrawCircle pfnCoreDrawCircle;
     PfnCoreDrawRectangle pfnCoreDrawRectangle;
     PfnCoreExportImage pfnCoreExportImage;
-    PfnCoreTemp_RunSFMLWindow pfnCoreTemp_RunSFMLWindow;
+    PfnCoreInitRenderWindow pfnCoreInitRenderWindow;
+    PfnCoreUpdateRenderWindow pfnCoreUpdateRenderWindow;
+    PfnCoreDisposeRenderWindow pfnCoreDisposeRenderWindow;
     PfnCoreDispose pfnCoreDispose;
 
     void* pCoreData;

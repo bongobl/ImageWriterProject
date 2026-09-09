@@ -1,6 +1,5 @@
 #include <iostream>
 #include <ImageWriter/CoreEntry.h>
-#include <SFML/Graphics.hpp>
 
 extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 {
@@ -146,15 +145,42 @@ extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData)
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool temp_RunSFMLWindow(InstanceData instanceData)
+extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData)
 {
-	sf::RenderWindow window(sf::VideoMode({ 1280, 720 }), "SFML works!");
+	if (!instanceData.pCoreData) {
+		std::cerr << "initRenderWindow: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on initRenderWindow()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	pCoreData->pWindow = new sf::RenderWindow(sf::VideoMode({ 1280, 720 }), "SFML works!");
+	pCoreData->pRectangleShape = new sf::RectangleShape(sf::Vector2f(300, 100));
+
+	sf::RenderWindow& window = *pCoreData->pWindow;
 	window.setKeyRepeatEnabled(false);
 	window.setFramerateLimit(120);
-	sf::RectangleShape shape(sf::Vector2f(300, 100));
+
+	sf::RectangleShape& shape = *pCoreData->pRectangleShape;
 	shape.setFillColor(sf::Color::Green);
 	shape.setOrigin(sf::Vector2f(150, 50));
 	shape.setPosition(sf::Vector2f(640, 360));
+
+	return true;
+}
+extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceData)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "updateRenderWindow: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on updateRenderWindow()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	sf::RenderWindow& window = *pCoreData->pWindow;
+	sf::RectangleShape& shape = *pCoreData->pRectangleShape;
 
 	sf::Clock clock;
 	while (window.isOpen())
@@ -173,6 +199,21 @@ extern "C" __declspec(dllexport) bool temp_RunSFMLWindow(InstanceData instanceDa
 		window.draw(shape);
 		window.display();
 	}
+	return true;
+}
+extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceData)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "disposeRenderWindow: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on disposeRenderWindow()");
+		return false;
+	}
 
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	delete pCoreData->pWindow;
+	pCoreData->pWindow = nullptr;
+	delete pCoreData->pRectangleShape;
+	pCoreData->pRectangleShape = nullptr;
 	return true;
 }

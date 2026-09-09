@@ -58,8 +58,14 @@ if __name__ == "__main__":
     framework.ExportImage.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_char_p]
     framework.ExportImage.restype = ctypes.c_bool
 
-    framework.TEMP_RunSFMLWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
-    framework.TEMP_RunSFMLWindow.restype = ctypes.c_bool
+    framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.InitRenderWindow.restype = ctypes.c_bool
+
+    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.UpdateRenderWindow.restype = ctypes.c_bool
+
+    framework.DisposeRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.DisposeRenderWindow.restype = ctypes.c_bool
     
     framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
     framework.DestroyImageWriterInstance.restype = ctypes.c_bool
@@ -77,7 +83,9 @@ if __name__ == "__main__":
 
     statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
-    framework.TEMP_RunSFMLWindow(instance, statusMessage)
+    framework.InitRenderWindow(instance, statusMessage)
+    framework.UpdateRenderWindow(instance, statusMessage)
+    framework.DisposeRenderWindow(instance, statusMessage)
 
     imageWriterThread.join()
     framework.DestroyImageWriterInstance(ctypes.byref(instance))
