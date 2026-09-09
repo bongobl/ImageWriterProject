@@ -178,7 +178,7 @@ extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance inst
     return pInstanceData->pfnCoreInitRenderWindow(*pInstanceData);
 }
 
-extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, char* pStatusMessage)
+extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, char* pStatusMessage, float deltaTime)
 {
     if (!instance.pData) {
         fprintf(stderr, "UpdateRenderWindow: instance.pData was null\n");
@@ -189,7 +189,7 @@ extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance in
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
 
-    return pInstanceData->pfnCoreUpdateRenderWindow(*pInstanceData);
+    return pInstanceData->pfnCoreUpdateRenderWindow(*pInstanceData, deltaTime);
 }
 
 extern "C" __declspec(dllexport) bool DisposeRenderWindow(HImageWriterInstance instance, char* pStatusMessage)

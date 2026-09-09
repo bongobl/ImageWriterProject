@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <thread>
+#include <chrono>
 
 void runImageWriterFlow(HImageWriterInstance instance)
 {
@@ -39,8 +40,24 @@ int main(void)
 
 	char statusMessage[256] = "Command executed successfully";
 
+	auto prevTime = std::chrono::steady_clock::now();
+
 	InitRenderWindow(instance, statusMessage);
-	UpdateRenderWindow(instance, statusMessage);
+	while (true) {
+		auto currentTime = std::chrono::steady_clock::now();
+
+		std::chrono::duration<float> elapsed = currentTime - prevTime;
+
+		float deltaTime = elapsed.count();
+
+		std::cout << deltaTime << std::endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds(16));
+
+		UpdateRenderWindow(instance, statusMessage, deltaTime);
+
+		prevTime = currentTime;
+	}
+
 	DisposeRenderWindow(instance, statusMessage);
 
 	if (imageWriterThread.joinable()) {

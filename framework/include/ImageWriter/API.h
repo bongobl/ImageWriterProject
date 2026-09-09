@@ -11,6 +11,6 @@ extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, 
 extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, char* pStatusMessage, int centerX, int centerY, int halfExtentX, int halfExtentY);
 extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance, char* pStatusMessage, const char* pImageName);
 extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance instance, char* pStatusMessage);
-extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, char* pStatusMessage);
+extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, char* pStatusMessage, float deltaTime);
 extern "C" __declspec(dllexport) bool DisposeRenderWindow(HImageWriterInstance instance, char* pStatusMessage);
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance);

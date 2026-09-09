@@ -1,4 +1,4 @@
-import socket, ctypes, threading
+import socket, ctypes, threading, pygame
 from ImageWriterProtocol import *
 from ctypes import *
 
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
     framework.InitRenderWindow.restype = ctypes.c_bool
 
-    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_float]
     framework.UpdateRenderWindow.restype = ctypes.c_bool
 
     framework.DisposeRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
@@ -168,7 +168,12 @@ if __name__ == "__main__":
     frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
 
     framework.InitRenderWindow(instance, frameworkFunctionMessage)
-    framework.UpdateRenderWindow(instance, frameworkFunctionMessage)
+
+    clock = pygame.time.Clock()
+    while True:
+        deltaSeconds = clock.tick(120) / 1000.0      
+        framework.UpdateRenderWindow(instance, frameworkFunctionMessage, deltaSeconds)
+
     framework.DisposeRenderWindow(instance, frameworkFunctionMessage)
 
     

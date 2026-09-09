@@ -1,4 +1,4 @@
-import ctypes
+import ctypes, pygame
 from ctypes import *
 import threading
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
     framework.InitRenderWindow.restype = ctypes.c_bool
 
-    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_float]
     framework.UpdateRenderWindow.restype = ctypes.c_bool
 
     framework.DisposeRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
@@ -84,7 +84,11 @@ if __name__ == "__main__":
     statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
     framework.InitRenderWindow(instance, statusMessage)
-    framework.UpdateRenderWindow(instance, statusMessage)
+
+    clock = pygame.time.Clock()
+    while True:
+        deltaSeconds = clock.tick(120) / 1000.0      
+        framework.UpdateRenderWindow(instance, statusMessage, deltaSeconds)
     framework.DisposeRenderWindow(instance, statusMessage)
 
     imageWriterThread.join()

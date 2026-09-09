@@ -128,23 +128,6 @@ extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData, con
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData)
-{
-	if (!pInstanceData) {
-		std::cerr << "dispose: pInstanceData was null" << std::endl;
-		return false;
-	}
-
-	if (!pInstanceData->pCoreData) {
-		std::cerr << "dispose: pInstanceData->pCoreData was null" << std::endl;
-		return false;
-	}
-
-	delete static_cast<CoreData*>(pInstanceData->pCoreData);
-	pInstanceData->pCoreData = nullptr;
-	return true;
-}
-
 extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData)
 {
 	if (!instanceData.pCoreData) {
@@ -169,7 +152,7 @@ extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData
 
 	return true;
 }
-extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceData)
+extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceData, float deltaTime)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "updateRenderWindow: instanceData.pCoreData was null" << std::endl;
@@ -182,23 +165,19 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 	sf::RenderWindow& window = *pCoreData->pWindow;
 	sf::RectangleShape& shape = *pCoreData->pRectangleShape;
 
-	sf::Clock clock;
-	while (window.isOpen())
+	while (const std::optional event = window.pollEvent())
 	{
-		while (const std::optional event = window.pollEvent())
-		{
-			if (event->is<sf::Event::Closed>())
-				window.close();
+		if (event->is<sf::Event::Closed>())
+			window.close();
 
-		}
-
-		sf::Time deltaTime = clock.restart();
-		shape.rotate(sf::radians(deltaTime.asMilliseconds() / 1000.0f));
-
-		window.clear();
-		window.draw(shape);
-		window.display();
 	}
+
+	shape.rotate(sf::radians(deltaTime));
+
+	window.clear();
+	window.draw(shape);
+	window.display();
+
 	return true;
 }
 extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceData)
@@ -215,5 +194,22 @@ extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceD
 	pCoreData->pWindow = nullptr;
 	delete pCoreData->pRectangleShape;
 	pCoreData->pRectangleShape = nullptr;
+	return true;
+}
+
+extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData)
+{
+	if (!pInstanceData) {
+		std::cerr << "dispose: pInstanceData was null" << std::endl;
+		return false;
+	}
+
+	if (!pInstanceData->pCoreData) {
+		std::cerr << "dispose: pInstanceData->pCoreData was null" << std::endl;
+		return false;
+	}
+
+	delete static_cast<CoreData*>(pInstanceData->pCoreData);
+	pInstanceData->pCoreData = nullptr;
 	return true;
 }

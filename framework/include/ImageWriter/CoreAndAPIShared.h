@@ -11,7 +11,7 @@ typedef bool (*PfnCoreDrawCircle)(InstanceData, int, int, int);
 typedef bool (*PfnCoreDrawRectangle)(InstanceData, int, int, int, int);
 typedef bool (*PfnCoreExportImage)(InstanceData, const char*);
 typedef bool (*PfnCoreInitRenderWindow)(InstanceData);
-typedef bool (*PfnCoreUpdateRenderWindow)(InstanceData);
+typedef bool (*PfnCoreUpdateRenderWindow)(InstanceData, float);
 typedef bool (*PfnCoreDisposeRenderWindow)(InstanceData);
 typedef bool (*PfnCoreDispose)(InstanceData*);
 

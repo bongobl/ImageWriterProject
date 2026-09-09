@@ -10,7 +10,7 @@ extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, i
 extern "C" __declspec(dllexport) bool exportImage(InstanceData instanceData, const char* pImageName);
 
 extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData);
-extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceData);
+extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceData, float deltaTime);
 extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceData);
 
 extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData);
