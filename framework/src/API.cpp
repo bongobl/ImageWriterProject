@@ -129,7 +129,7 @@ extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instanc
     return pInstanceData->pfnCoreDrawRectangle(*pInstanceData, centerX, centerY, halfExtentX, halfExtentY);
 }
 
-extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance instance)
+extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance instance, int64_t windowHandle)
 {
     if (!instance.pData) {
         fprintf(stderr, "InitRenderWindow: instance.pData was null\n");
@@ -138,7 +138,7 @@ extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance inst
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
 
-    return pInstanceData->pfnCoreInitRenderWindow(*pInstanceData);
+    return pInstanceData->pfnCoreInitRenderWindow(*pInstanceData, windowHandle);
 }
 
 extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, float deltaTime)

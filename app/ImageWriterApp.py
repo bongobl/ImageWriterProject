@@ -1,7 +1,11 @@
-import socket, ctypes, threading, pygame
+import socket, ctypes, threading, pygame, tkinter as tk
 from ImageWriterProtocol import *
 from ctypes import *
+import errno
 
+
+# Winsock Constant: Socket operation on non-socket
+WSAENOTSOCK = 10038
 
 # TODO: Mirror API.h: move to common header
 class HImageWriterInstance(ctypes.Structure):
@@ -10,6 +14,9 @@ class HImageWriterInstance(ctypes.Structure):
     ]
 
 def runNetworkService(instance: HImageWriterInstance):
+
+    global connToClient
+    global serverSocket
 
     # set up listening socket (IPv4 + TCP)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
@@ -26,7 +33,18 @@ def runNetworkService(instance: HImageWriterInstance):
             print(f"Server: listening on {HOST_IP}:{PORT}...")
 
             # listening state: wait here until a client connects
-            connToClient, clientAddr = serverSocket.accept()
+            
+            try:
+                connToClient, clientAddr = serverSocket.accept()
+            except OSError as e:
+
+                # Check if the error is due to the socket being closed or invalidated
+                if e.errno in (errno.EBADF, errno.EINVAL) or getattr(e, 'winerror', None) == WSAENOTSOCK:
+                    print("Listening socket was closed. returning from runNetworkService().")
+                    return
+                else:
+                    # This is a real, unexpected network or system error
+                    raise e
 
             with connToClient:
                 print(f"Server: Connected to a client at {clientAddr}")
@@ -98,11 +116,20 @@ def runNetworkService(instance: HImageWriterInstance):
                         break
 
 
+def main_loop_callback():
+
+    deltaSeconds = clock.tick(120) / 1000.0
+    framework.UpdateRenderWindow(instance, deltaSeconds)
+
+    root.after(1, main_loop_callback)
+
+def onClickedClearButton():
+    print("TODO: Make this button clear the canvas!")
 # main
 if __name__ == "__main__":
 
     # load image writer library and functions
-    framework = ctypes.CDLL("C:\\Dev\\Practice\\BasicClaude\\ImageWriter\\buildGNU\\ImageWriterAPI.dll")
+    framework = ctypes.CDLL("./ImageWriterAPI.dll")
 
     framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
     framework.CreateImageWriterInstance.restype = ctypes.c_bool
@@ -113,7 +140,7 @@ if __name__ == "__main__":
     framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
     framework.DrawRectangle.restype = ctypes.c_bool
 
-    framework.InitRenderWindow.argtypes = [HImageWriterInstance]
+    framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_int64]
     framework.InitRenderWindow.restype = ctypes.c_bool
 
     framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_float]
@@ -130,6 +157,7 @@ if __name__ == "__main__":
 
     # create instance
     instance = HImageWriterInstance()
+
     if not framework.CreateImageWriterInstance(ctypes.byref(instance)):
         print("Failed to create image writer instance")
         exit(1)
@@ -137,18 +165,50 @@ if __name__ == "__main__":
     networkServiceThread = threading.Thread(target = runNetworkService, args=(instance,))
     networkServiceThread.start()
     
-    framework.InitRenderWindow(instance)
+    root = tk.Tk()
+    root.title("Image Writer App")
+    root.geometry("1920x1080")
+
+    canvas = tk.Canvas(root, width=640, height=480, bg="black")
+    canvas.pack(padx=50, pady=50, expand=True, fill=tk.BOTH)
+
+    button = tk.Button(
+        root, 
+        text="TODO: Clear canvas",
+        command=onClickedClearButton,
+        font=("Helvetica", 16, "bold"),
+        padx=5,
+        pady=2
+    )
+
+    # 3. Position the button in the window
+    button.pack(pady=20)
+
+
+    root.update()
+    canvasId = canvas.winfo_id()
+
+    framework.InitRenderWindow(instance, canvasId)
+    root.after(1, main_loop_callback)
 
     clock = pygame.time.Clock()
-    while framework.TEMP_IsRenderWindowOpen(instance):
-        deltaSeconds = clock.tick(120) / 1000.0      
-        framework.UpdateRenderWindow(instance, deltaSeconds)
+    root.mainloop()
 
     framework.DisposeRenderWindow(instance)
-    print("Disposed RenderWindow")
+
+    # close sockets
+    try:
+        connToClient
+    except NameError:
+        print("Variable is NOT defined.")
+    else:
+        print("Variable IS defined.")
+        connToClient.close()
+    serverSocket.close()
     
     networkServiceThread.join()
 
+    
     # Todo: figure out where to put this when we find a way to gracefully kill the server
     framework.DestroyImageWriterInstance(instance)
 

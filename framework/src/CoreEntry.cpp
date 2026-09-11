@@ -53,7 +53,7 @@ extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, i
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData)
+extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData, int64_t windowHandle)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "initRenderWindow: instanceData.pCoreData was null" << std::endl;
@@ -62,7 +62,7 @@ extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
-	pCoreData->pWindow = new sf::RenderWindow(sf::VideoMode({ 1920, 1080 }), "SFML works!");
+	pCoreData->pWindow = new sf::RenderWindow((HWND)windowHandle);
 
 	sf::RenderWindow& window = *pCoreData->pWindow;
 	window.setKeyRepeatEnabled(false);
@@ -88,6 +88,9 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 			window.close();
 
 	}
+	
+	// Test just to make sure window updates every frame
+	//pCoreData->m_Shapes.dummyUpdateShapes(deltaTime);
 
 	window.clear();
 	pCoreData->m_Shapes.drawShapes(window);

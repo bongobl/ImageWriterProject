@@ -11,17 +11,24 @@
 class ShapeList {
 
 	// TODO: when implementing add/remove, need to store in pointer map
-	std::vector<sf::Drawable*> m_SFMLDrawables;
+	std::vector<sf::Shape*> m_SFMLDrawables;
 	mutable std::shared_mutex mutex;
 
 public:
-	void addShape(sf::Drawable* pDrawable) {
+	void addShape(sf::Shape* pDrawable) {
 
 		std::unique_lock<std::shared_mutex> lock(mutex);
 
 		m_SFMLDrawables.push_back(pDrawable);
 	}
 
+	void dummyUpdateShapes(float deltaTime) {
+		std::shared_lock<std::shared_mutex> lock(mutex);
+
+		for (int i = 0; i < m_SFMLDrawables.size(); ++i) {
+			m_SFMLDrawables.at(i)->rotate(sf::radians(deltaTime));
+		}
+	}
 	void drawShapes(sf::RenderWindow& window) {
 
 		std::shared_lock<std::shared_mutex> lock(mutex);

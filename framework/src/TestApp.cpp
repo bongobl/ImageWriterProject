@@ -3,6 +3,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <windows.h>
 
 void runImageWriterFlow(HImageWriterInstance instance)
 {
@@ -35,7 +36,8 @@ int main(void)
 
 	auto prevTime = std::chrono::steady_clock::now();
 
-	InitRenderWindow(instance);
+	int nullHwnd = 0;
+	InitRenderWindow(instance, nullHwnd);
 	while (TEMP_IsRenderWindowOpen(instance)) {
 		auto currentTime = std::chrono::steady_clock::now();
 
