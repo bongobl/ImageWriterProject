@@ -113,16 +113,16 @@ if __name__ == "__main__":
     framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
     framework.DrawRectangle.restype = ctypes.c_bool
 
-    framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.InitRenderWindow.argtypes = [HImageWriterInstance]
     framework.InitRenderWindow.restype = ctypes.c_bool
 
-    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_float]
+    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_float]
     framework.UpdateRenderWindow.restype = ctypes.c_bool
 
-    framework.DisposeRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.DisposeRenderWindow.argtypes = [HImageWriterInstance]
     framework.DisposeRenderWindow.restype = ctypes.c_bool
     
-    framework.TEMP_IsRenderWindowOpen.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.TEMP_IsRenderWindowOpen.argtypes = [HImageWriterInstance]
     framework.TEMP_IsRenderWindowOpen.restype = ctypes.c_bool
 
     framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
@@ -137,16 +137,14 @@ if __name__ == "__main__":
     networkServiceThread = threading.Thread(target = runNetworkService, args=(instance,))
     networkServiceThread.start()
     
-    frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
-
-    framework.InitRenderWindow(instance, frameworkFunctionMessage)
+    framework.InitRenderWindow(instance)
 
     clock = pygame.time.Clock()
-    while framework.TEMP_IsRenderWindowOpen(instance, frameworkFunctionMessage):
+    while framework.TEMP_IsRenderWindowOpen(instance):
         deltaSeconds = clock.tick(120) / 1000.0      
-        framework.UpdateRenderWindow(instance, frameworkFunctionMessage, deltaSeconds)
+        framework.UpdateRenderWindow(instance, deltaSeconds)
 
-    framework.DisposeRenderWindow(instance, frameworkFunctionMessage)
+    framework.DisposeRenderWindow(instance)
     print("Disposed RenderWindow")
     
     networkServiceThread.join()

@@ -57,7 +57,6 @@ extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "initRenderWindow: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on initRenderWindow()");
 		return false;
 	}
 
@@ -76,7 +75,6 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "updateRenderWindow: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on updateRenderWindow()");
 		return false;
 	}
 
@@ -91,7 +89,6 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 
 	}
 
-
 	window.clear();
 	pCoreData->m_Shapes.drawShapes(window);
 	window.display();
@@ -102,16 +99,14 @@ extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceD
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "disposeRenderWindow: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on disposeRenderWindow()");
 		return false;
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
+	pCoreData->m_Shapes.destroyAllShapes();
 	delete pCoreData->pWindow;
 	pCoreData->pWindow = nullptr;
-	
-	pCoreData->m_Shapes.destroyAllShapes();
 
 	return true;
 }
@@ -120,7 +115,6 @@ extern "C" __declspec(dllexport) bool temp_IsRenderWindowOpen(InstanceData insta
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "temp_IsRenderWindowOpen: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on temp_IsRenderWindowOpen()");
 		return false;
 	}
 

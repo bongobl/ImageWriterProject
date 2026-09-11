@@ -46,16 +46,16 @@ if __name__ == "__main__":
     framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
     framework.DrawRectangle.restype = ctypes.c_bool
 
-    framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.InitRenderWindow.argtypes = [HImageWriterInstance]
     framework.InitRenderWindow.restype = ctypes.c_bool
 
-    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_float]
+    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_float]
     framework.UpdateRenderWindow.restype = ctypes.c_bool
 
-    framework.DisposeRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.DisposeRenderWindow.argtypes = [HImageWriterInstance]
     framework.DisposeRenderWindow.restype = ctypes.c_bool
     
-    framework.TEMP_IsRenderWindowOpen.argtypes = [HImageWriterInstance, ctypes.c_char_p]
+    framework.TEMP_IsRenderWindowOpen.argtypes = [HImageWriterInstance]
     framework.TEMP_IsRenderWindowOpen.restype = ctypes.c_bool
 
     framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
@@ -72,15 +72,14 @@ if __name__ == "__main__":
     imageWriterThread = threading.Thread(target = runImageWriterFlow, args=(instance,))
     imageWriterThread.start()
 
-    statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
-    framework.InitRenderWindow(instance, statusMessage)
+    framework.InitRenderWindow(instance)
 
     clock = pygame.time.Clock()
-    while framework.TEMP_IsRenderWindowOpen(instance, statusMessage):
+    while framework.TEMP_IsRenderWindowOpen(instance):
         deltaSeconds = clock.tick(120) / 1000.0      
-        framework.UpdateRenderWindow(instance, statusMessage, deltaSeconds)
-    framework.DisposeRenderWindow(instance, statusMessage)
+        framework.UpdateRenderWindow(instance, deltaSeconds)
+    framework.DisposeRenderWindow(instance)
 
     imageWriterThread.join()
     framework.DestroyImageWriterInstance(ctypes.byref(instance))

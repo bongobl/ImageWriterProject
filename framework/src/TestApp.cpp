@@ -32,12 +32,11 @@ int main(void)
 
 	std::thread imageWriterThread(runImageWriterFlow, instance);
 
-	char statusMessage[256] = "Command executed successfully";
 
 	auto prevTime = std::chrono::steady_clock::now();
 
-	InitRenderWindow(instance, statusMessage);
-	while (TEMP_IsRenderWindowOpen(instance, statusMessage)) {
+	InitRenderWindow(instance);
+	while (TEMP_IsRenderWindowOpen(instance)) {
 		auto currentTime = std::chrono::steady_clock::now();
 
 		std::chrono::duration<float> elapsed = currentTime - prevTime;
@@ -46,12 +45,12 @@ int main(void)
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
-		UpdateRenderWindow(instance, statusMessage, deltaTime);
+		UpdateRenderWindow(instance, deltaTime);
 
 		prevTime = currentTime;
 	}
 
-	DisposeRenderWindow(instance, statusMessage);
+	DisposeRenderWindow(instance);
 
 	if (imageWriterThread.joinable()) {
 		imageWriterThread.join();

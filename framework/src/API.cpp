@@ -129,58 +129,50 @@ extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instanc
     return pInstanceData->pfnCoreDrawRectangle(*pInstanceData, centerX, centerY, halfExtentX, halfExtentY);
 }
 
-extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance instance, char* pStatusMessage)
+extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance instance)
 {
     if (!instance.pData) {
         fprintf(stderr, "InitRenderWindow: instance.pData was null\n");
-        strcpy(pStatusMessage, "ImageWiter app did not call InitRenderWindow() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
 
     return pInstanceData->pfnCoreInitRenderWindow(*pInstanceData);
 }
 
-extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, char* pStatusMessage, float deltaTime)
+extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, float deltaTime)
 {
     if (!instance.pData) {
         fprintf(stderr, "UpdateRenderWindow: instance.pData was null\n");
-        strcpy(pStatusMessage, "ImageWiter app did not call UpdateRenderWindow() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
 
     return pInstanceData->pfnCoreUpdateRenderWindow(*pInstanceData, deltaTime);
 }
 
-extern "C" __declspec(dllexport) bool DisposeRenderWindow(HImageWriterInstance instance, char* pStatusMessage)
+extern "C" __declspec(dllexport) bool DisposeRenderWindow(HImageWriterInstance instance)
 {
     if (!instance.pData) {
         fprintf(stderr, "DisposeRenderWindow: instance.pData was null\n");
-        strcpy(pStatusMessage, "ImageWiter app did not call DisposeRenderWindow() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
 
     return pInstanceData->pfnCoreDisposeRenderWindow(*pInstanceData);
 }
 
-extern "C" __declspec(dllexport) bool TEMP_IsRenderWindowOpen(HImageWriterInstance instance, char* pStatusMessage)
+extern "C" __declspec(dllexport) bool TEMP_IsRenderWindowOpen(HImageWriterInstance instance)
 {
     if (!instance.pData) {
         fprintf(stderr, "TEMP_IsRenderWindowOpen: instance.pData was null\n");
-        strcpy(pStatusMessage, "ImageWiter app did not call TEMP_IsRenderWindowOpen() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
 
     return pInstanceData->pfnTemp_IsRenderWindowOpen(*pInstanceData);
 }
