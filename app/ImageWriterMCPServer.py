@@ -57,58 +57,6 @@ def disconnectFromImageWriter():
         connToServer.close()
 
 
-            
-@mcp.tool()
-def setupImage(width: int, height: int) -> MCPOutcome:
-    """Sets up a blank image canvas for drawing things to
-
-    Image starts off as black and will get contents written to it as
-    various Draw* commands are issued.
-    Returns True on success, False on failure
-    """
-    if not connectToImageWriterApp():
-        raise RuntimeError("setupImage(): Failed to connect to ImageWriter app")
-
-    commIn = Command.SetupImage
-    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
-
-    # create setupImage command params
-    setupImageParams = SetupImageParams(width = width, height = height)
-    logger.info(f"To server: {setupImageParams.toString()}")
-
-    # serialize params
-    paramsBuffer = bytes(setupImageParams)
-
-    # send message to server
-    try:
-        logger.info(f"setupImage: sending command buffer")
-        connToServer.sendall(commandBuffer)
-        logger.info(f"setupImage: sending param buffer")
-        connToServer.sendall(paramsBuffer)
-
-    # will fail if server had disconnected at time of sending message
-    except ConnectionResetError as e:
-        logger.error(f"ConnectionResetError: {e}\n\n")
-        disconnectFromImageWriter()
-        raise RuntimeError("setupImage(): Failed to send command to ImageWriter app")
-
-    replyBuffer = bytearray()
-    
-    # wait here and receive message from client
-    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
-    if not status:
-        # log error message and return to connecting state
-        logger.error(errorMessage)
-        disconnectFromImageWriter()
-        raise RuntimeError("setupImage(): Failed to receive reply from ImageWriter app")
-    
-    # deserialize client message and log
-    reply = Reply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply.toString()}")
-
-    disconnectFromImageWriter()
-    return reply.toMCPOutcome()
-
 @mcp.tool()
 def drawCircle(centerX: int, centerY: int, radius: int) -> MCPOutcome:
     """draws a circle on an image
@@ -212,57 +160,6 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
 
     disconnectFromImageWriter()
 
-    return reply.toMCPOutcome()
-
-
-@mcp.tool()
-def exportImage(filename: str) -> MCPOutcome:
-    """exports the image png to disk with a specified name, do not include the ".png" suffix
-
-    Importantly, this should not be called before an image is set up or it will fail
-    Returns True on success, False on failure
-    """
-
-    if not connectToImageWriterApp():
-        raise RuntimeError("exportImage(): Failed to connect to ImageWriter app")
-    
-    commIn = Command.ExportImage
-    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
-
-    # create exportImage command params
-    exportImageParams = ExportImageParams(imageName = filename.encode('utf-8'))
-    logger.info(f"To server: {exportImageParams.toString()}")
-
-    # serialize params
-    paramsBuffer = bytes(exportImageParams)
-
-    # send message to server
-    try:
-        connToServer.sendall(commandBuffer)
-        connToServer.sendall(paramsBuffer)
-
-    # will fail if server had disconnected at time of sending message
-    # return to connecting state
-    except ConnectionResetError as e:
-        logger.error(f"ConnectionResetError: {e}\n\n")
-        disconnectFromImageWriter()
-        raise RuntimeError("exportImage(): Failed to send command to ImageWriter app")
-
-    replyBuffer = bytearray()
-    
-    # wait here and receive message from client
-    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
-    if not status:
-        # log error message and return to connecting state
-        logger.error(errorMessage)
-        disconnectFromImageWriter()
-        raise RuntimeError("exportImage(): Failed to receive reply from ImageWriter app")
-    
-    # deserialize client message and log
-    reply = Reply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply.toString()}")
-
-    disconnectFromImageWriter()
     return reply.toMCPOutcome()
 
 

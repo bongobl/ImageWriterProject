@@ -29,14 +29,6 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         return false;
     }
 
-    PfnCoreSetupImage pfnCoreSetupImage = (PfnCoreSetupImage)GetProcAddress(hDll, "setupImage");
-
-    if (pfnCoreSetupImage == NULL) {
-        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function setupImage could not load\n");
-        FreeLibrary(hDll);
-        return false;
-    }
-
     PfnCoreDrawCircle pfnCoreDrawCircle = (PfnCoreDrawCircle)GetProcAddress(hDll, "drawCircle");
 
     if (pfnCoreDrawCircle == NULL) {
@@ -49,14 +41,6 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
 
     if (pfnCoreDrawRectangle == NULL) {
         fprintf(stderr, "CreateImageWriterInstance: CoreEntry function pfnCoreDrawRectangle could not load\n");
-        FreeLibrary(hDll);
-        return false;
-    }
-
-    PfnCoreExportImage pfnCoreExportImage = (PfnCoreExportImage)GetProcAddress(hDll, "exportImage");
-
-    if (pfnCoreExportImage == NULL) {
-        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function exportImage could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -106,10 +90,8 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     *pInstanceData = {
         .hDll = hDll,
         .pfnCoreInitialize = pfnCoreInitialize,
-        .pfnCoreSetupImage = pfnCoreSetupImage,
         .pfnCoreDrawCircle = pfnCoreDrawCircle,
         .pfnCoreDrawRectangle = pfnCoreDrawRectangle,
-        .pfnCoreExportImage = pfnCoreExportImage,
         .pfnCoreInitRenderWindow = pfnCoreInitRenderWindow,
         .pfnCoreUpdateRenderWindow = pfnCoreUpdateRenderWindow,
         .pfnCoreDisposeRenderWindow = pfnCoreDisposeRenderWindow,
@@ -119,19 +101,6 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
 
     // initialize core
     return pInstanceData->pfnCoreInitialize(pInstanceData);
-}
-
-extern "C" __declspec(dllexport) bool SetupImage(HImageWriterInstance instance, char* pStatusMessage, int width, int height)
-{
-	if (!instance.pData) {
-		fprintf(stderr, "SetupImage: instance.pData was null\n");
-        strcpy(pStatusMessage, "ImageWiter app did not call SetupImage() from its underlying framework correctly");
-		return false;
-	}
-
-    InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreSetupImage(*pInstanceData, width, height);
 }
 
 extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, int centerX, int centerY, int radius)
@@ -158,19 +127,6 @@ extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instanc
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
     return pInstanceData->pfnCoreDrawRectangle(*pInstanceData, centerX, centerY, halfExtentX, halfExtentY);
-}
-
-extern "C" __declspec(dllexport) bool ExportImage(HImageWriterInstance instance, char* pStatusMessage, const char* pImageName)
-{
-    if (!instance.pData) {
-        fprintf(stderr, "ExportImage: instance.pData was null\n");
-        strcpy(pStatusMessage, "ImageWiter app did not call ExportImage() from its underlying framework correctly");
-        return false;
-    }
-
-    InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreExportImage(*pInstanceData, pImageName);
 }
 
 extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance instance, char* pStatusMessage)

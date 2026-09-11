@@ -51,19 +51,6 @@ def runNetworkService(instance: HImageWriterInstance):
                     frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
                     match command:
                         
-                        case Command.SetupImage:
-
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(SetupImageParams))
-                            if not status:
-                                # print error message and return to listening state
-                                print(errorMessage)
-                                break
-                            
-                            # deserialize drawCircle params
-                            setupImageParams = SetupImageParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {setupImageParams.toString()}")
-                            frameworkFunctionStatus = framework.SetupImage(instance, frameworkFunctionMessage, setupImageParams.width, setupImageParams.height)
-
                         case Command.DrawCircle:
 
                             status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(DrawCircleParams))
@@ -87,18 +74,6 @@ def runNetworkService(instance: HImageWriterInstance):
                             rectangleParams = DrawRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams.toString()}")
                             frameworkFunctionStatus = framework.DrawRectangle(instance, frameworkFunctionMessage, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY);
-
-                        case Command.ExportImage:
-
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(ExportImageParams))
-                            if not status:
-                                # print error message and return to listening state
-                                print(errorMessage)
-                                break
-                            # deserialize exportImage params
-                            exportImageParams = ExportImageParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {exportImageParams.toString()}")
-                            frameworkFunctionStatus = framework.ExportImage(instance, frameworkFunctionMessage, cast(exportImageParams.imageName, c_char_p));
 
                         case Command.Disconnecting:
                             
@@ -132,17 +107,11 @@ if __name__ == "__main__":
     framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
     framework.CreateImageWriterInstance.restype = ctypes.c_bool
 
-    framework.SetupImage.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int]
-    framework.SetupImage.restype = ctypes.c_bool
-
     framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int]
     framework.DrawCircle.restype = ctypes.c_bool
 
     framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
     framework.DrawRectangle.restype = ctypes.c_bool
-
-    framework.ExportImage.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_char_p]
-    framework.ExportImage.restype = ctypes.c_bool
 
     framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_char_p]
     framework.InitRenderWindow.restype = ctypes.c_bool

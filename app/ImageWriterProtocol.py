@@ -10,22 +10,10 @@ COMMAND_SIZE = 1
 
 class Command(IntEnum):
 
-    SetupImage = 1
     DrawCircle = 2
     DrawRectangle = 3
-    ExportImage = 4
     Disconnecting = 5
 
-# Message to server
-class SetupImageParams(ctypes.Structure):
-    _fields_ = [
-        ("width", ctypes.c_int),
-        ("height", ctypes.c_int),
-    ]
-
-    def toString(self):
-        return f"SetupImage params: width = {self.width}, height = {self.height}"
-    
 class DrawCircleParams(ctypes.Structure):
     _fields_ = [
         ("centerX", ctypes.c_int),
@@ -46,14 +34,6 @@ class DrawRectangleParams(ctypes.Structure):
 
     def toString(self):
         return f"Rectange params: centerX = {self.centerX}, centerY = {self.centerY}, halfExtentX = {self.halfExtentX}, halfExtentY = {self.halfExtentY}"
-
-class ExportImageParams(ctypes.Structure):
-    _fields_ = [
-        ("imageName", ctypes.c_char * MAX_IMAGE_FILENAME_LENGTH),
-    ]
-
-    def toString(self):
-        return f"ExportImage params: imageName = {self.imageName.decode('utf-8')}"
 
 class MCPOutcome(BaseModel):
     success: bool = False

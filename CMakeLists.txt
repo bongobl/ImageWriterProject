@@ -27,25 +27,21 @@ set(SFML_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/external/SFML/include")
 project(ImageWriterCore)
 
 set(FRAMEWORK_INCLUDE_DIR "${FRAMEWORK_DIR}/include")
-set(STB_IMAGE_DIR "${CMAKE_SOURCE_DIR}/external/stb")
 
 set(ALL_INCLUDE_DIRS
 	"${FRAMEWORK_INCLUDE_DIR}"
-	"${STB_IMAGE_DIR}"
     "${SFML_INCLUDE_DIR}"
 )
 
 set(FRAMEWORK_SRC_DIR "${FRAMEWORK_DIR}/src")
 
 set(CORE_HEADER_FILES
-	"${FRAMEWORK_INCLUDE_DIR}/ImageWriter/Image.h"
 	"${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreEntry.h"
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreCommon.h"
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
 )
 
 set(CORE_SRC_FILES
-	"${FRAMEWORK_SRC_DIR}/Image.cpp"
 	"${FRAMEWORK_SRC_DIR}/CoreEntry.cpp"
 )
 
