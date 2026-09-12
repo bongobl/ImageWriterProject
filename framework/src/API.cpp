@@ -69,10 +69,10 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         return false;
     }
 
-    PfnTemp_IsRenderWindowOpen pfnTemp_IsRenderWindowOpen = (PfnTemp_IsRenderWindowOpen)GetProcAddress(hDll, "temp_IsRenderWindowOpen");
+    PfnIsIsolatedRenderWindowOpen pfnIsIsolatedRenderWindowOpen = (PfnIsIsolatedRenderWindowOpen)GetProcAddress(hDll, "isIsolatedRenderWindowOpen");
 
-    if (pfnTemp_IsRenderWindowOpen == NULL) {
-        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function pfnTemp_IsRenderWindowOpen could not load\n");
+    if (pfnIsIsolatedRenderWindowOpen == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function pfnIsIsolatedRenderWindowOpen could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -95,7 +95,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         .pfnCoreInitRenderWindow = pfnCoreInitRenderWindow,
         .pfnCoreUpdateRenderWindow = pfnCoreUpdateRenderWindow,
         .pfnCoreDisposeRenderWindow = pfnCoreDisposeRenderWindow,
-        .pfnTemp_IsRenderWindowOpen = pfnTemp_IsRenderWindowOpen,
+        .pfnIsIsolatedRenderWindowOpen = pfnIsIsolatedRenderWindowOpen,
         .pfnCoreDispose = pfnCoreDispose,
     };
 
@@ -165,16 +165,16 @@ extern "C" __declspec(dllexport) bool DisposeRenderWindow(HImageWriterInstance i
     return pInstanceData->pfnCoreDisposeRenderWindow(*pInstanceData);
 }
 
-extern "C" __declspec(dllexport) bool TEMP_IsRenderWindowOpen(HImageWriterInstance instance)
+extern "C" __declspec(dllexport) bool IsIsolatedRenderWindowOpen(HImageWriterInstance instance)
 {
     if (!instance.pData) {
-        fprintf(stderr, "TEMP_IsRenderWindowOpen: instance.pData was null\n");
+        fprintf(stderr, "IsIsolatedRenderWindowOpen: instance.pData was null\n");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
 
-    return pInstanceData->pfnTemp_IsRenderWindowOpen(*pInstanceData);
+    return pInstanceData->pfnIsIsolatedRenderWindowOpen(*pInstanceData);
 }
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance)
 {

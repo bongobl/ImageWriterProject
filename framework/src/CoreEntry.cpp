@@ -62,11 +62,22 @@ extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
-	pCoreData->pWindow = new sf::RenderWindow((HWND)windowHandle);
+	if (windowHandle) {
+		pCoreData->pWindow = new sf::RenderWindow((HWND)windowHandle);
+		
+	}
+	else {
+		pCoreData->pWindow = new sf::RenderWindow(sf::VideoMode({ 1920, 1080 }), "Image Writer App");
+	}
+	
 
 	sf::RenderWindow& window = *pCoreData->pWindow;
 	window.setKeyRepeatEnabled(false);
 	window.setFramerateLimit(120);
+
+	// The thread that initializes this window may not be the one that renders to it
+	// deactivate OpenGL context for this thread
+	(void)window.setActive(false);
 
 
 	return true;
@@ -81,6 +92,9 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
 	sf::RenderWindow& window = *pCoreData->pWindow;
+
+	// activate OpenGL context for on thread for drawing
+	(void)window.setActive(true);
 
 	while (const std::optional event = window.pollEvent())
 	{
@@ -114,7 +128,7 @@ extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceD
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool temp_IsRenderWindowOpen(InstanceData instanceData)
+extern "C" __declspec(dllexport) bool isIsolatedRenderWindowOpen(InstanceData instanceData)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "temp_IsRenderWindowOpen: instanceData.pCoreData was null" << std::endl;

@@ -11,7 +11,7 @@ typedef bool (*PfnCoreDrawRectangle)(InstanceData, int, int, int, int);
 typedef bool (*PfnCoreInitRenderWindow)(InstanceData, int64_t);
 typedef bool (*PfnCoreUpdateRenderWindow)(InstanceData, float);
 typedef bool (*PfnCoreDisposeRenderWindow)(InstanceData);
-typedef bool (*PfnTemp_IsRenderWindowOpen)(InstanceData);
+typedef bool (*PfnIsIsolatedRenderWindowOpen)(InstanceData);
 typedef bool (*PfnCoreDispose)(InstanceData*);
 
 struct InstanceData
@@ -24,7 +24,7 @@ struct InstanceData
     PfnCoreInitRenderWindow pfnCoreInitRenderWindow;
     PfnCoreUpdateRenderWindow pfnCoreUpdateRenderWindow;
     PfnCoreDisposeRenderWindow pfnCoreDisposeRenderWindow;
-    PfnTemp_IsRenderWindowOpen pfnTemp_IsRenderWindowOpen;
+    PfnIsIsolatedRenderWindowOpen pfnIsIsolatedRenderWindowOpen;
     PfnCoreDispose pfnCoreDispose;
 
     void* pCoreData;

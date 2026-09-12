@@ -11,6 +11,6 @@ extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, i
 extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData, int64_t windowHandle);
 extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceData, float deltaTime);
 extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceData);
-extern "C" __declspec(dllexport) bool temp_IsRenderWindowOpen(InstanceData instanceData);
+extern "C" __declspec(dllexport) bool isIsolatedRenderWindowOpen(InstanceData instanceData);
 
 extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData);

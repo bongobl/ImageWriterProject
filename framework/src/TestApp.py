@@ -1,8 +1,49 @@
-import ctypes, pygame, threading, tkinter as tk
+import ctypes, pygame, threading, time, tkinter as tk
 from ctypes import *
 
-framework = ctypes.CDLL("./ImageWriterAPI.dll")
+class WindowUI(tk.Tk):
+    def __init__(self, name, windowSize):
+        super().__init__()
 
+        self.title(name)
+        self.geometry(windowSize)
+
+        self.protocol("WM_DELETE_WINDOW", self.on_window_close)
+
+        self.canvas = tk.Canvas(self, width=640, height=480, bg="black")
+        self.canvas.pack(padx=50, pady=50, expand=True, fill=tk.BOTH)
+
+        button = tk.Button(
+            self, 
+            text="TODO: Clear canvas",
+            command=self.onClickedClearButton,
+            font=("Helvetica", 16, "bold"),
+            padx=5,
+            pady=2
+        )
+
+        # 3. Position the button in the window
+        button.pack(pady=20)
+
+        # update to make canvas live and then obtain canvas id
+        self.update()
+        self.canvasId = self.canvas.winfo_id()
+
+        self.windowIsActive = True
+
+    def onClickedClearButton(self):
+        print("TODO: Make this button clear the canvas!")
+
+    def on_window_close(self):
+    
+        self.windowIsActive = False
+    
+        # wait some time for render thread to finish
+        time.sleep(0.07) 
+        self.destroy()
+
+def isWindowUIOpen():
+    return root.windowIsActive
 
 # TODO: Mirror API.h: move to common header
 class HImageWriterInstance(ctypes.Structure):
@@ -10,103 +51,104 @@ class HImageWriterInstance(ctypes.Structure):
         ("pData", ctypes.c_void_p),
     ]
 
-def cString(pyString):
-    charArray = ctypes.create_string_buffer(pyString.encode('utf-8'))
-    ptrToFirstChar = cast(charArray, c_char_p)
-    return ptrToFirstChar
+    def Init(self, windowHandle, fnIsWindowOpen, fnReceiveCommands):
+        
+        self.framework = ctypes.CDLL("./ImageWriterAPI.dll")
 
-def runImageWriterFlow(instance: HImageWriterInstance):
+        self.framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
+        self.framework.CreateImageWriterInstance.restype = ctypes.c_bool
+
+        self.framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+        self.framework.DrawCircle.restype = ctypes.c_bool
+
+        self.framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+        self.framework.DrawRectangle.restype = ctypes.c_bool
+
+        self.framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_int64]
+        self.framework.InitRenderWindow.restype = ctypes.c_bool
+
+        self.framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_float]
+        self.framework.UpdateRenderWindow.restype = ctypes.c_bool
+
+        self.framework.DisposeRenderWindow.argtypes = [HImageWriterInstance]
+        self.framework.DisposeRenderWindow.restype = ctypes.c_bool
+
+        self.framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
+        self.framework.DestroyImageWriterInstance.restype = ctypes.c_bool
+
+        self.framework.IsIsolatedRenderWindowOpen.argtypes = [HImageWriterInstance]
+        self.framework.IsIsolatedRenderWindowOpen.restype = ctypes.c_bool
+
+        if not self.framework.CreateImageWriterInstance(ctypes.byref(self)):
+            print("Failed to create image writer instance")
+            exit(1)
+
+        self.fnReceiveCommands = fnReceiveCommands
+        self.imageWriterThread = threading.Thread(target = fnReceiveCommands, args=(self,))
+        self.imageWriterThread.start()
+
+
+        self.fnIsWindowOpen = fnIsWindowOpen
+
+        # if there was no window handle, SFML will create its own isolated, so we must rely
+        # on its event handling to tell us if the window is open
+        if windowHandle == 0:
+            self.fnIsWindowOpen = lambda: self.framework.IsIsolatedRenderWindowOpen(self)
+
+
+        self.windowLoopThread = threading.Thread(target = self.runRenderWindow, args=(windowHandle, ))
+        self.windowLoopThread.start()
+
+
+    def runRenderWindow(self, windowHandle):
+
+        self.framework.InitRenderWindow(self, windowHandle)
+
+        clock = pygame.time.Clock()
+        while self.fnIsWindowOpen():
+            deltaSeconds = clock.tick(12) / 1000.0
+            self.framework.UpdateRenderWindow(self, deltaSeconds)
+
+        self.framework.DisposeRenderWindow(self)
+
+    def Dispose(self):
+
+        self.windowLoopThread.join()
+        self.imageWriterThread.join()
+        self.framework.DestroyImageWriterInstance(ctypes.byref(self))
+
+
+def createSomeSampleShapes(instance: HImageWriterInstance):
 
     statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
-    framework.DrawCircle(instance, statusMessage, 350, 200, 100)
-    framework.DrawRectangle(instance, statusMessage, 1500, 700, 200, 150)
+    time.sleep(0.5)
+    instance.framework.DrawCircle(instance, statusMessage, 350, 200, 100)
+    instance.framework.DrawRectangle(instance, statusMessage, 1500, 700, 200, 150)
 
+    time.sleep(0.5)
+    instance.framework.DrawCircle(instance, statusMessage, 400, 200, 80);
+    instance.framework.DrawRectangle(instance, statusMessage, 100, 150, 75, 120)
 
-    framework.DrawCircle(instance, statusMessage, 400, 200, 80);
-    framework.DrawRectangle(instance, statusMessage, 100, 150, 75, 120)
+    time.sleep(0.5)
+    instance.framework.DrawCircle(instance, statusMessage, 800, 300, 70)
+    instance.framework.DrawCircle(instance, statusMessage, 300, 550, 150)
+    instance.framework.DrawRectangle(instance, statusMessage, 500, 300, 400, 10)
 
-    framework.DrawCircle(instance, statusMessage, 800, 300, 70)
-    framework.DrawCircle(instance, statusMessage, 300, 550, 150)
-    framework.DrawRectangle(instance, statusMessage, 500, 300, 400, 10)
-
-
-def main_loop_callback():
-
-    global clock
-    deltaSeconds = clock.tick(120) / 1000.0
-    framework.UpdateRenderWindow(instance, deltaSeconds)
-
-    root.after(1, main_loop_callback)
 
 if __name__ == "__main__":
-
-    framework = ctypes.CDLL("./ImageWriterAPI.dll")
-
-    framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-    framework.CreateImageWriterInstance.restype = ctypes.c_bool
-
-    framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-    framework.DrawCircle.restype = ctypes.c_bool
-
-    framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-    framework.DrawRectangle.restype = ctypes.c_bool
-
-    framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_int64]
-    framework.InitRenderWindow.restype = ctypes.c_bool
-
-    framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_float]
-    framework.UpdateRenderWindow.restype = ctypes.c_bool
-
-    framework.DisposeRenderWindow.argtypes = [HImageWriterInstance]
-    framework.DisposeRenderWindow.restype = ctypes.c_bool
     
-    framework.TEMP_IsRenderWindowOpen.argtypes = [HImageWriterInstance]
-    framework.TEMP_IsRenderWindowOpen.restype = ctypes.c_bool
+    # create UI
+    root = WindowUI(name = "My Test App", windowSize="1920x1080")   
 
-    framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-    framework.DestroyImageWriterInstance.restype = ctypes.c_bool
-
-
-    instance = HImageWriterInstance()
-
-    if not framework.CreateImageWriterInstance(ctypes.byref(instance)):
-        print("Failed to create image writer instance")
-        exit(1)
-
-    imageWriterThread = threading.Thread(target = runImageWriterFlow, args=(instance,))
-    imageWriterThread.start()
-
-    root = tk.Tk()
-    root.title("My App")
-    root.geometry("1920x1080")
-
-    canvas = tk.Canvas(root, width=640, height=480, bg="black")
-    canvas.pack(padx=50, pady=50, expand=True, fill=tk.BOTH)
-
-    button = tk.Button(
-        root, 
-        text="Click Me", 
-        font=("Helvetica", 16, "bold"),
-        padx=5,
-        pady=2
-    )
-
-    # 3. Position the button in the window
-    button.pack(pady=20)
-
-
-    root.update()
-    canvasId = canvas.winfo_id()
-
-    framework.InitRenderWindow(instance, canvasId)
-    root.after(1, main_loop_callback)
-
-    clock = pygame.time.Clock()
+    # create ImageWriter
+    sampleInstance = HImageWriterInstance()
+    sampleInstance.Init(root.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = createSomeSampleShapes)
+    
+    # run UI
     root.mainloop()
     
     print("Disposing")
-    framework.DisposeRenderWindow(instance)
-
-    imageWriterThread.join()
-    framework.DestroyImageWriterInstance(ctypes.byref(instance))
+    
+    # dispose
+    sampleInstance.Dispose()

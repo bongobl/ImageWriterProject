@@ -1,6 +1,5 @@
 #pragma once
 #include <stdio.h>
-#include <windows.h>
 #include <cstdint>
 struct HImageWriterInstance
 {
@@ -19,5 +18,5 @@ extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instanc
 extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance instance, int64_t windowHandle);
 extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, float deltaTime);
 extern "C" __declspec(dllexport) bool DisposeRenderWindow(HImageWriterInstance instance);
-extern "C" __declspec(dllexport) bool TEMP_IsRenderWindowOpen(HImageWriterInstance instance);
+extern "C" __declspec(dllexport) bool IsIsolatedRenderWindowOpen(HImageWriterInstance instance);
 
