@@ -13,14 +13,15 @@ import logging
 import ctypes
 from ctypes import *
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 
 # Logs go to stderr; stdout is reserved for the MCP protocol.
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("imagewriter")
 
 
-mcp = FastMCP(
+mcp = MCPServer(
     "ImageWriter",
     instructions=(
         "This server generates images of any given size and exports them to disk"
@@ -65,7 +66,7 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> MCPOutcome:
     """
 
     if not connectToImageWriterApp():
-        raise RuntimeError("drawCircle(): Failed to connect to ImageWriter app")
+        raise ToolError("drawCircle(): Failed to connect to ImageWriter app")
 
     commIn = Command.DrawCircle
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
@@ -86,7 +87,7 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> MCPOutcome:
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        raise RuntimeError("drawCircle(): Failed to send command to ImageWriter app")
+        raise ToolError("drawCircle(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
@@ -96,7 +97,7 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> MCPOutcome:
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        raise RuntimeError("drawCircle(): Failed to receive reply from ImageWriter app")
+        raise ToolError("drawCircle(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
     reply = Reply.from_buffer_copy(replyBuffer)
@@ -119,7 +120,7 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
     """
 
     if not connectToImageWriterApp():
-        raise RuntimeError("drawRectangle(): Failed to connect to ImageWriter app")
+        raise ToolError("drawRectangle(): Failed to connect to ImageWriter app")
 
     commIn = Command.DrawRectangle
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
@@ -139,7 +140,7 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        raise RuntimeError("drawRectangle(): Failed to send command to ImageWriter app")
+        raise ToolError("drawRectangle(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
@@ -149,7 +150,7 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        raise RuntimeError("drawRectangle(): Failed to receive reply from ImageWriter app")
+        raise ToolError("drawRectangle(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
     reply = Reply.from_buffer_copy(replyBuffer)
