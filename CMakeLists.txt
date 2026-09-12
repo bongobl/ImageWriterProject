@@ -92,10 +92,11 @@ target_include_directories(TestApp PRIVATE ${ALL_INCLUDE_DIRS})
 target_link_libraries(TestApp ImageWriterAPI)
 
 
-##################################   Python Files ##################################
+##################################   Python Files   ##################################
 
 set(PYTHON_FILES
     "${FRAMEWORK_SRC_DIR}/TestApp.py"
+    "${FRAMEWORK_SRC_DIR}/ImageWriter.py"
     "${APP_DIR}/ImageWriterProtocol.py"
     "${APP_DIR}/ImageWriterApp.py"
 )

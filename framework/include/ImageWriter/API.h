@@ -1,11 +1,13 @@
 #pragma once
 #include <stdio.h>
 #include <cstdint>
-struct HImageWriterInstance
+
+struct ImageWriter
 {
     void* pData;
 };
 
+typedef ImageWriter HImageWriterInstance;
 // App lifecycle
 extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInstance* pInstance);
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance);

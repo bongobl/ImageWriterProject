@@ -1,8 +1,7 @@
-import socket, ctypes, threading, pygame, time, tkinter as tk
+import socket, threading, pygame, time, errno, tkinter as tk
 from ImageWriterProtocol import *
+from ImageWriter import *
 from ctypes import *
-import errno
-
 
 # Winsock Constant: Socket operation on non-socket
 WSAENOTSOCK = 10038
@@ -51,80 +50,8 @@ class WindowUI(tk.Tk):
 def isWindowUIOpen():
     return root.windowIsActive
 
-# TODO: Mirror API.h: move to common header
-class HImageWriterInstance(ctypes.Structure):
-    _fields_ = [
-        ("pData", ctypes.c_void_p),
-    ]
 
-    def Init(self, windowHandle, fnIsWindowOpen, fnReceiveCommands):
-        
-        self.framework = ctypes.CDLL("./ImageWriterAPI.dll")
-
-        self.framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-        self.framework.CreateImageWriterInstance.restype = ctypes.c_bool
-
-        self.framework.DrawCircle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-        self.framework.DrawCircle.restype = ctypes.c_bool
-
-        self.framework.DrawRectangle.argtypes = [HImageWriterInstance, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-        self.framework.DrawRectangle.restype = ctypes.c_bool
-
-        self.framework.InitRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_int64]
-        self.framework.InitRenderWindow.restype = ctypes.c_bool
-
-        self.framework.UpdateRenderWindow.argtypes = [HImageWriterInstance, ctypes.c_float]
-        self.framework.UpdateRenderWindow.restype = ctypes.c_bool
-
-        self.framework.DisposeRenderWindow.argtypes = [HImageWriterInstance]
-        self.framework.DisposeRenderWindow.restype = ctypes.c_bool
-
-        self.framework.DestroyImageWriterInstance.argtypes = [ctypes.POINTER(HImageWriterInstance)]
-        self.framework.DestroyImageWriterInstance.restype = ctypes.c_bool
-
-        self.framework.IsIsolatedRenderWindowOpen.argtypes = [HImageWriterInstance]
-        self.framework.IsIsolatedRenderWindowOpen.restype = ctypes.c_bool
-
-        if not self.framework.CreateImageWriterInstance(ctypes.byref(self)):
-            print("Failed to create image writer instance")
-            exit(1)
-
-        self.fnReceiveCommands = fnReceiveCommands
-        self.imageWriterThread = threading.Thread(target = fnReceiveCommands, args=(self,))
-        self.imageWriterThread.start()
-
-
-        self.fnIsWindowOpen = fnIsWindowOpen
-
-        # if there was no window handle, SFML will create its own isolated, so we must rely
-        # on its event handling to tell us if the window is open
-        if windowHandle == 0:
-            self.fnIsWindowOpen = lambda: self.framework.IsIsolatedRenderWindowOpen(self)
-
-
-        self.windowLoopThread = threading.Thread(target = self.runRenderWindow, args=(windowHandle, ))
-        self.windowLoopThread.start()
-
-
-    def runRenderWindow(self, windowHandle):
-
-        self.framework.InitRenderWindow(self, windowHandle)
-
-        clock = pygame.time.Clock()
-        while self.fnIsWindowOpen():
-            deltaSeconds = clock.tick(12) / 1000.0
-            self.framework.UpdateRenderWindow(self, deltaSeconds)
-
-        self.framework.DisposeRenderWindow(self)
-
-    def Dispose(self):
-
-        self.windowLoopThread.join()
-        self.imageWriterThread.join()
-        self.framework.DestroyImageWriterInstance(ctypes.byref(self))
-
-
-def runNetworkService(instance: HImageWriterInstance):
+def runNetworkService(instance: ImageWriter):
 
     global connToClient
     global serverSocket
@@ -192,7 +119,7 @@ def runNetworkService(instance: HImageWriterInstance):
                             # deserialize drawCircle params
                             circleParams = DrawCircleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {circleParams.toString()}")
-                            frameworkFunctionStatus = instance.framework.DrawCircle(instance, frameworkFunctionMessage, circleParams.centerX, circleParams.centerY, circleParams.radius);
+                            frameworkFunctionStatus = instance.DrawCircle(frameworkFunctionMessage, circleParams.centerX, circleParams.centerY, circleParams.radius);
 
                         case Command.DrawRectangle:
 
@@ -204,7 +131,7 @@ def runNetworkService(instance: HImageWriterInstance):
                             # deserialize drawRectangle params
                             rectangleParams = DrawRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams.toString()}")
-                            frameworkFunctionStatus = instance.framework.DrawRectangle(instance, frameworkFunctionMessage, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY);
+                            frameworkFunctionStatus = instance.DrawRectangle(frameworkFunctionMessage, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY);
 
                         case Command.Disconnecting:
                             
@@ -237,13 +164,11 @@ if __name__ == "__main__":
     root = WindowUI(name = "My Test App", windowSize="1920x1080")   
 
     # create ImageWriter
-    sampleInstance = HImageWriterInstance()
+    sampleInstance = ImageWriter()
     sampleInstance.Init(root.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = runNetworkService)
     
     # run UI
     root.mainloop()
-    
-    print("Disposing")
     
     # close sockets
     try:
