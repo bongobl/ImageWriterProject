@@ -14,13 +14,22 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	printf("%s\n", statusMessage);
 
 	system("pause");
+	ClearImage(instance, statusMessage);
+
+	system("pause");
 	DrawCircle(instance, statusMessage, 400, 200, 80);
 	DrawRectangle(instance, statusMessage, 100, 150, 75, 120);
+
+	system("pause");
+	ClearImage(instance, statusMessage);
 
 	system("pause");
 	DrawCircle(instance, statusMessage, 800, 300, 70);
 	DrawCircle(instance, statusMessage, 300, 550, 150);
 	DrawRectangle(instance, statusMessage, 500, 300, 400, 10);
+
+	system("pause");
+	ClearImage(instance, statusMessage);
 }
 int main(void)
 {

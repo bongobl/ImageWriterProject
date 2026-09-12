@@ -8,6 +8,7 @@ struct InstanceData;
 typedef bool (*PfnCoreInitialize)(InstanceData*);
 typedef bool (*PfnCoreDrawCircle)(InstanceData, int, int, int);
 typedef bool (*PfnCoreDrawRectangle)(InstanceData, int, int, int, int);
+typedef bool (*PfnCoreClearImage)(InstanceData);
 typedef bool (*PfnCoreInitRenderWindow)(InstanceData, int64_t);
 typedef bool (*PfnCoreUpdateRenderWindow)(InstanceData, float);
 typedef bool (*PfnCoreDisposeRenderWindow)(InstanceData);
@@ -21,6 +22,7 @@ struct InstanceData
     PfnCoreInitialize pfnCoreInitialize;
     PfnCoreDrawCircle pfnCoreDrawCircle;
     PfnCoreDrawRectangle pfnCoreDrawRectangle;
+    PfnCoreClearImage pfnCoreClearImage;
     PfnCoreInitRenderWindow pfnCoreInitRenderWindow;
     PfnCoreUpdateRenderWindow pfnCoreUpdateRenderWindow;
     PfnCoreDisposeRenderWindow pfnCoreDisposeRenderWindow;

@@ -53,6 +53,20 @@ extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, i
 	return true;
 }
 
+extern "C" __declspec(dllexport) bool clearImage(InstanceData instanceData)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "clearImage: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on clearImage()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	pCoreData->m_Shapes.destroyAllShapes();
+
+	return true;
+}
 extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData, int64_t windowHandle)
 {
 	if (!instanceData.pCoreData) {

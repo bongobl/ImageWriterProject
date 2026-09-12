@@ -20,7 +20,7 @@ class WindowUI(tk.Tk):
 
         button = tk.Button(
             self, 
-            text="TODO: Clear canvas",
+            text="Clear Image",
             command=self.onClickedClearButton,
             font=("Helvetica", 16, "bold"),
             padx=5,
@@ -37,7 +37,8 @@ class WindowUI(tk.Tk):
         self.windowIsActive = True
 
     def onClickedClearButton(self):
-        print("TODO: Make this button clear the canvas!")
+        statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
+        imageWriter.ClearImage(statusMessage)
 
     def on_window_close(self):
     
@@ -164,8 +165,8 @@ if __name__ == "__main__":
     root = WindowUI(name = "My Test App", windowSize="1920x1080")   
 
     # create ImageWriter
-    sampleInstance = ImageWriter()
-    sampleInstance.Init(root.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = runNetworkService)
+    imageWriter = ImageWriter()
+    imageWriter.Init(root.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = runNetworkService)
     
     # run UI
     root.mainloop()
@@ -181,4 +182,4 @@ if __name__ == "__main__":
     serverSocket.close()
 
     # dispose
-    sampleInstance.Dispose()
+    imageWriter.Dispose()

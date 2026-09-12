@@ -11,7 +11,7 @@
 class ShapeList {
 
 	// TODO: when implementing add/remove, need to store in pointer map
-	std::vector<sf::Shape*> m_SFMLDrawables;
+	std::vector<sf::Shape*> m_Shapes;
 	mutable std::shared_mutex mutex;
 
 public:
@@ -19,31 +19,31 @@ public:
 
 		std::unique_lock<std::shared_mutex> lock(mutex);
 
-		m_SFMLDrawables.push_back(pDrawable);
+		m_Shapes.push_back(pDrawable);
 	}
 
 	void dummyUpdateShapes(float deltaTime) {
 		std::shared_lock<std::shared_mutex> lock(mutex);
 
-		for (int i = 0; i < m_SFMLDrawables.size(); ++i) {
-			m_SFMLDrawables.at(i)->rotate(sf::radians(deltaTime));
+		for (int i = 0; i < m_Shapes.size(); ++i) {
+			m_Shapes.at(i)->rotate(sf::radians(deltaTime));
 		}
 	}
 	void drawShapes(sf::RenderWindow& window) {
 
 		std::shared_lock<std::shared_mutex> lock(mutex);
 
-		for (int i = 0; i < m_SFMLDrawables.size(); ++i) {
-			window.draw(*m_SFMLDrawables.at(i));
+		for (int i = 0; i < m_Shapes.size(); ++i) {
+			window.draw(*m_Shapes.at(i));
 		}
 	}
 
 	void destroyAllShapes() {
-		for (int i = 0; i < m_SFMLDrawables.size(); ++i) {
-			delete m_SFMLDrawables.at(i);
-			m_SFMLDrawables.at(i) = nullptr;
+		for (int i = 0; i < m_Shapes.size(); ++i) {
+			delete m_Shapes.at(i);
+			m_Shapes.at(i) = nullptr;
 		}
-		m_SFMLDrawables.clear();
+		m_Shapes.clear();
 	}
 };
 

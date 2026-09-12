@@ -79,3 +79,6 @@ class ImageWriter(ctypes.Structure):
 
     def DrawRectangle(self, statusMessage, centerX, centerY, halfExtentX, halfExtentY):
         return self.framework.DrawRectangle(self, statusMessage, centerX, centerY, halfExtentX, halfExtentY)
+
+    def ClearImage(self, statusMessage):
+        return self.framework.ClearImage(self, statusMessage)
