@@ -109,7 +109,11 @@ def runNetworkService(instance: ImageWriter):
                     frameworkFunctionStatus = False
                     frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
                     match command:
-                        
+
+                        case Command.ClearImage:
+
+                            print("From client: Clearing image")
+                            frameworkFunctionStatus = instance.ClearImage(frameworkFunctionMessage);
                         case Command.DrawCircle:
 
                             status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(DrawCircleParams))
@@ -137,6 +141,10 @@ def runNetworkService(instance: ImageWriter):
                         case Command.Disconnecting:
                             
                             print(f"Client at {clientAddr} gracefully disconnected\n\n")
+
+                            # break out of client listening loop and go back to listening for
+                            # any new clients listening on port
+                            connToClient.close()
                             break
                             
                         case _:

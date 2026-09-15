@@ -10,6 +10,7 @@ COMMAND_SIZE = 1
 
 class Command(IntEnum):
 
+    ClearImage = 1
     DrawCircle = 2
     DrawRectangle = 3
     Disconnecting = 5

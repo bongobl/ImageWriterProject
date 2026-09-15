@@ -53,15 +53,18 @@ def createSomeSampleShapes(instance: ImageWriter):
 
     statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
-    time.sleep(0.5)
+    time.sleep(1.0)
     instance.DrawCircle(statusMessage, 350, 200, 100)
     instance.DrawRectangle(statusMessage, 1500, 700, 200, 150)
+    
 
-    time.sleep(0.5)
+    time.sleep(1.0)
+    instance.ClearImage(statusMessage);
     instance.DrawCircle(statusMessage, 400, 200, 80);
     instance.DrawRectangle(statusMessage, 100, 150, 75, 120)
 
-    time.sleep(0.5)
+    time.sleep(1.0)
+    instance.ClearImage(statusMessage);
     instance.DrawCircle(statusMessage, 800, 300, 70)
     instance.DrawCircle(statusMessage, 300, 550, 150)
     instance.DrawRectangle(statusMessage, 500, 300, 400, 10)

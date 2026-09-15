@@ -57,13 +57,47 @@ def disconnectFromImageWriter():
     finally:
         connToServer.close()
 
+@mcp.tool()
+def clearImage() -> MCPOutcome:
+    """clears the image of all drawn shapes"""
+
+    if not connectToImageWriterApp():
+        raise ToolError("clearImage(): Failed to connect to ImageWriter app")
+
+    commIn = Command.ClearImage
+    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
+
+    # send message to server
+    try:
+        connToServer.sendall(commandBuffer)
+
+    # will fail if server had disconnected at time of sending message
+    except ConnectionResetError as e:
+        logger.error(f"ConnectionResetError: {e}\n\n")
+        disconnectFromImageWriter()
+        raise ToolError("clearImage(): Failed to send command to ImageWriter app")
+
+    replyBuffer = bytearray()
+    
+    # wait here and receive message from client
+    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
+    if not status:
+        # log error message and return to connecting state
+        logger.error(errorMessage)
+        disconnectFromImageWriter()
+        raise ToolError("clearImage(): Failed to receive reply from ImageWriter app")
+    
+    # deserialize client message and log
+    reply = Reply.from_buffer_copy(replyBuffer)
+    logger.info(f"From server: {reply.toString()}")
+
+    disconnectFromImageWriter()
+
+    return reply.toMCPOutcome()
 
 @mcp.tool()
 def drawCircle(centerX: int, centerY: int, radius: int) -> MCPOutcome:
-    """draws a circle on an image
-    Importantly, this should not be called before an image is set up or it will fail
-    Returns True on success, False on failure
-    """
+    """draws a circle on an image"""
 
     if not connectToImageWriterApp():
         raise ToolError("drawCircle(): Failed to connect to ImageWriter app")
@@ -103,21 +137,13 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> MCPOutcome:
     reply = Reply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
-    # serialize params
-    paramsBuffer = bytes(circleParams)
-
-
     disconnectFromImageWriter()
 
     return reply.toMCPOutcome()
 
 @mcp.tool()
 def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int) -> MCPOutcome:
-    """draws a rectangle on an image
-
-    Importantly, this should not be called before an image is set up or it will fail
-    Returns True on success, False on failure
-    """
+    """draws a rectangle on an image"""
 
     if not connectToImageWriterApp():
         raise ToolError("drawRectangle(): Failed to connect to ImageWriter app")
@@ -155,9 +181,6 @@ def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int
     # deserialize client message and log
     reply = Reply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
-
-    # serialize params
-    paramsBuffer = bytes(rectangleParams)
 
     disconnectFromImageWriter()
 
