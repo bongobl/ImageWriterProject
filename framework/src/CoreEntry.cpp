@@ -12,7 +12,7 @@ extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, int centerX, int centerY, int radius)
+extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, float posX, float posY, float radius)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "drawCircle: instanceData.pCoreData was null" << std::endl;
@@ -23,17 +23,18 @@ extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, int 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
 
-	sf::CircleShape* pCircleShape = new sf::CircleShape(radius);
+	float screenRadius = pCoreData->screenFromWorldScaleFactor * radius;
+	sf::CircleShape* pCircleShape = new sf::CircleShape(screenRadius);
 	pCircleShape->setFillColor(sf::Color::Green);
-	pCircleShape->setOrigin(sf::Vector2f(radius, radius));
-	pCircleShape->setPosition(sf::Vector2f(centerX, centerY));
+	pCircleShape->setOrigin(sf::Vector2f(screenRadius, screenRadius));
+	pCircleShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(posX, posY));
 
 	pCoreData->m_Shapes.addShape(pCircleShape);
 
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, int centerX, int centerY, int halfExtentX, int halfExtentY)
+extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, float posX, float posY, float halfExtentX, float halfExtentY)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "drawRectangle: instanceData.pCoreData was null" << std::endl;
@@ -43,10 +44,11 @@ extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, i
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
-	sf::RectangleShape* pRectShape = new sf::RectangleShape(sf::Vector2f(halfExtentX * 2, halfExtentY * 2));
+	sf::Vector2f screenExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(halfExtentX * 2, halfExtentY * 2);
+	sf::RectangleShape* pRectShape = new sf::RectangleShape(screenExtents);
 	pRectShape->setFillColor(sf::Color::Magenta);
-	pRectShape->setOrigin(sf::Vector2f(halfExtentX, halfExtentY));
-	pRectShape->setPosition(sf::Vector2f(centerX, centerY));
+	pRectShape->setOrigin(screenExtents / 2.0f);
+	pRectShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(posX, posY));
 
 	pCoreData->m_Shapes.addShape(pRectShape);
 
@@ -88,6 +90,18 @@ extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData
 	sf::RenderWindow& window = *pCoreData->pWindow;
 	window.setKeyRepeatEnabled(false);
 	window.setFramerateLimit(120);
+
+	// read window initial size
+	sf::Vector2u size = window.getSize();
+	pCoreData->initialWindowWidth = size.x;
+	pCoreData->initialWindowHeight = size.y;
+
+	pCoreData->screenFromWorldScaleFactor = (pCoreData->initialWindowHeight / 2.0f) * pCoreData->worldZoomOutFactor;
+	pCoreData->screenFromWorld = sf::Transform()
+		.translate(sf::Vector2f(pCoreData->initialWindowWidth / 2, pCoreData->initialWindowHeight / 2))
+		.scale(sf::Vector2f(pCoreData->initialWindowWidth / 2, -pCoreData->initialWindowHeight / 2))
+		.scale(sf::Vector2f((float)pCoreData->initialWindowHeight / pCoreData->initialWindowWidth, 1))
+		.scale(sf::Vector2f(pCoreData->worldZoomOutFactor, pCoreData->worldZoomOutFactor));
 
 	// The thread that initializes this window may not be the one that renders to it
 	// deactivate OpenGL context for this thread

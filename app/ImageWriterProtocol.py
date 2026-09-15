@@ -17,9 +17,9 @@ class Command(IntEnum):
 
 class DrawCircleParams(ctypes.Structure):
     _fields_ = [
-        ("centerX", ctypes.c_int),
-        ("centerY", ctypes.c_int),
-        ("radius", ctypes.c_int),
+        ("centerX", ctypes.c_float),
+        ("centerY", ctypes.c_float),
+        ("radius", ctypes.c_float),
     ]
 
     def toString(self):
@@ -27,10 +27,10 @@ class DrawCircleParams(ctypes.Structure):
 
 class DrawRectangleParams(ctypes.Structure):
     _fields_ = [
-        ("centerX", ctypes.c_int),
-        ("centerY", ctypes.c_int),
-        ("halfExtentX", ctypes.c_int),
-        ("halfExtentY", ctypes.c_int),
+        ("centerX", ctypes.c_float),
+        ("centerY", ctypes.c_float),
+        ("halfExtentX", ctypes.c_float),
+        ("halfExtentY", ctypes.c_float),
     ]
 
     def toString(self):

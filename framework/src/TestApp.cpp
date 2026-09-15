@@ -8,25 +8,29 @@ void runImageWriterFlow(HImageWriterInstance instance)
 {
 	char statusMessage[256] = "Command executed successfully";
 
+	float maxY = 20 / 3.0f;
+	float maxX = maxY * (1920 / 1080.0f);
+
 	system("pause");
-	DrawCircle(instance, statusMessage, 350, 200, 100);
-	DrawRectangle(instance, statusMessage, 1500, 700, 200, 150);
+	DrawCircle(instance, statusMessage, maxX, maxY, 1);
+	DrawRectangle(instance, statusMessage, -maxX, -maxY, 3, 2);
 	printf("%s\n", statusMessage);
 
 	system("pause");
 	ClearImage(instance, statusMessage);
 
 	system("pause");
-	DrawCircle(instance, statusMessage, 400, 200, 80);
-	DrawRectangle(instance, statusMessage, 100, 150, 75, 120);
+	DrawRectangle(instance, statusMessage, 0, 0, maxX - 1, maxY - 1);
+	DrawCircle(instance, statusMessage, 3, -2, 3);
+	
 
 	system("pause");
 	ClearImage(instance, statusMessage);
 
 	system("pause");
-	DrawCircle(instance, statusMessage, 800, 300, 70);
-	DrawCircle(instance, statusMessage, 300, 550, 150);
-	DrawRectangle(instance, statusMessage, 500, 300, 400, 10);
+	DrawCircle(instance, statusMessage, -5, 3, 2);
+	DrawCircle(instance, statusMessage, 7, -4, 0.5f);
+	DrawRectangle(instance, statusMessage, -8, -1, 1, 3);
 
 	system("pause");
 	ClearImage(instance, statusMessage);

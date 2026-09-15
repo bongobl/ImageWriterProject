@@ -112,7 +112,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     return pInstanceData->pfnCoreInitialize(pInstanceData);
 }
 
-extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, int centerX, int centerY, int radius)
+extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, float posX, float posY, float radius)
 {
     if (!instance.pData) {
         fprintf(stderr, "DrawCircle: instance.pData was null\n");
@@ -122,10 +122,10 @@ extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, 
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreDrawCircle(*pInstanceData, centerX, centerY, radius);
+    return pInstanceData->pfnCoreDrawCircle(*pInstanceData, posX, posY, radius);
 }
 
-extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, char* pStatusMessage, int centerX, int centerY, int halfExtentX, int halfExtentY)
+extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, char* pStatusMessage, float posX, float posY, float halfExtentX, float halfExtentY)
 {
     if (!instance.pData) {
         fprintf(stderr, "DrawRectangle: instance.pData was null\n");
@@ -135,7 +135,7 @@ extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instanc
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreDrawRectangle(*pInstanceData, centerX, centerY, halfExtentX, halfExtentY);
+    return pInstanceData->pfnCoreDrawRectangle(*pInstanceData, posX, posY, halfExtentX, halfExtentY);
 }
 
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage)

@@ -15,10 +15,10 @@ class ImageWriter(ctypes.Structure):
         self.framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(ImageWriter)]
         self.framework.CreateImageWriterInstance.restype = ctypes.c_bool
 
-        self.framework.DrawCircle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+        self.framework.DrawCircle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.c_float, ctypes.c_float, ctypes.c_float]
         self.framework.DrawCircle.restype = ctypes.c_bool
 
-        self.framework.DrawRectangle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+        self.framework.DrawRectangle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float]
         self.framework.DrawRectangle.restype = ctypes.c_bool
 
         self.framework.InitRenderWindow.argtypes = [ImageWriter, ctypes.c_int64]

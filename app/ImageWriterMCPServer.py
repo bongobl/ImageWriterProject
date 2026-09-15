@@ -24,9 +24,11 @@ logger = logging.getLogger("imagewriter")
 mcp = MCPServer(
     "ImageWriter",
     instructions=(
-        "This server generates images of any given size and exports them to disk"
-        "In all of the Draw* commands, a centerX value of 0 is the far left and increases as you move to the right"
-        "Likewise a centerY value of 0 is the top of the image and increases as you move down"
+        "This server connects to an image writer application tells it to draw whatever the user wishes"
+        "Note the coordinate system is such that (x,y) = (0,0) is the center of the image the"
+        "x axis range is roughly -12.5 to 12.5 and the y axis range is roughly -6.5 to 6.5"
+        "X values increase as you move toward the right of the image"
+        "Y values increase as you move toward the top of the image"
     ),
 )
 
@@ -96,7 +98,7 @@ def clearImage() -> MCPOutcome:
     return reply.toMCPOutcome()
 
 @mcp.tool()
-def drawCircle(centerX: int, centerY: int, radius: int) -> MCPOutcome:
+def drawCircle(centerX: float, centerY: float, radius: float) -> MCPOutcome:
     """draws a circle on an image"""
 
     if not connectToImageWriterApp():
@@ -142,7 +144,7 @@ def drawCircle(centerX: int, centerY: int, radius: int) -> MCPOutcome:
     return reply.toMCPOutcome()
 
 @mcp.tool()
-def drawRectangle(centerX: int, centerY: int, halfExtentX: int, halfExtentY: int) -> MCPOutcome:
+def drawRectangle(centerX: float, centerY: float, halfExtentX: float, halfExtentY: float) -> MCPOutcome:
     """draws a rectangle on an image"""
 
     if not connectToImageWriterApp():

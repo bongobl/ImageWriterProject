@@ -13,8 +13,8 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance);
 
 // AI API
-extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, int centerX, int centerY, int radius);
-extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, char* pStatusMessage, int centerX, int centerY, int halfExtentX, int halfExtentY);
+extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, float centerX, float centerY, float radius);
+extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, char* pStatusMessage, float centerX, float centerY, float halfExtentX, float halfExtentY);
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage);
 
 // Window lifecycle

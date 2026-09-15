@@ -81,7 +81,7 @@ def runNetworkService(instance: ImageWriter):
 
                 # Check if the error is due to the socket being closed or invalidated
                 if e.errno in (errno.EBADF, errno.EINVAL) or getattr(e, 'winerror', None) == WSAENOTSOCK:
-                    print("Listening socket was closed. returning from runNetworkService().")
+                    print("Listening socket was closed. exiting service loop.")
                     return
                 else:
                     # This is a real, unexpected network or system error
@@ -170,7 +170,7 @@ def runNetworkService(instance: ImageWriter):
 if __name__ == "__main__":
 
     # create UI
-    root = WindowUI(name = "My Test App", windowSize="1920x1080")   
+    root = WindowUI(name = "ImageWriter App", windowSize="1920x1080")   
 
     # create ImageWriter
     imageWriter = ImageWriter()

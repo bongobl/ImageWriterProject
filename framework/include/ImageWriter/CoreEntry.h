@@ -5,8 +5,8 @@
 #include <cstdint>
 
 extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData);
-extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, int centerX, int centerY, int radius);
-extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, int centerX, int centerY, int halfExtentX, int halfExtentY);
+extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, float posX, float posY, float radius);
+extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, float posX, float posY, float halfExtentX, float halfExtentY);
 extern "C" __declspec(dllexport) bool clearImage(InstanceData instanceData);
 
 extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData, int64_t windowHandle);

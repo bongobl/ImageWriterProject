@@ -50,6 +50,13 @@ public:
 struct CoreData {
 
 	sf::RenderWindow* pWindow = nullptr;
+	float initialWindowWidth = 0;
+	float initialWindowHeight = 0;
+
+	// screen space from world space conversion
+	const float worldZoomOutFactor = 0.15;
+	float screenFromWorldScaleFactor = 1;
+	sf::Transform screenFromWorld = sf::Transform::Identity;
 
 	ShapeList m_Shapes;
 };
