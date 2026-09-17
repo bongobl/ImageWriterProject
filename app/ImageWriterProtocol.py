@@ -10,9 +10,10 @@ COMMAND_SIZE = 1
 
 class Command(IntEnum):
 
-    ClearImage = 1
-    DrawCircle = 2
-    DrawRectangle = 3
+    GetCameraView = 1
+    ClearImage = 2
+    DrawCircle = 3
+    DrawRectangle = 4
     Disconnecting = 5
 
 class DrawCircleParams(ctypes.Structure):
@@ -55,6 +56,33 @@ class PlainStatusReply(ctypes.Structure):
         return PlainStatusReplyMCPPayload(success = self.success, message = self.message.decode('utf-8'))
 
 
+
+class CameraViewReplyMCPPayload(BaseModel):
+    success: bool = False
+    message: str = ""
+    posX: float = 0
+    posY: float = 0
+    maxX: float = 0
+    maxY: float = 0
+    angle: float = 0
+
+class CameraViewReply(ctypes.Structure):
+    type MCPPayload = CameraViewReplyMCPPayload
+    _fields_ = [
+        ("success", ctypes.c_bool),
+        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
+        ("posX", ctypes.c_float),
+        ("posY", ctypes.c_float),
+        ("maxX", ctypes.c_float),
+        ("maxY", ctypes.c_float),
+        ("angle", ctypes.c_float)
+    ]
+
+    def toString(self):
+        return f"CameraViewReply: success = {self.success}, message = {self.message.decode('utf-8')}, posX = {self.posX}, posY = {self.posY}, maxX = {self.maxX}, maxY = {self.maxY}, angle = {self.angle}"
+
+    def toMCPPayload(self) -> MCPPayload:
+        return CameraViewReplyMCPPayload(success = self.success, message = self.message.decode('utf-8'), posX = self.posX, posY = self.posY, maxX = self.maxX, maxY = self.maxY, angle = self.angle)
 
 def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:
 

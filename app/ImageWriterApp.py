@@ -109,11 +109,25 @@ def runNetworkService(instance: ImageWriter):
                     frameworkFunctionStatus = False
                     frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
                     match command:
-
+                        
+                        case Command.GetCameraView:
+                            print("From client: Getting the camera view")
+                            cameraView = RectParams()
+                            frameworkFunctionStatus = instance.GetCameraView(frameworkFunctionMessage, cameraView)
+                            reply = CameraViewReply(
+                                success = frameworkFunctionStatus, 
+                                message = frameworkFunctionMessage.value,
+                                posX = cameraView.posX,
+                                posY = cameraView.posY,
+                                maxX = cameraView.maxX,
+                                maxY = cameraView.maxY,
+                                angle = cameraView.angle
+                            )
                         case Command.ClearImage:
 
                             print("From client: Clearing image")
                             frameworkFunctionStatus = instance.ClearImage(frameworkFunctionMessage);
+                            reply = PlainStatusReply(success = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
                         case Command.DrawCircle:
 
                             status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(DrawCircleParams))
@@ -125,6 +139,7 @@ def runNetworkService(instance: ImageWriter):
                             circleParams = DrawCircleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {circleParams.toString()}")
                             frameworkFunctionStatus = instance.DrawCircle(frameworkFunctionMessage, circleParams.centerX, circleParams.centerY, circleParams.radius);
+                            reply = PlainStatusReply(success = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
 
                         case Command.DrawRectangle:
 
@@ -137,6 +152,7 @@ def runNetworkService(instance: ImageWriter):
                             rectangleParams = DrawRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams.toString()}")
                             frameworkFunctionStatus = instance.DrawRectangle(frameworkFunctionMessage, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY);
+                            reply = PlainStatusReply(success = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
 
                         case Command.Disconnecting:
                             
@@ -151,7 +167,6 @@ def runNetworkService(instance: ImageWriter):
                             print("Unrecognized command")
 
 
-                    reply = PlainStatusReply(success = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
                     print(f"To client: {reply.toString()}")
 
                     # serialize client message

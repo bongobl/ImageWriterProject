@@ -60,8 +60,49 @@ def disconnectFromImageWriter():
         connToServer.close()
 
 @mcp.tool()
+def getCameraView() -> CameraViewReply.MCPPayload:
+    """returns the rectangle representing the camera's view within the world, this is so that users are
+    aware of where shapes will appear in the window based on the world coordinates they are drawn at.
+    It specifies the camera's position, rotation angle and extents. Here minX is always -maxX and minY is always -maxY
+    """
+
+    if not connectToImageWriterApp():
+        raise ToolError("getCameraView(): Failed to connect to ImageWriter app")
+
+    commIn = Command.GetCameraView
+    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
+
+    # send message to server
+    try:
+        connToServer.sendall(commandBuffer)
+
+    # will fail if server had disconnected at time of sending message
+    except ConnectionResetError as e:
+        logger.error(f"ConnectionResetError: {e}\n\n")
+        disconnectFromImageWriter()
+        raise ToolError("clearImage(): Failed to send command to ImageWriter app")
+
+    replyBuffer = bytearray()
+    
+    # wait here and receive message from client
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(CameraViewReply))
+    if not success:
+        # log error message and return to connecting state
+        logger.error(errorMessage)
+        disconnectFromImageWriter()
+        raise ToolError("clearImage(): Failed to receive reply from ImageWriter app")
+    
+    # deserialize client message and log
+    reply = CameraViewReply.from_buffer_copy(replyBuffer)
+    logger.info(f"From server: {reply.toString()}")
+
+    disconnectFromImageWriter()
+
+    return reply.toMCPPayload()
+
+@mcp.tool()
 def clearImage() -> PlainStatusReply.MCPPayload:
-    """clears the image of all drawn shapes"""
+    """clears the world of all drawn shapes"""
 
     if not connectToImageWriterApp():
         raise ToolError("clearImage(): Failed to connect to ImageWriter app")
@@ -98,8 +139,8 @@ def clearImage() -> PlainStatusReply.MCPPayload:
     return reply.toMCPPayload()
 
 @mcp.tool()
-def drawCircle(centerX: float, centerY: float, radius: float) -> PlainStatusReply.MCPPayload:
-    """draws a circle on an image"""
+def drawCircle(positionX: float, positionY: float, radius: float) -> PlainStatusReply.MCPPayload:
+    """places a new circle within the world at specified coordinates and size"""
 
     if not connectToImageWriterApp():
         raise ToolError("drawCircle(): Failed to connect to ImageWriter app")
@@ -108,7 +149,7 @@ def drawCircle(centerX: float, centerY: float, radius: float) -> PlainStatusRepl
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
     # create drawCircle command params
-    circleParams = DrawCircleParams(centerX = centerX, centerY = centerY, radius = radius)
+    circleParams = DrawCircleParams(centerX = positionX, centerY = positionY, radius = radius)
     logger.info(f"To server: {circleParams.toString()}")
 
     # serialize params
@@ -144,8 +185,8 @@ def drawCircle(centerX: float, centerY: float, radius: float) -> PlainStatusRepl
     return reply.toMCPPayload()
 
 @mcp.tool()
-def drawRectangle(centerX: float, centerY: float, halfExtentX: float, halfExtentY: float) -> PlainStatusReply.MCPPayload:
-    """draws a rectangle on an image"""
+def drawRectangle(positionX: float, positionY: float, halfExtentX: float, halfExtentY: float) -> PlainStatusReply.MCPPayload:
+    """places a new rectangle within the world at specified coordinates and size"""
 
     if not connectToImageWriterApp():
         raise ToolError("drawRectangle(): Failed to connect to ImageWriter app")
@@ -154,7 +195,7 @@ def drawRectangle(centerX: float, centerY: float, halfExtentX: float, halfExtent
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
     # create drawRectangle command params
-    rectangleParams = DrawRectangleParams(centerX = centerX, centerY = centerY, halfExtentX = halfExtentX, halfExtentY = halfExtentY)
+    rectangleParams = DrawRectangleParams(centerX = positionX, centerY = positionY, halfExtentX = halfExtentX, halfExtentY = halfExtentY)
     logger.info(f"To server: {rectangleParams.toString()}")
 
     # serialize params
