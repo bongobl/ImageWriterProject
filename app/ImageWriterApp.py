@@ -151,7 +151,7 @@ def runNetworkService(instance: ImageWriter):
                             print("Unrecognized command")
 
 
-                    reply = Reply(status = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
+                    reply = PlainStatusReply(success = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
                     print(f"To client: {reply.toString()}")
 
                     # serialize client message

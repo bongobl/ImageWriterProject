@@ -60,7 +60,7 @@ def disconnectFromImageWriter():
         connToServer.close()
 
 @mcp.tool()
-def clearImage() -> MCPOutcome:
+def clearImage() -> PlainStatusReply.MCPPayload:
     """clears the image of all drawn shapes"""
 
     if not connectToImageWriterApp():
@@ -82,23 +82,23 @@ def clearImage() -> MCPOutcome:
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
-    if not status:
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainStatusReply))
+    if not success:
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
         raise ToolError("clearImage(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
-    reply = Reply.from_buffer_copy(replyBuffer)
+    reply = PlainStatusReply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()
 
-    return reply.toMCPOutcome()
+    return reply.toMCPPayload()
 
 @mcp.tool()
-def drawCircle(centerX: float, centerY: float, radius: float) -> MCPOutcome:
+def drawCircle(centerX: float, centerY: float, radius: float) -> PlainStatusReply.MCPPayload:
     """draws a circle on an image"""
 
     if not connectToImageWriterApp():
@@ -128,23 +128,23 @@ def drawCircle(centerX: float, centerY: float, radius: float) -> MCPOutcome:
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
-    if not status:
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainStatusReply))
+    if not success:
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
         raise ToolError("drawCircle(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
-    reply = Reply.from_buffer_copy(replyBuffer)
+    reply = PlainStatusReply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()
 
-    return reply.toMCPOutcome()
+    return reply.toMCPPayload()
 
 @mcp.tool()
-def drawRectangle(centerX: float, centerY: float, halfExtentX: float, halfExtentY: float) -> MCPOutcome:
+def drawRectangle(centerX: float, centerY: float, halfExtentX: float, halfExtentY: float) -> PlainStatusReply.MCPPayload:
     """draws a rectangle on an image"""
 
     if not connectToImageWriterApp():
@@ -173,20 +173,20 @@ def drawRectangle(centerX: float, centerY: float, halfExtentX: float, halfExtent
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    status, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(Reply))
-    if not status:
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainStatusReply))
+    if not success:
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
         raise ToolError("drawRectangle(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
-    reply = Reply.from_buffer_copy(replyBuffer)
+    reply = PlainStatusReply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()
 
-    return reply.toMCPOutcome()
+    return reply.toMCPPayload()
 
 
 if __name__ == "__main__":

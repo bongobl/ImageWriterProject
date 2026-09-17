@@ -36,22 +36,23 @@ class DrawRectangleParams(ctypes.Structure):
     def toString(self):
         return f"Rectange params: centerX = {self.centerX}, centerY = {self.centerY}, halfExtentX = {self.halfExtentX}, halfExtentY = {self.halfExtentY}"
 
-class MCPOutcome(BaseModel):
+class PlainStatusReplyMCPPayload(BaseModel):
     success: bool = False
     message: str = ""
 
 # Server reply to client after each command
-class Reply(ctypes.Structure):
+class PlainStatusReply(ctypes.Structure):
+    type MCPPayload = PlainStatusReplyMCPPayload
     _fields_ = [
-        ("status", ctypes.c_bool),
+        ("success", ctypes.c_bool),
         ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
     ]
 
     def toString(self):
-        return f"Reply: status = {self.status}, message = {self.message.decode('utf-8')}"
+        return f"PlainStatusReply: success = {self.success}, message = {self.message.decode('utf-8')}"
 
-    def toMCPOutcome(self) -> MCPOutcome:
-        return MCPOutcome(success = self.status, message = self.message.decode('utf-8'))
+    def toMCPPayload(self) -> MCPPayload:
+        return PlainStatusReplyMCPPayload(success = self.success, message = self.message.decode('utf-8'))
 
 
 
