@@ -53,18 +53,20 @@ def createSomeSampleShapes(instance: ImageWriter):
 
     statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
-    maxY = 20 / 3;
-    maxX = maxY * (1920 / 1080);
+    input("Wait for a bit here for Window to initialize... Press Enter")
 
-    input("Press Enter")
-    instance.DrawCircle(statusMessage, maxX, maxY, 1)
-    instance.DrawRectangle(statusMessage, -maxX, -maxY, 3, 2)
+    cameraView = RectParams()
+    instance.GetCameraView(statusMessage, cameraView)
+    print(f"camera maxX = {cameraView.maxX}, maxY = {cameraView.maxY}")
+
+    instance.DrawCircle(statusMessage, cameraView.maxX, cameraView.maxY, 1)
+    instance.DrawRectangle(statusMessage, -cameraView.maxX, -cameraView.maxY, 3, 2)
     
     input("Press Enter")
     instance.ClearImage(statusMessage);
 
     input("Press Enter")
-    instance.DrawRectangle(statusMessage, 0, 0, maxX - 1, maxY - 1)
+    instance.DrawRectangle(statusMessage, 0, 0, cameraView.maxX - 1, cameraView.maxY - 1)
     instance.DrawCircle(statusMessage, 3, -2, 3);
 
     input("Press Enter")

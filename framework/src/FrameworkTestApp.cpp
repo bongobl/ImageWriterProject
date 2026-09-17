@@ -8,19 +8,21 @@ void runImageWriterFlow(HImageWriterInstance instance)
 {
 	char statusMessage[256] = "Command executed successfully";
 
-	float maxY = 20 / 3.0f;
-	float maxX = maxY * (1920 / 1080.0f);
+	RectParams cameraView = {};
+
+	GetCameraView(instance, statusMessage, &cameraView);
+	std::cout << "maxX = " << cameraView.maxX << ", maxY = " << cameraView.maxY << std::endl;
 
 	system("pause");
-	DrawCircle(instance, statusMessage, maxX, maxY, 1);
-	DrawRectangle(instance, statusMessage, -maxX, -maxY, 3, 2);
+	DrawCircle(instance, statusMessage, cameraView.maxX, cameraView.maxY, 1);
+	DrawRectangle(instance, statusMessage, -cameraView.maxX, -cameraView.maxY, 3, 2);
 	printf("%s\n", statusMessage);
 
 	system("pause");
 	ClearImage(instance, statusMessage);
 
 	system("pause");
-	DrawRectangle(instance, statusMessage, 0, 0, maxX - 1, maxY - 1);
+	DrawRectangle(instance, statusMessage, 0, 0, cameraView.maxX - 1, cameraView.maxY - 1);
 	DrawCircle(instance, statusMessage, 3, -2, 3);
 	
 
@@ -43,14 +45,15 @@ int main(void)
 		return EXIT_FAILURE;
 	}
 
+	// Create an isolated window with a handle value of 0
+	int windowHwnd = 0;
+	InitRenderWindow(instance, windowHwnd);
+
 	std::thread imageWriterThread(runImageWriterFlow, instance);
 
 
 	auto prevTime = std::chrono::steady_clock::now();
 
-	// Create an isolated window with a handle value of 0
-	int windowHwnd = 0;
-	InitRenderWindow(instance, windowHwnd);
 	while (IsIsolatedRenderWindowOpen(instance)) {
 		auto currentTime = std::chrono::steady_clock::now();
 

@@ -12,6 +12,25 @@ extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 	return true;
 }
 
+extern "C" __declspec(dllexport) bool getCameraView(InstanceData instanceData, RectParams* pCameraView)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "getCameraView: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on getCameraView()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+	*pCameraView = {
+		.posX = 0,
+		.posY = 0,
+		.maxX = pCoreData->initialWindowWidth / (2 * pCoreData->screenFromWorldScaleFactor),
+		.maxY = pCoreData->initialWindowHeight / (2 * pCoreData->screenFromWorldScaleFactor),
+		.angle = 0
+	};
+
+	return true;
+}
 extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, float posX, float posY, float radius)
 {
 	if (!instanceData.pCoreData) {

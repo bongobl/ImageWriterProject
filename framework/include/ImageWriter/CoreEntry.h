@@ -5,6 +5,8 @@
 #include <cstdint>
 
 extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData);
+
+extern "C" __declspec(dllexport) bool getCameraView(InstanceData instanceData, RectParams* pCameraView);
 extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, float posX, float posY, float radius);
 extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, float posX, float posY, float halfExtentX, float halfExtentY);
 extern "C" __declspec(dllexport) bool clearImage(InstanceData instanceData);

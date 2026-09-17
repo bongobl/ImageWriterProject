@@ -7,12 +7,22 @@ struct ImageWriter
     void* pData;
 };
 
+struct RectParams {
+    float posX;
+    float posY;
+    float maxX;
+    float maxY;
+    float angle;
+};
+
 typedef ImageWriter HImageWriterInstance;
+
 // App lifecycle
 extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInstance* pInstance);
 extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance);
 
 // AI API
+extern "C" __declspec(dllexport) bool GetCameraView(HImageWriterInstance instance, char* pStatusMessage, RectParams* pCameraView);
 extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, float centerX, float centerY, float radius);
 extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, char* pStatusMessage, float centerX, float centerY, float halfExtentX, float halfExtentY);
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage);

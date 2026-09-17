@@ -29,6 +29,15 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         return false;
     }
 
+    PfnCoreGetCameraView pfnCoreGetCameraView = (PfnCoreGetCameraView)GetProcAddress(hDll, "getCameraView");
+
+    if (pfnCoreGetCameraView == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function getCameraView could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
+    
+
     PfnCoreDrawCircle pfnCoreDrawCircle = (PfnCoreDrawCircle)GetProcAddress(hDll, "drawCircle");
 
     if (pfnCoreDrawCircle == NULL) {
@@ -98,6 +107,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     *pInstanceData = {
         .hDll = hDll,
         .pfnCoreInitialize = pfnCoreInitialize,
+        .pfnCoreGetCameraView = pfnCoreGetCameraView,
         .pfnCoreDrawCircle = pfnCoreDrawCircle,
         .pfnCoreDrawRectangle = pfnCoreDrawRectangle,
         .pfnCoreClearImage = pfnCoreClearImage,
@@ -110,6 +120,19 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
 
     // initialize core
     return pInstanceData->pfnCoreInitialize(pInstanceData);
+}
+
+extern "C" __declspec(dllexport) bool GetCameraView(HImageWriterInstance instance, char* pStatusMessage, RectParams* pCameraView)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "GetCameraView: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call GetCameraView() from its underlying framework correctly");
+        return false;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
+    return pInstanceData->pfnCoreGetCameraView(*pInstanceData, pCameraView);
 }
 
 extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, float posX, float posY, float radius)
