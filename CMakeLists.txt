@@ -47,7 +47,7 @@ set(CORE_SRC_FILES
 
 add_library(ImageWriterCore SHARED ${CORE_SRC_FILES} ${CORE_HEADER_FILES})
 
-set_target_properties(ImageWriterCore PROPERTIES FOLDER "ImageWriterFramework")
+set_target_properties(ImageWriterCore PROPERTIES FOLDER "ImageWriter")
 set_target_properties(ImageWriterCore PROPERTIES PREFIX  "")
 target_compile_features(ImageWriterCore PRIVATE cxx_std_20)
 target_include_directories(ImageWriterCore PRIVATE ${ALL_INCLUDE_DIRS})
@@ -68,35 +68,34 @@ set(API_SRC_FILES
 
 add_library(ImageWriterAPI SHARED ${API_SRC_FILES} ${API_HEADER_FILES})
 
-set_target_properties(ImageWriterAPI PROPERTIES FOLDER "ImageWriterFramework")
+set_target_properties(ImageWriterAPI PROPERTIES FOLDER "ImageWriter")
 set_target_properties(ImageWriterAPI PROPERTIES PREFIX  "")
 target_compile_features(ImageWriterAPI PRIVATE cxx_std_20)
 target_include_directories(ImageWriterAPI PRIVATE ${ALL_INCLUDE_DIRS})
 
-target_link_libraries(ImageWriterAPI)
 
-##################################   Test App   ##################################
-project(TestApp)
+##################################  Framework Test App   ##################################
+project(FrameworkTestApp)
 
 set(TEST_APP_SRC_FILES
-	"${FRAMEWORK_SRC_DIR}/TestApp.cpp"
+	"${FRAMEWORK_SRC_DIR}/FrameworkTestApp.cpp"
 )
 
-add_executable(TestApp ${TEST_APP_SRC_FILES})
+add_executable(FrameworkTestApp ${TEST_APP_SRC_FILES})
 
 
-target_compile_features(TestApp PRIVATE cxx_std_20)
-set_target_properties(TestApp PROPERTIES FOLDER "ImageWriterFramework/TestApp")
-target_include_directories(TestApp PRIVATE ${ALL_INCLUDE_DIRS})
+target_compile_features(FrameworkTestApp PRIVATE cxx_std_20)
+set_target_properties(FrameworkTestApp PROPERTIES FOLDER "ImageWriter/TestApp")
+target_include_directories(FrameworkTestApp PRIVATE ${ALL_INCLUDE_DIRS})
 
-target_link_libraries(TestApp ImageWriterAPI)
+target_link_libraries(FrameworkTestApp ImageWriterAPI)
 
 
-##################################   Python Files   ##################################
+##############################   Copy Python Files to app build dir  ###########################
 
 set(PYTHON_FILES
-    "${FRAMEWORK_SRC_DIR}/TestApp.py"
-    "${FRAMEWORK_SRC_DIR}/ImageWriter.py"
+    "${APP_DIR}/FrameworkTestApp.py"
+    "${APP_DIR}/ImageWriter.py"
     "${APP_DIR}/ImageWriterProtocol.py"
     "${APP_DIR}/ImageWriterApp.py"
 )
@@ -114,6 +113,7 @@ foreach(file ${PYTHON_FILES})
     )
 endforeach()
 
+##############################   Copy DLLs to app build dir  ###############################
 if(WIN32) # This command is specific to Windows
     add_custom_command(
         TARGET ImageWriterCore POST_BUILD
