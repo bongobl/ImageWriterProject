@@ -55,18 +55,18 @@ def createSomeSampleShapes(instance: ImageWriter):
 
     input("Wait for a bit here for Window to initialize... Press Enter")
 
-    cameraView = RectParams()
-    instance.GetCameraView(statusMessage, cameraView)
-    print(f"camera maxX = {cameraView.maxX}, maxY = {cameraView.maxY}")
+    cameraTransform = Transform()
+    instance.GetCameraTransform(statusMessage, cameraTransform)
+    print(f"camera scaleX = {cameraTransform.scaleX}, scaleY = {cameraTransform.scaleY}")
 
-    instance.DrawCircle(statusMessage, cameraView.maxX, cameraView.maxY, 1)
-    instance.DrawRectangle(statusMessage, -cameraView.maxX, -cameraView.maxY, 3, 2)
+    instance.DrawCircle(statusMessage, cameraTransform.scaleX, cameraTransform.scaleY, 1)
+    instance.DrawRectangle(statusMessage, -cameraTransform.scaleX, -cameraTransform.scaleY, 3, 2)
     
     input("Press Enter")
     instance.ClearImage(statusMessage);
 
     input("Press Enter")
-    instance.DrawRectangle(statusMessage, 0, 0, cameraView.maxX - 1, cameraView.maxY - 1)
+    instance.DrawRectangle(statusMessage, 0, 0, cameraTransform.scaleX - 1, cameraTransform.scaleY - 1)
     instance.DrawCircle(statusMessage, 3, -2, 3);
 
     input("Press Enter")
@@ -82,7 +82,7 @@ def createSomeSampleShapes(instance: ImageWriter):
 
 
 if __name__ == "__main__":
-    
+
     # create UI
     root = WindowUI(name = "My Test App", windowSize="1920x1080")   
 

@@ -1,21 +1,23 @@
 import ctypes, socket
 from pydantic import BaseModel
 from enum import IntEnum
+from ImageWriterCommon import *
 
 HOST_IP = '127.0.0.1'
 PORT = 65432
 MAX_IMAGE_FILENAME_LENGTH = 64
-MAX_REPLY_MESSAGE_LENGTH = 256
 COMMAND_SIZE = 1
 
+# Commands
 class Command(IntEnum):
 
-    GetCameraView = 1
+    GetCameraTransform = 1
     ClearImage = 2
     DrawCircle = 3
     DrawRectangle = 4
     Disconnecting = 5
 
+# Parameters
 class DrawCircleParams(ctypes.Structure):
     _fields_ = [
         ("centerX", ctypes.c_float),
@@ -37,52 +39,46 @@ class DrawRectangleParams(ctypes.Structure):
     def toString(self):
         return f"Rectange params: centerX = {self.centerX}, centerY = {self.centerY}, halfExtentX = {self.halfExtentX}, halfExtentY = {self.halfExtentY}"
 
-class PlainStatusReplyMCPPayload(BaseModel):
-    success: bool = False
-    message: str = ""
+# Replies
+
+class PlainReplyMCPPayload(BaseModel):
+    status: StatusMCPPayload = ()
 
 # Server reply to client after each command
-class PlainStatusReply(ctypes.Structure):
-    type MCPPayload = PlainStatusReplyMCPPayload
+class PlainReply(ctypes.Structure):
+    type MCPPayload = PlainReplyMCPPayload
     _fields_ = [
-        ("success", ctypes.c_bool),
-        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
+        ("status", Status)
     ]
 
     def toString(self):
-        return f"PlainStatusReply: success = {self.success}, message = {self.message.decode('utf-8')}"
+        return f"(PlainReply: status = {self.status.toString()})"
 
     def toMCPPayload(self) -> MCPPayload:
-        return PlainStatusReplyMCPPayload(success = self.success, message = self.message.decode('utf-8'))
+        return PlainReplyMCPPayload(status = self.status.toMCPPayload())
 
 
+class TransformReplyMCPPayload(BaseModel):
+    status: StatusMCPPayload = ()
+    transform: TransformMCPPayload = ()
 
-class CameraViewReplyMCPPayload(BaseModel):
-    success: bool = False
-    message: str = ""
-    posX: float = 0
-    posY: float = 0
-    maxX: float = 0
-    maxY: float = 0
-    angle: float = 0
-
-class CameraViewReply(ctypes.Structure):
-    type MCPPayload = CameraViewReplyMCPPayload
+class TransformReply(ctypes.Structure):
+    type MCPPayload = TransformReplyMCPPayload
     _fields_ = [
-        ("success", ctypes.c_bool),
-        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
-        ("posX", ctypes.c_float),
-        ("posY", ctypes.c_float),
-        ("maxX", ctypes.c_float),
-        ("maxY", ctypes.c_float),
-        ("angle", ctypes.c_float)
+        ("status", Status),
+        ("transform", Transform),
     ]
 
     def toString(self):
-        return f"CameraViewReply: success = {self.success}, message = {self.message.decode('utf-8')}, posX = {self.posX}, posY = {self.posY}, maxX = {self.maxX}, maxY = {self.maxY}, angle = {self.angle}"
+        return f"(TransformReply: status = {self.status.toString()}, transform = {self.transform.toString()})"
 
     def toMCPPayload(self) -> MCPPayload:
-        return CameraViewReplyMCPPayload(success = self.success, message = self.message.decode('utf-8'), posX = self.posX, posY = self.posY, maxX = self.maxX, maxY = self.maxY, angle = self.angle)
+
+        return TransformReplyMCPPayload(
+            status = self.status.toMCPPayload(),
+            transform = self.transform.toMCPPayload()
+        )
+
 
 def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:
 

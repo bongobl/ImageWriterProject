@@ -1,15 +1,8 @@
-import ctypes, pygame, threading, tkinter as tk
+import pygame, threading, tkinter as tk
 from ctypes import *
+from ImageWriterCommon import *
 
-class RectParams(ctypes.Structure):
-    _fields_ = [
-        ("posX", ctypes.c_float),
-        ("posY", ctypes.c_float),
-        ("maxX", ctypes.c_float),
-        ("maxY", ctypes.c_float),
-        ("angle", ctypes.c_float)
-    ]
-# TODO: Mirror API.h: move to common header
+
 class ImageWriter(ctypes.Structure):
     _fields_ = [
         ("pData", ctypes.c_void_p),
@@ -22,8 +15,8 @@ class ImageWriter(ctypes.Structure):
         self.framework.CreateImageWriterInstance.argtypes = [ctypes.POINTER(ImageWriter)]
         self.framework.CreateImageWriterInstance.restype = ctypes.c_bool
 
-        self.framework.GetCameraView.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(RectParams)]
-        self.framework.GetCameraView.restype = ctypes.c_bool
+        self.framework.GetCameraTransform.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
+        self.framework.GetCameraTransform.restype = ctypes.c_bool
 
         self.framework.DrawCircle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.c_float, ctypes.c_float, ctypes.c_float]
         self.framework.DrawCircle.restype = ctypes.c_bool
@@ -84,8 +77,8 @@ class ImageWriter(ctypes.Structure):
         self.commandReceiverThread.join()
         self.framework.DestroyImageWriterInstance(ctypes.byref(self))
 
-    def GetCameraView(self, statusMessage, cameraView):
-        return self.framework.GetCameraView(self, statusMessage, ctypes.byref(cameraView))
+    def GetCameraTransform(self, statusMessage, cameraView):
+        return self.framework.GetCameraTransform(self, statusMessage, ctypes.byref(cameraView))
 
     def DrawCircle(self, statusMessage, centerX, centerY, radius):
         return self.framework.DrawCircle(self, statusMessage, centerX, centerY, radius)

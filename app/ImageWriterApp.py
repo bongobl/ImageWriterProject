@@ -93,7 +93,7 @@ def runNetworkService(instance: ImageWriter):
                 # continually listen for new messages from client
                 while True:
 
-                    # wait here and receive message from client
+                    # wait here and receive command from client
                     commandBuffer = bytearray()
                     status, errorMessage = receiveMessage(buffer = commandBuffer, connection = connToClient, size = COMMAND_SIZE)
                     if not status:
@@ -106,28 +106,27 @@ def runNetworkService(instance: ImageWriter):
                     # wait here and receive message from client
                     paramsBuffer = bytearray()
                     
-                    frameworkFunctionStatus = False
                     frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
                     match command:
                         
-                        case Command.GetCameraView:
+                        case Command.GetCameraTransform:
+
                             print("From client: Getting the camera view")
-                            cameraView = RectParams()
-                            frameworkFunctionStatus = instance.GetCameraView(frameworkFunctionMessage, cameraView)
-                            reply = CameraViewReply(
-                                success = frameworkFunctionStatus, 
-                                message = frameworkFunctionMessage.value,
-                                posX = cameraView.posX,
-                                posY = cameraView.posY,
-                                maxX = cameraView.maxX,
-                                maxY = cameraView.maxY,
-                                angle = cameraView.angle
-                            )
+                            cameraTransform = Transform()
+                            frameworkFunctionSucceeded = instance.GetCameraTransform(frameworkFunctionMessage, cameraTransform)
+
+                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = TransformReply(status = commandStatus, transform = cameraTransform)
+
                         case Command.ClearImage:
 
                             print("From client: Clearing image")
-                            frameworkFunctionStatus = instance.ClearImage(frameworkFunctionMessage);
-                            reply = PlainStatusReply(success = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
+                            frameworkFunctionSucceeded = instance.ClearImage(frameworkFunctionMessage)
+
+
+                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = PlainReply(status = commandStatus)
+
                         case Command.DrawCircle:
 
                             status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(DrawCircleParams))
@@ -135,11 +134,15 @@ def runNetworkService(instance: ImageWriter):
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
+
                             # deserialize drawCircle params
                             circleParams = DrawCircleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {circleParams.toString()}")
-                            frameworkFunctionStatus = instance.DrawCircle(frameworkFunctionMessage, circleParams.centerX, circleParams.centerY, circleParams.radius);
-                            reply = PlainStatusReply(success = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
+                            frameworkFunctionSucceeded = instance.DrawCircle(frameworkFunctionMessage, circleParams.centerX, circleParams.centerY, circleParams.radius)
+
+
+                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = PlainReply(status = commandStatus)
 
                         case Command.DrawRectangle:
 
@@ -148,11 +151,14 @@ def runNetworkService(instance: ImageWriter):
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
+
                             # deserialize drawRectangle params
                             rectangleParams = DrawRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams.toString()}")
-                            frameworkFunctionStatus = instance.DrawRectangle(frameworkFunctionMessage, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY);
-                            reply = PlainStatusReply(success = frameworkFunctionStatus, message = frameworkFunctionMessage.value)
+                            frameworkFunctionSucceeded = instance.DrawRectangle(frameworkFunctionMessage, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY)
+                            
+                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = PlainReply(status = commandStatus)
 
                         case Command.Disconnecting:
                             
@@ -165,6 +171,10 @@ def runNetworkService(instance: ImageWriter):
                             
                         case _:
                             print("Unrecognized command")
+                            reply = PlainStatusReply(
+                                success = False,
+                                message = ("Unrecognized command sent to ImageWriterApp over socket").encode('utf-8')
+                            )
 
 
                     print(f"To client: {reply.toString()}")

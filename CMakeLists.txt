@@ -95,6 +95,7 @@ target_link_libraries(FrameworkTestApp ImageWriterAPI)
 
 set(PYTHON_FILES
     "${APP_DIR}/FrameworkTestApp.py"
+    "${APP_DIR}/ImageWriterCommon.py"
     "${APP_DIR}/ImageWriter.py"
     "${APP_DIR}/ImageWriterProtocol.py"
     "${APP_DIR}/ImageWriterApp.py"

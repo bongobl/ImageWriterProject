@@ -12,20 +12,20 @@ extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool getCameraView(InstanceData instanceData, RectParams* pCameraView)
+extern "C" __declspec(dllexport) bool getCameraTransform(InstanceData instanceData, Transform* pCameraTransform)
 {
 	if (!instanceData.pCoreData) {
-		std::cerr << "getCameraView: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on getCameraView()");
+		std::cerr << "getCameraTransform: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on getCameraTransform()");
 		return false;
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-	*pCameraView = {
-		.posX = 0,
-		.posY = 0,
-		.maxX = pCoreData->initialWindowWidth / (2 * pCoreData->screenFromWorldScaleFactor),
-		.maxY = pCoreData->initialWindowHeight / (2 * pCoreData->screenFromWorldScaleFactor),
+	*pCameraTransform = {
+		.positionX = 0,
+		.positionY = 0,
+		.scaleX = pCoreData->initialWindowWidth / (2 * pCoreData->screenFromWorldScaleFactor),
+		.scaleY = pCoreData->initialWindowHeight / (2 * pCoreData->screenFromWorldScaleFactor),
 		.angle = 0
 	};
 

@@ -29,10 +29,10 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         return false;
     }
 
-    PfnCoreGetCameraView pfnCoreGetCameraView = (PfnCoreGetCameraView)GetProcAddress(hDll, "getCameraView");
+    PfnCoreGetCameraTransform pfnCoreGetCameraTransform = (PfnCoreGetCameraTransform)GetProcAddress(hDll, "getCameraTransform");
 
-    if (pfnCoreGetCameraView == NULL) {
-        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function getCameraView could not load\n");
+    if (pfnCoreGetCameraTransform == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function getCameraTransform could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -107,7 +107,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     *pInstanceData = {
         .hDll = hDll,
         .pfnCoreInitialize = pfnCoreInitialize,
-        .pfnCoreGetCameraView = pfnCoreGetCameraView,
+        .pfnCoreGetCameraTransform = pfnCoreGetCameraTransform,
         .pfnCoreDrawCircle = pfnCoreDrawCircle,
         .pfnCoreDrawRectangle = pfnCoreDrawRectangle,
         .pfnCoreClearImage = pfnCoreClearImage,
@@ -122,17 +122,17 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     return pInstanceData->pfnCoreInitialize(pInstanceData);
 }
 
-extern "C" __declspec(dllexport) bool GetCameraView(HImageWriterInstance instance, char* pStatusMessage, RectParams* pCameraView)
+extern "C" __declspec(dllexport) bool GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform)
 {
     if (!instance.pData) {
-        fprintf(stderr, "GetCameraView: instance.pData was null\n");
-        strcpy(pStatusMessage, "ImageWiter app did not call GetCameraView() from its underlying framework correctly");
+        fprintf(stderr, "GetCameraTransform: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call GetCameraTransform() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreGetCameraView(*pInstanceData, pCameraView);
+    return pInstanceData->pfnCoreGetCameraTransform(*pInstanceData, pCameraTransform);
 }
 
 extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, float posX, float posY, float radius)

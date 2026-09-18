@@ -60,19 +60,19 @@ def disconnectFromImageWriter():
         connToServer.close()
 
 @mcp.tool()
-def getCameraView() -> CameraViewReply.MCPPayload:
-    """returns the rectangle representing the camera's view within the world, this is so that users are
-    aware of where shapes will appear in the window based on the world coordinates they are drawn at.
-    It specifies the camera's position, rotation angle and extents. Here minX is always -maxX and minY is always -maxY
+def getCameraTransform() -> TransformReply.MCPPayload:
+    """returns the rectangle representing the camera's transform within the world which consists of a position, rotation
+    and scale (in that order of most globally to most locally applied)
+    Note a scale value along an axis of x means it spans that axis from -x to x.
     """
 
     if not connectToImageWriterApp():
-        raise ToolError("getCameraView(): Failed to connect to ImageWriter app")
+        raise ToolError("getCameraTransform(): Failed to connect to ImageWriter app")
 
-    commIn = Command.GetCameraView
+    commIn = Command.GetCameraTransform
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
-    # send message to server
+    # send command to server
     try:
         connToServer.sendall(commandBuffer)
 
@@ -80,20 +80,20 @@ def getCameraView() -> CameraViewReply.MCPPayload:
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        raise ToolError("clearImage(): Failed to send command to ImageWriter app")
+        raise ToolError("getCameraTransform(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(CameraViewReply))
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(TransformReply))
     if not success:
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        raise ToolError("clearImage(): Failed to receive reply from ImageWriter app")
+        raise ToolError("getCameraTransform(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
-    reply = CameraViewReply.from_buffer_copy(replyBuffer)
+    reply = TransformReply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()
@@ -101,7 +101,7 @@ def getCameraView() -> CameraViewReply.MCPPayload:
     return reply.toMCPPayload()
 
 @mcp.tool()
-def clearImage() -> PlainStatusReply.MCPPayload:
+def clearImage() -> PlainReply.MCPPayload:
     """clears the world of all drawn shapes"""
 
     if not connectToImageWriterApp():
@@ -123,7 +123,7 @@ def clearImage() -> PlainStatusReply.MCPPayload:
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainStatusReply))
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainReply))
     if not success:
         # log error message and return to connecting state
         logger.error(errorMessage)
@@ -131,7 +131,7 @@ def clearImage() -> PlainStatusReply.MCPPayload:
         raise ToolError("clearImage(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
-    reply = PlainStatusReply.from_buffer_copy(replyBuffer)
+    reply = PlainReply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()
@@ -139,7 +139,7 @@ def clearImage() -> PlainStatusReply.MCPPayload:
     return reply.toMCPPayload()
 
 @mcp.tool()
-def drawCircle(positionX: float, positionY: float, radius: float) -> PlainStatusReply.MCPPayload:
+def drawCircle(positionX: float, positionY: float, radius: float) -> PlainReply.MCPPayload:
     """places a new circle within the world at specified coordinates and size"""
 
     if not connectToImageWriterApp():
@@ -169,7 +169,7 @@ def drawCircle(positionX: float, positionY: float, radius: float) -> PlainStatus
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainStatusReply))
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainReply))
     if not success:
         # log error message and return to connecting state
         logger.error(errorMessage)
@@ -177,7 +177,7 @@ def drawCircle(positionX: float, positionY: float, radius: float) -> PlainStatus
         raise ToolError("drawCircle(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
-    reply = PlainStatusReply.from_buffer_copy(replyBuffer)
+    reply = PlainReply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()
@@ -185,7 +185,7 @@ def drawCircle(positionX: float, positionY: float, radius: float) -> PlainStatus
     return reply.toMCPPayload()
 
 @mcp.tool()
-def drawRectangle(positionX: float, positionY: float, halfExtentX: float, halfExtentY: float) -> PlainStatusReply.MCPPayload:
+def drawRectangle(positionX: float, positionY: float, halfExtentX: float, halfExtentY: float) -> PlainReply.MCPPayload:
     """places a new rectangle within the world at specified coordinates and size"""
 
     if not connectToImageWriterApp():
@@ -214,7 +214,7 @@ def drawRectangle(positionX: float, positionY: float, halfExtentX: float, halfEx
     replyBuffer = bytearray()
     
     # wait here and receive message from client
-    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainStatusReply))
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainReply))
     if not success:
         # log error message and return to connecting state
         logger.error(errorMessage)
@@ -222,7 +222,7 @@ def drawRectangle(positionX: float, positionY: float, halfExtentX: float, halfEx
         raise ToolError("drawRectangle(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
-    reply = PlainStatusReply.from_buffer_copy(replyBuffer)
+    reply = PlainReply.from_buffer_copy(replyBuffer)
     logger.info(f"From server: {reply.toString()}")
 
     disconnectFromImageWriter()

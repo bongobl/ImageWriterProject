@@ -8,21 +8,21 @@ void runImageWriterFlow(HImageWriterInstance instance)
 {
 	char statusMessage[256] = "Command executed successfully";
 
-	RectParams cameraView = {};
+	Transform cameraTransform = {};
 
-	GetCameraView(instance, statusMessage, &cameraView);
-	std::cout << "maxX = " << cameraView.maxX << ", maxY = " << cameraView.maxY << std::endl;
+	GetCameraTransform(instance, statusMessage, &cameraTransform);
+	std::cout << "scaleX = " << cameraTransform.scaleX << ", scaleY = " << cameraTransform.scaleY << std::endl;
 
 	system("pause");
-	DrawCircle(instance, statusMessage, cameraView.maxX, cameraView.maxY, 1);
-	DrawRectangle(instance, statusMessage, -cameraView.maxX, -cameraView.maxY, 3, 2);
+	DrawCircle(instance, statusMessage, cameraTransform.scaleX, cameraTransform.scaleY, 1);
+	DrawRectangle(instance, statusMessage, -cameraTransform.scaleX, -cameraTransform.scaleY, 3, 2);
 	printf("%s\n", statusMessage);
 
 	system("pause");
 	ClearImage(instance, statusMessage);
 
 	system("pause");
-	DrawRectangle(instance, statusMessage, 0, 0, cameraView.maxX - 1, cameraView.maxY - 1);
+	DrawRectangle(instance, statusMessage, 0, 0, cameraTransform.scaleX - 1, cameraTransform.scaleY - 1);
 	DrawCircle(instance, statusMessage, 3, -2, 3);
 	
 
