@@ -21,8 +21,8 @@ class ImageWriter(ctypes.Structure):
         self.framework.DrawCircle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.c_float, ctypes.c_float, ctypes.c_float]
         self.framework.DrawCircle.restype = ctypes.c_bool
 
-        self.framework.DrawRectangle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float]
-        self.framework.DrawRectangle.restype = ctypes.c_bool
+        self.framework.AddRectangle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
+        self.framework.AddRectangle.restype = ctypes.c_bool
 
         self.framework.InitRenderWindow.argtypes = [ImageWriter, ctypes.c_int64]
         self.framework.InitRenderWindow.restype = ctypes.c_bool
@@ -83,8 +83,8 @@ class ImageWriter(ctypes.Structure):
     def DrawCircle(self, statusMessage, centerX, centerY, radius):
         return self.framework.DrawCircle(self, statusMessage, centerX, centerY, radius)
 
-    def DrawRectangle(self, statusMessage, centerX, centerY, halfExtentX, halfExtentY):
-        return self.framework.DrawRectangle(self, statusMessage, centerX, centerY, halfExtentX, halfExtentY)
+    def AddRectangle(self, statusMessage, transform):
+        return self.framework.AddRectangle(self, statusMessage, ctypes.byref(transform))
 
     def ClearImage(self, statusMessage):
         return self.framework.ClearImage(self, statusMessage)

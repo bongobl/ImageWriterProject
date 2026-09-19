@@ -53,22 +53,23 @@ extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, floa
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, float posX, float posY, float halfExtentX, float halfExtentY)
+extern "C" __declspec(dllexport) bool addRectangle(InstanceData instanceData, const Transform* pTransform)
 {
 	if (!instanceData.pCoreData) {
-		std::cerr << "drawRectangle: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on drawRectangle()");
+		std::cerr << "addRectangle: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on addRectangle()");
 		return false;
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
-	sf::Vector2f screenExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(halfExtentX * 2, halfExtentY * 2);
-	sf::RectangleShape* pRectShape = new sf::RectangleShape(screenExtents);
+	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(pTransform->scaleX, pTransform->scaleY);
+	sf::RectangleShape* pRectShape = new sf::RectangleShape(sf::Vector2f(2,2));
 	pRectShape->setFillColor(sf::Color::Magenta);
-	pRectShape->setOrigin(screenExtents / 2.0f);
-	pRectShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(posX, posY));
-
+	pRectShape->setOrigin(sf::Vector2f(1, 1));
+	pRectShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(pTransform->positionX, pTransform->positionY));
+	pRectShape->setRotation(-sf::degrees(pTransform->angle));
+	pRectShape->setScale(screenHalfExtents);
 	pCoreData->m_Shapes.addShape(pRectShape);
 
 	return true;

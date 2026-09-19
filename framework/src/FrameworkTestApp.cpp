@@ -15,14 +15,17 @@ void runImageWriterFlow(HImageWriterInstance instance)
 
 	system("pause");
 	DrawCircle(instance, statusMessage, cameraTransform.scaleX, cameraTransform.scaleY, 1);
-	DrawRectangle(instance, statusMessage, -cameraTransform.scaleX, -cameraTransform.scaleY, 3, 2);
+	
+	Transform transform = { .positionX = -cameraTransform.scaleX, .positionY = -cameraTransform.scaleY, .scaleX = 3, .scaleY = 2, .angle = 20 };
+	AddRectangle(instance, statusMessage, &transform);
 	printf("%s\n", statusMessage);
 
 	system("pause");
 	ClearImage(instance, statusMessage);
 
 	system("pause");
-	DrawRectangle(instance, statusMessage, 0, 0, cameraTransform.scaleX - 1, cameraTransform.scaleY - 1);
+	transform = { .positionX = 0, .positionY = 0, .scaleX = cameraTransform.scaleX - 1, .scaleY = cameraTransform.scaleY - 1, .angle = -30 };
+	AddRectangle(instance, statusMessage, &transform);
 	DrawCircle(instance, statusMessage, 3, -2, 3);
 	
 
@@ -32,7 +35,9 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	system("pause");
 	DrawCircle(instance, statusMessage, -5, 3, 2);
 	DrawCircle(instance, statusMessage, 7, -4, 0.5f);
-	DrawRectangle(instance, statusMessage, -8, -1, 1, 3);
+
+	transform = { .positionX = -8, .positionY = -1, .scaleX = 1, .scaleY = 1, .angle = 12 };
+	AddRectangle(instance, statusMessage, &transform);
 
 	system("pause");
 	ClearImage(instance, statusMessage);

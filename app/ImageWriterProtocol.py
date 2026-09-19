@@ -5,7 +5,6 @@ from ImageWriterCommon import *
 
 HOST_IP = '127.0.0.1'
 PORT = 65432
-MAX_IMAGE_FILENAME_LENGTH = 64
 COMMAND_SIZE = 1
 
 # Commands
@@ -14,7 +13,7 @@ class Command(IntEnum):
     GetCameraTransform = 1
     ClearImage = 2
     DrawCircle = 3
-    DrawRectangle = 4
+    AddRectangle = 4
     Disconnecting = 5
 
 # Parameters
@@ -28,16 +27,13 @@ class DrawCircleParams(ctypes.Structure):
     def toString(self):
         return f"Circle params: centerX = {self.centerX}, centerY = {self.centerY}, radius = {self.radius}"
 
-class DrawRectangleParams(ctypes.Structure):
+class AddRectangleParams(ctypes.Structure):
     _fields_ = [
-        ("centerX", ctypes.c_float),
-        ("centerY", ctypes.c_float),
-        ("halfExtentX", ctypes.c_float),
-        ("halfExtentY", ctypes.c_float),
+        ("transform", Transform)
     ]
 
     def toString(self):
-        return f"Rectange params: centerX = {self.centerX}, centerY = {self.centerY}, halfExtentX = {self.halfExtentX}, halfExtentY = {self.halfExtentY}"
+        return f"(AddRectangleParams: transform = {self.transform.toString()})"
 
 # Replies
 
@@ -59,8 +55,8 @@ class PlainReply(ctypes.Structure):
 
 
 class TransformReplyMCPPayload(BaseModel):
-    status: StatusMCPPayload = ()
-    transform: TransformMCPPayload = ()
+    status: StatusMCPPayload
+    transform: TransformMCPPayload
 
 class TransformReply(ctypes.Structure):
     type MCPPayload = TransformReplyMCPPayload

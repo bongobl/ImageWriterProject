@@ -1,9 +1,10 @@
 import ctypes
 from ctypes import *
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 MAX_REPLY_MESSAGE_LENGTH = 256
 
+######## Status ########
 class StatusMCPPayload(BaseModel):
     success: bool = False
     message: str = ""
@@ -21,12 +22,21 @@ class Status(ctypes.Structure):
     def toMCPPayload(self) -> MCPPayload:
         return StatusMCPPayload(success = self.success, message = self.message.decode('utf-8'))
 
+######## Transform ########
+TRANSFORM_DOC = (
+    "A Transform consists of:" 
+    "positionX (float) = X position, " 
+    "positionY (float)= Y position "
+    "scaleX (float) = X scale, "
+    "scaleY (float) = Y scale"
+    "angle (float) = counter clockwise angle orientation on world plane"
+)
 class TransformMCPPayload(BaseModel):
-    positionX: float = 0
-    positionY: float = 0
-    scaleX: float = 0
-    scaleY: float = 0
-    angle: float = 0
+    positionX: float = Field(..., description="(float), X position")
+    positionY: float = Field(..., description="(float), Y position")
+    scaleX: float = Field(..., description="(float), X scale")
+    scaleY: float = Field(..., description="(float), Y scale")
+    angle: float = Field(..., description="(float), counter clockwise angle orientation")
 
 class Transform(ctypes.Structure):
     type MCPPayload = TransformMCPPayload
@@ -48,3 +58,10 @@ class Transform(ctypes.Structure):
             scaleX = self.scaleX, 
             scaleY = self.scaleY, 
             angle = self.angle)
+
+    def fromMCPPayload(self, payload):
+        self.positionX = payload.positionX
+        self.positionY = payload.positionY
+        self.scaleX = payload.scaleX 
+        self.scaleY = payload.scaleY 
+        self.angle = payload.angle

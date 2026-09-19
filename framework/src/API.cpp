@@ -46,10 +46,10 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         return false;
     }
 
-    PfnCoreDrawRectangle pfnCoreDrawRectangle = (PfnCoreDrawRectangle)GetProcAddress(hDll, "drawRectangle");
+    PfnCoreAddRectangle pfnCoreAddRectangle = (PfnCoreAddRectangle)GetProcAddress(hDll, "addRectangle");
 
-    if (pfnCoreDrawRectangle == NULL) {
-        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function drawRectangle could not load\n");
+    if (pfnCoreAddRectangle == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function addRectangle could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -109,7 +109,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         .pfnCoreInitialize = pfnCoreInitialize,
         .pfnCoreGetCameraTransform = pfnCoreGetCameraTransform,
         .pfnCoreDrawCircle = pfnCoreDrawCircle,
-        .pfnCoreDrawRectangle = pfnCoreDrawRectangle,
+        .pfnCoreAddRectangle = pfnCoreAddRectangle,
         .pfnCoreClearImage = pfnCoreClearImage,
         .pfnCoreInitRenderWindow = pfnCoreInitRenderWindow,
         .pfnCoreUpdateRenderWindow = pfnCoreUpdateRenderWindow,
@@ -148,17 +148,17 @@ extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, 
     return pInstanceData->pfnCoreDrawCircle(*pInstanceData, posX, posY, radius);
 }
 
-extern "C" __declspec(dllexport) bool DrawRectangle(HImageWriterInstance instance, char* pStatusMessage, float posX, float posY, float halfExtentX, float halfExtentY)
+extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, const Transform* pCameraTransform)
 {
     if (!instance.pData) {
-        fprintf(stderr, "DrawRectangle: instance.pData was null\n");
-        strcpy(pStatusMessage, "ImageWiter app did not call DrawRectangle() from its underlying framework correctly");
+        fprintf(stderr, "AddRectangle: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call AddRectangle() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreDrawRectangle(*pInstanceData, posX, posY, halfExtentX, halfExtentY);
+    return pInstanceData->pfnCoreAddRectangle(*pInstanceData, pCameraTransform);
 }
 
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage)

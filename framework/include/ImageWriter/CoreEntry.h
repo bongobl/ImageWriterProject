@@ -8,7 +8,7 @@ extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData);
 
 extern "C" __declspec(dllexport) bool getCameraTransform(InstanceData instanceData, Transform* pCameraTransform);
 extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, float posX, float posY, float radius);
-extern "C" __declspec(dllexport) bool drawRectangle(InstanceData instanceData, float posX, float posY, float halfExtentX, float halfExtentY);
+extern "C" __declspec(dllexport) bool addRectangle(InstanceData instanceData, const Transform* pTransform);
 extern "C" __declspec(dllexport) bool clearImage(InstanceData instanceData);
 
 extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData, int64_t windowHandle);

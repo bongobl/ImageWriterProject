@@ -12,6 +12,7 @@ from ImageWriterProtocol import *
 import logging
 import ctypes
 from ctypes import *
+from typing import Annotated
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
@@ -183,19 +184,23 @@ def drawCircle(positionX: float, positionY: float, radius: float) -> PlainReply.
     disconnectFromImageWriter()
 
     return reply.toMCPPayload()
-
+    
 @mcp.tool()
-def drawRectangle(positionX: float, positionY: float, halfExtentX: float, halfExtentY: float) -> PlainReply.MCPPayload:
-    """places a new rectangle within the world at specified coordinates and size"""
+def addRectangle(
+    transform: Annotated[TransformMCPPayload, Field(description = f"specifies where to place this new rectangle. {TRANSFORM_DOC}")]
+) -> PlainReply.MCPPayload:
+    """places a new rectangle within the world at a specified transform"""
 
     if not connectToImageWriterApp():
-        raise ToolError("drawRectangle(): Failed to connect to ImageWriter app")
+        raise ToolError("addRectangle(): Failed to connect to ImageWriter app")
 
-    commIn = Command.DrawRectangle
+    commIn = Command.AddRectangle
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
-    # create drawRectangle command params
-    rectangleParams = DrawRectangleParams(centerX = positionX, centerY = positionY, halfExtentX = halfExtentX, halfExtentY = halfExtentY)
+    # create addRectangle command params
+    transformRaw = Transform()
+    transformRaw.fromMCPPayload(transform)
+    rectangleParams = AddRectangleParams(transform = transformRaw)
     logger.info(f"To server: {rectangleParams.toString()}")
 
     # serialize params
@@ -209,7 +214,7 @@ def drawRectangle(positionX: float, positionY: float, halfExtentX: float, halfEx
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        raise ToolError("drawRectangle(): Failed to send command to ImageWriter app")
+        raise ToolError("addRectangle(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
@@ -219,7 +224,7 @@ def drawRectangle(positionX: float, positionY: float, halfExtentX: float, halfEx
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        raise ToolError("drawRectangle(): Failed to receive reply from ImageWriter app")
+        raise ToolError("addRectangle(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
     reply = PlainReply.from_buffer_copy(replyBuffer)

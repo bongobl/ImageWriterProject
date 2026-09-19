@@ -144,18 +144,18 @@ def runNetworkService(instance: ImageWriter):
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
 
-                        case Command.DrawRectangle:
+                        case Command.AddRectangle:
 
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(DrawRectangleParams))
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(AddRectangleParams))
                             if not status:
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
 
-                            # deserialize drawRectangle params
-                            rectangleParams = DrawRectangleParams.from_buffer_copy(paramsBuffer)
+                            # deserialize addRectangle params
+                            rectangleParams = AddRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams.toString()}")
-                            frameworkFunctionSucceeded = instance.DrawRectangle(frameworkFunctionMessage, rectangleParams.centerX, rectangleParams.centerY, rectangleParams.halfExtentX, rectangleParams.halfExtentY)
+                            frameworkFunctionSucceeded = instance.AddRectangle(frameworkFunctionMessage, rectangleParams.transform)
                             
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)

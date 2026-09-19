@@ -60,13 +60,16 @@ def createSomeSampleShapes(instance: ImageWriter):
     print(f"camera scaleX = {cameraTransform.scaleX}, scaleY = {cameraTransform.scaleY}")
 
     instance.DrawCircle(statusMessage, cameraTransform.scaleX, cameraTransform.scaleY, 1)
-    instance.DrawRectangle(statusMessage, -cameraTransform.scaleX, -cameraTransform.scaleY, 3, 2)
+
+    transform = Transform(positionX = -cameraTransform.scaleX, positionY = -cameraTransform.scaleY, scaleX = 3, scaleY = 2, angle = 20)
+    instance.AddRectangle(statusMessage, transform)
     
     input("Press Enter")
     instance.ClearImage(statusMessage);
 
     input("Press Enter")
-    instance.DrawRectangle(statusMessage, 0, 0, cameraTransform.scaleX - 1, cameraTransform.scaleY - 1)
+    transform = Transform(positionX = 0, positionY = 0, scaleX = cameraTransform.scaleX - 1, scaleY = cameraTransform.scaleY - 1, angle = -30)
+    instance.AddRectangle(statusMessage, transform)
     instance.DrawCircle(statusMessage, 3, -2, 3);
 
     input("Press Enter")
@@ -75,7 +78,9 @@ def createSomeSampleShapes(instance: ImageWriter):
     input("Press Enter")
     instance.DrawCircle(statusMessage, -5, 3, 2)
     instance.DrawCircle(statusMessage, 7, -4, 0.5)
-    instance.DrawRectangle(statusMessage, -8, -1, 1, 3)
+
+    transform = Transform(positionX = -8, positionY = -1, scaleX = 1, scaleY = 1, angle = 12)
+    instance.AddRectangle(statusMessage, transform)
 
     input("Press Enter")
     instance.ClearImage(statusMessage);
