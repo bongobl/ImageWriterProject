@@ -12,20 +12,19 @@ class Command(IntEnum):
 
     GetCameraTransform = 1
     ClearImage = 2
-    DrawCircle = 3
+    AddEllipse = 3
     AddRectangle = 4
     Disconnecting = 5
 
 # Parameters
-class DrawCircleParams(ctypes.Structure):
+
+class AddEllipseParams(ctypes.Structure):
     _fields_ = [
-        ("centerX", ctypes.c_float),
-        ("centerY", ctypes.c_float),
-        ("radius", ctypes.c_float),
+        ("transform", Transform)
     ]
 
     def toString(self):
-        return f"Circle params: centerX = {self.centerX}, centerY = {self.centerY}, radius = {self.radius}"
+        return f"(AddEllipseParams: transform = {self.transform.toString()})"
 
 class AddRectangleParams(ctypes.Structure):
     _fields_ = [

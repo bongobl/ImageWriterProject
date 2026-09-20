@@ -14,9 +14,10 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	std::cout << "scaleX = " << cameraTransform.scaleX << ", scaleY = " << cameraTransform.scaleY << std::endl;
 
 	system("pause");
-	DrawCircle(instance, statusMessage, cameraTransform.scaleX, cameraTransform.scaleY, 1);
+	Transform transform = { .positionX = cameraTransform.scaleX, .positionY = cameraTransform.scaleY, .scaleX = 1, .scaleY = 1, .angle = 0 };
+	AddEllipse(instance, statusMessage, &transform);
 	
-	Transform transform = { .positionX = -cameraTransform.scaleX, .positionY = -cameraTransform.scaleY, .scaleX = 3, .scaleY = 2, .angle = 20 };
+	transform = { .positionX = -cameraTransform.scaleX, .positionY = -cameraTransform.scaleY, .scaleX = 3, .scaleY = 2, .angle = 20 };
 	AddRectangle(instance, statusMessage, &transform);
 	printf("%s\n", statusMessage);
 
@@ -26,15 +27,20 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	system("pause");
 	transform = { .positionX = 0, .positionY = 0, .scaleX = cameraTransform.scaleX - 1, .scaleY = cameraTransform.scaleY - 1, .angle = -30 };
 	AddRectangle(instance, statusMessage, &transform);
-	DrawCircle(instance, statusMessage, 3, -2, 3);
+
+	transform = { .positionX = 3, .positionY = -2, .scaleX = 3, .scaleY = 2, .angle = -10 };
+	AddEllipse(instance, statusMessage, &transform);
 	
 
 	system("pause");
 	ClearImage(instance, statusMessage);
 
 	system("pause");
-	DrawCircle(instance, statusMessage, -5, 3, 2);
-	DrawCircle(instance, statusMessage, 7, -4, 0.5f);
+	transform = { .positionX = -5, .positionY = 3, .scaleX = 1, .scaleY = 4, .angle = -25 };
+	AddEllipse(instance, statusMessage, &transform);
+
+	transform = { .positionX = 7, .positionY = -4, .scaleX = 0.5f, .scaleY = 1.5f, .angle = 60 };
+	AddEllipse(instance, statusMessage, &transform);
 
 	transform = { .positionX = -8, .positionY = -1, .scaleX = 1, .scaleY = 1, .angle = 12 };
 	AddRectangle(instance, statusMessage, &transform);

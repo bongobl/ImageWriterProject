@@ -38,10 +38,10 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
     }
     
 
-    PfnCoreDrawCircle pfnCoreDrawCircle = (PfnCoreDrawCircle)GetProcAddress(hDll, "drawCircle");
+    PfnCoreAddEllipse pfnCoreAddEllipse = (PfnCoreAddEllipse)GetProcAddress(hDll, "addEllipse");
 
-    if (pfnCoreDrawCircle == NULL) {
-        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function drawCircle could not load\n");
+    if (pfnCoreAddEllipse == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function addEllipse could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -108,7 +108,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         .hDll = hDll,
         .pfnCoreInitialize = pfnCoreInitialize,
         .pfnCoreGetCameraTransform = pfnCoreGetCameraTransform,
-        .pfnCoreDrawCircle = pfnCoreDrawCircle,
+        .pfnCoreAddEllipse = pfnCoreAddEllipse,
         .pfnCoreAddRectangle = pfnCoreAddRectangle,
         .pfnCoreClearImage = pfnCoreClearImage,
         .pfnCoreInitRenderWindow = pfnCoreInitRenderWindow,
@@ -135,20 +135,20 @@ extern "C" __declspec(dllexport) bool GetCameraTransform(HImageWriterInstance in
     return pInstanceData->pfnCoreGetCameraTransform(*pInstanceData, pCameraTransform);
 }
 
-extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, float posX, float posY, float radius)
+extern "C" __declspec(dllexport) bool AddEllipse(HImageWriterInstance instance, char* pStatusMessage, const Transform* pTransform)
 {
     if (!instance.pData) {
-        fprintf(stderr, "DrawCircle: instance.pData was null\n");
-        strcpy(pStatusMessage, "ImageWiter app did not call DrawCircle() from its underlying framework correctly");
+        fprintf(stderr, "AddEllipse: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call AddEllipse() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreDrawCircle(*pInstanceData, posX, posY, radius);
+    return pInstanceData->pfnCoreAddEllipse(*pInstanceData, pTransform);
 }
 
-extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, const Transform* pCameraTransform)
+extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, const Transform* pTransform)
 {
     if (!instance.pData) {
         fprintf(stderr, "AddRectangle: instance.pData was null\n");
@@ -158,7 +158,7 @@ extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreAddRectangle(*pInstanceData, pCameraTransform);
+    return pInstanceData->pfnCoreAddRectangle(*pInstanceData, pTransform);
 }
 
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage)

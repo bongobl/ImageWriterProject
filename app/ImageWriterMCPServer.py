@@ -140,21 +140,28 @@ def clearImage() -> PlainReply.MCPPayload:
     return reply.toMCPPayload()
 
 @mcp.tool()
-def drawCircle(positionX: float, positionY: float, radius: float) -> PlainReply.MCPPayload:
-    """places a new circle within the world at specified coordinates and size"""
+def addEllipse(
+        transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new ellipse. {TRANSFORM_DOC}")]
+) -> PlainReply.MCPPayload:
+    """
+    Places a new ellipse within the world at specified position, orientation and size
+    Note that a (scaleX, scaleY) value of (1,1) represents a unit circle of radius 1
+    """
 
     if not connectToImageWriterApp():
-        raise ToolError("drawCircle(): Failed to connect to ImageWriter app")
+        raise ToolError("addEllipse(): Failed to connect to ImageWriter app")
 
-    commIn = Command.DrawCircle
+    commIn = Command.AddEllipse
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
-    # create drawCircle command params
-    circleParams = DrawCircleParams(centerX = positionX, centerY = positionY, radius = radius)
-    logger.info(f"To server: {circleParams.toString()}")
+    # create addEllipse command params
+    transformRaw = Transform()
+    transformRaw.fromMCPPayload(transform)
+    ellipseParams = AddEllipseParams(transform = transformRaw)
+    logger.info(f"To server: {ellipseParams.toString()}")
 
     # serialize params
-    paramsBuffer = bytes(circleParams)
+    paramsBuffer = bytes(ellipseParams)
 
     # send message to server
     try:
@@ -165,7 +172,7 @@ def drawCircle(positionX: float, positionY: float, radius: float) -> PlainReply.
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        raise ToolError("drawCircle(): Failed to send command to ImageWriter app")
+        raise ToolError("addEllipse(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
@@ -175,7 +182,7 @@ def drawCircle(positionX: float, positionY: float, radius: float) -> PlainReply.
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        raise ToolError("drawCircle(): Failed to receive reply from ImageWriter app")
+        raise ToolError("addEllipse(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
     reply = PlainReply.from_buffer_copy(replyBuffer)
@@ -187,9 +194,12 @@ def drawCircle(positionX: float, positionY: float, radius: float) -> PlainReply.
     
 @mcp.tool()
 def addRectangle(
-    transform: Annotated[TransformMCPPayload, Field(description = f"specifies where to place this new rectangle. {TRANSFORM_DOC}")]
+    transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {TRANSFORM_DOC}")]
 ) -> PlainReply.MCPPayload:
-    """places a new rectangle within the world at a specified transform"""
+    """
+    Places a new rectangle within the world at specified position, orientation and size
+    Note that a (scaleX, scaleY) value of (1,1) represents a square of width and height both equal to 2
+    """
 
     if not connectToImageWriterApp():
         raise ToolError("addRectangle(): Failed to connect to ImageWriter app")

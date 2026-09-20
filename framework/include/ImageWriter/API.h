@@ -23,7 +23,7 @@ extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterIns
 
 // AI API
 extern "C" __declspec(dllexport) bool GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform);
-extern "C" __declspec(dllexport) bool DrawCircle(HImageWriterInstance instance, char* pStatusMessage, float centerX, float centerY, float radius);
+extern "C" __declspec(dllexport) bool AddEllipse(HImageWriterInstance instance, char* pStatusMessage, const Transform* pTransform);
 extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, const Transform* pCameraTransform);
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage);
 

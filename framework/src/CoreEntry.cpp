@@ -31,7 +31,7 @@ extern "C" __declspec(dllexport) bool getCameraTransform(InstanceData instanceDa
 
 	return true;
 }
-extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, float posX, float posY, float radius)
+extern "C" __declspec(dllexport) bool addEllipse(InstanceData instanceData, const Transform* pTransform)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "drawCircle: instanceData.pCoreData was null" << std::endl;
@@ -42,11 +42,14 @@ extern "C" __declspec(dllexport) bool drawCircle(InstanceData instanceData, floa
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
 
-	float screenRadius = pCoreData->screenFromWorldScaleFactor * radius;
-	sf::CircleShape* pCircleShape = new sf::CircleShape(screenRadius);
+	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(pTransform->scaleX, pTransform->scaleY);
+	sf::CircleShape* pCircleShape = new sf::CircleShape(1);
 	pCircleShape->setFillColor(sf::Color::Green);
-	pCircleShape->setOrigin(sf::Vector2f(screenRadius, screenRadius));
-	pCircleShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(posX, posY));
+	pCircleShape->setOrigin(sf::Vector2f(1, 1));
+
+	pCircleShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(pTransform->positionX, pTransform->positionY));
+	pCircleShape->setRotation(-sf::degrees(pTransform->angle));
+	pCircleShape->setScale(screenHalfExtents);
 
 	pCoreData->m_Shapes.addShape(pCircleShape);
 

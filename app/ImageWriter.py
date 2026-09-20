@@ -18,8 +18,8 @@ class ImageWriter(ctypes.Structure):
         self.framework.GetCameraTransform.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
         self.framework.GetCameraTransform.restype = ctypes.c_bool
 
-        self.framework.DrawCircle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.c_float, ctypes.c_float, ctypes.c_float]
-        self.framework.DrawCircle.restype = ctypes.c_bool
+        self.framework.AddEllipse.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
+        self.framework.AddEllipse.restype = ctypes.c_bool
 
         self.framework.AddRectangle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
         self.framework.AddRectangle.restype = ctypes.c_bool
@@ -80,8 +80,8 @@ class ImageWriter(ctypes.Structure):
     def GetCameraTransform(self, statusMessage, cameraView):
         return self.framework.GetCameraTransform(self, statusMessage, ctypes.byref(cameraView))
 
-    def DrawCircle(self, statusMessage, centerX, centerY, radius):
-        return self.framework.DrawCircle(self, statusMessage, centerX, centerY, radius)
+    def AddEllipse(self, statusMessage, transform):
+        return self.framework.AddEllipse(self, statusMessage, ctypes.byref(transform))
 
     def AddRectangle(self, statusMessage, transform):
         return self.framework.AddRectangle(self, statusMessage, ctypes.byref(transform))

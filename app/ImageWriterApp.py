@@ -127,19 +127,18 @@ def runNetworkService(instance: ImageWriter):
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
 
-                        case Command.DrawCircle:
+                        case Command.AddEllipse:
 
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(DrawCircleParams))
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(AddEllipseParams))
                             if not status:
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
 
-                            # deserialize drawCircle params
-                            circleParams = DrawCircleParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {circleParams.toString()}")
-                            frameworkFunctionSucceeded = instance.DrawCircle(frameworkFunctionMessage, circleParams.centerX, circleParams.centerY, circleParams.radius)
-
+                            # deserialize addEllipse params
+                            ellipseParams = AddEllipseParams.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {ellipseParams.toString()}")
+                            frameworkFunctionSucceeded = instance.AddEllipse(frameworkFunctionMessage, ellipseParams.transform)
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)

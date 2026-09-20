@@ -10,7 +10,7 @@ struct InstanceData;
 typedef bool (*PfnCoreInitialize)(InstanceData*);
 
 typedef bool (*PfnCoreGetCameraTransform)(InstanceData, Transform*);
-typedef bool (*PfnCoreDrawCircle)(InstanceData, float, float, float);
+typedef bool (*PfnCoreAddEllipse)(InstanceData, const Transform*);
 typedef bool (*PfnCoreAddRectangle)(InstanceData, const Transform*);
 typedef bool (*PfnCoreClearImage)(InstanceData);
 
@@ -27,7 +27,7 @@ struct InstanceData
     PfnCoreInitialize pfnCoreInitialize;
 
     PfnCoreGetCameraTransform pfnCoreGetCameraTransform;
-    PfnCoreDrawCircle pfnCoreDrawCircle;
+    PfnCoreAddEllipse pfnCoreAddEllipse;
     PfnCoreAddRectangle pfnCoreAddRectangle;
     PfnCoreClearImage pfnCoreClearImage;
 
