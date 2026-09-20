@@ -135,7 +135,7 @@ extern "C" __declspec(dllexport) bool GetCameraTransform(HImageWriterInstance in
     return pInstanceData->pfnCoreGetCameraTransform(*pInstanceData, pCameraTransform);
 }
 
-extern "C" __declspec(dllexport) bool AddEllipse(HImageWriterInstance instance, char* pStatusMessage, const Transform* pTransform)
+extern "C" __declspec(dllexport) bool AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color)
 {
     if (!instance.pData) {
         fprintf(stderr, "AddEllipse: instance.pData was null\n");
@@ -145,10 +145,10 @@ extern "C" __declspec(dllexport) bool AddEllipse(HImageWriterInstance instance, 
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreAddEllipse(*pInstanceData, pTransform);
+    return pInstanceData->pfnCoreAddEllipse(*pInstanceData, transform, color);
 }
 
-extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, const Transform* pTransform)
+extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color)
 {
     if (!instance.pData) {
         fprintf(stderr, "AddRectangle: instance.pData was null\n");
@@ -158,7 +158,7 @@ extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreAddRectangle(*pInstanceData, pTransform);
+    return pInstanceData->pfnCoreAddRectangle(*pInstanceData, transform, color);
 }
 
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage)

@@ -20,19 +20,21 @@ class Command(IntEnum):
 
 class AddEllipseParams(ctypes.Structure):
     _fields_ = [
-        ("transform", Transform)
+        ("transform", Transform),
+        ("color", Color)
     ]
 
     def toString(self):
-        return f"(AddEllipseParams: transform = {self.transform.toString()})"
+        return f"(AddEllipseParams: transform = {self.transform.toString()}, color = {self.color.toString()})"
 
 class AddRectangleParams(ctypes.Structure):
     _fields_ = [
-        ("transform", Transform)
+        ("transform", Transform),
+        ("color", Color)
     ]
 
     def toString(self):
-        return f"(AddRectangleParams: transform = {self.transform.toString()})"
+        return f"(AddRectangleParams: transform = {self.transform.toString()}, color = {self.color.toString()})"
 
 # Replies
 

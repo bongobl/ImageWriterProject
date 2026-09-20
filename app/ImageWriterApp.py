@@ -49,7 +49,7 @@ class WindowUI(tk.Tk):
         self.destroy()
 
 def isWindowUIOpen():
-    return root.windowIsActive
+    return windowUI.windowIsActive
 
 
 def runNetworkService(instance: ImageWriter):
@@ -138,7 +138,7 @@ def runNetworkService(instance: ImageWriter):
                             # deserialize addEllipse params
                             ellipseParams = AddEllipseParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {ellipseParams.toString()}")
-                            frameworkFunctionSucceeded = instance.AddEllipse(frameworkFunctionMessage, ellipseParams.transform)
+                            frameworkFunctionSucceeded = instance.AddEllipse(frameworkFunctionMessage, ellipseParams.transform, ellipseParams.color)
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
@@ -154,7 +154,7 @@ def runNetworkService(instance: ImageWriter):
                             # deserialize addRectangle params
                             rectangleParams = AddRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams.toString()}")
-                            frameworkFunctionSucceeded = instance.AddRectangle(frameworkFunctionMessage, rectangleParams.transform)
+                            frameworkFunctionSucceeded = instance.AddRectangle(frameworkFunctionMessage, rectangleParams.transform, rectangleParams.color)
                             
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
@@ -194,14 +194,14 @@ def runNetworkService(instance: ImageWriter):
 if __name__ == "__main__":
 
     # create UI
-    root = WindowUI(name = "ImageWriter App", windowSize="1920x1080")   
+    windowUI = WindowUI(name = "ImageWriter App", windowSize="1920x1080")   
 
     # create ImageWriter
     imageWriter = ImageWriter()
-    imageWriter.Init(root.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = runNetworkService)
+    imageWriter.Init(windowUI.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = runNetworkService)
     
     # run UI
-    root.mainloop()
+    windowUI.mainloop()
     
     # close sockets
     try:

@@ -140,11 +140,24 @@ def clearImage() -> PlainReply.MCPPayload:
     return reply.toMCPPayload()
 
 @mcp.tool()
+def testAddColor(
+    color: Annotated[ColorMCPPayload, Field(description = f"A color value to test and print. {COLOR_DOC}")]
+):
+    """
+    Tests taking in color values and prints them to make sure they have correct values
+    """
+    colorRaw = Color()
+    colorRaw.fromMCPPayload(color)
+    logger.info(f"Received color value: {colorRaw.toString()}")
+
+
+@mcp.tool()
 def addEllipse(
-        transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new ellipse. {TRANSFORM_DOC}")]
+        transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new ellipse. {TRANSFORM_DOC}")],
+        color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")]
 ) -> PlainReply.MCPPayload:
     """
-    Places a new ellipse within the world at specified position, orientation and size
+    Places a new ellipse within the world at specified transform and color
     Note that a (scaleX, scaleY) value of (1,1) represents a unit circle of radius 1
     """
 
@@ -157,7 +170,11 @@ def addEllipse(
     # create addEllipse command params
     transformRaw = Transform()
     transformRaw.fromMCPPayload(transform)
-    ellipseParams = AddEllipseParams(transform = transformRaw)
+
+    colorRaw = Color()
+    colorRaw.fromMCPPayload(color)
+
+    ellipseParams = AddEllipseParams(transform = transformRaw, color = colorRaw)
     logger.info(f"To server: {ellipseParams.toString()}")
 
     # serialize params
@@ -194,10 +211,11 @@ def addEllipse(
     
 @mcp.tool()
 def addRectangle(
-    transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {TRANSFORM_DOC}")]
+    transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {TRANSFORM_DOC}")],
+    color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")]
 ) -> PlainReply.MCPPayload:
     """
-    Places a new rectangle within the world at specified position, orientation and size
+    Places a new rectangle within the world at specified transform and color
     Note that a (scaleX, scaleY) value of (1,1) represents a square of width and height both equal to 2
     """
 
@@ -210,7 +228,11 @@ def addRectangle(
     # create addRectangle command params
     transformRaw = Transform()
     transformRaw.fromMCPPayload(transform)
-    rectangleParams = AddRectangleParams(transform = transformRaw)
+
+    colorRaw = Color()
+    colorRaw.fromMCPPayload(color)
+
+    rectangleParams = AddRectangleParams(transform = transformRaw, color = colorRaw)
     logger.info(f"To server: {rectangleParams.toString()}")
 
     # serialize params

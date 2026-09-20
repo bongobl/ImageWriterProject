@@ -1,5 +1,16 @@
 #include <iostream>
 #include <ImageWriter/CoreEntry.h>
+#include <algorithm>
+using FrameworkColor = Color;
+namespace sf {
+	static sf::Color fromCore(FrameworkColor color) {
+		return sf::Color(
+			std::clamp(color.red, 0.0f, 1.0f) * 255,
+			std::clamp(color.green, 0.0f, 1.0f) * 255,
+			std::clamp(color.blue, 0.0f, 1.0f) * 255,
+			std::clamp(color.alpha, 0.0f, 1.0f) * 255);
+	}
+}
 
 extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 {
@@ -31,7 +42,7 @@ extern "C" __declspec(dllexport) bool getCameraTransform(InstanceData instanceDa
 
 	return true;
 }
-extern "C" __declspec(dllexport) bool addEllipse(InstanceData instanceData, const Transform* pTransform)
+extern "C" __declspec(dllexport) bool addEllipse(InstanceData instanceData, Transform transform, Color color)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "drawCircle: instanceData.pCoreData was null" << std::endl;
@@ -42,13 +53,14 @@ extern "C" __declspec(dllexport) bool addEllipse(InstanceData instanceData, cons
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
 
-	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(pTransform->scaleX, pTransform->scaleY);
+	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(transform.scaleX, transform.scaleY);
 	sf::CircleShape* pCircleShape = new sf::CircleShape(1);
-	pCircleShape->setFillColor(sf::Color::Green);
+
+	pCircleShape->setFillColor(sf::fromCore(color));
 	pCircleShape->setOrigin(sf::Vector2f(1, 1));
 
-	pCircleShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(pTransform->positionX, pTransform->positionY));
-	pCircleShape->setRotation(-sf::degrees(pTransform->angle));
+	pCircleShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(transform.positionX, transform.positionY));
+	pCircleShape->setRotation(-sf::degrees(transform.angle));
 	pCircleShape->setScale(screenHalfExtents);
 
 	pCoreData->m_Shapes.addShape(pCircleShape);
@@ -56,7 +68,7 @@ extern "C" __declspec(dllexport) bool addEllipse(InstanceData instanceData, cons
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool addRectangle(InstanceData instanceData, const Transform* pTransform)
+extern "C" __declspec(dllexport) bool addRectangle(InstanceData instanceData, Transform transform, Color color)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "addRectangle: instanceData.pCoreData was null" << std::endl;
@@ -66,12 +78,12 @@ extern "C" __declspec(dllexport) bool addRectangle(InstanceData instanceData, co
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
-	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(pTransform->scaleX, pTransform->scaleY);
+	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(transform.scaleX, transform.scaleY);
 	sf::RectangleShape* pRectShape = new sf::RectangleShape(sf::Vector2f(2,2));
-	pRectShape->setFillColor(sf::Color::Magenta);
+	pRectShape->setFillColor(sf::fromCore(color));
 	pRectShape->setOrigin(sf::Vector2f(1, 1));
-	pRectShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(pTransform->positionX, pTransform->positionY));
-	pRectShape->setRotation(-sf::degrees(pTransform->angle));
+	pRectShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(transform.positionX, transform.positionY));
+	pRectShape->setRotation(-sf::degrees(transform.angle));
 	pRectShape->setScale(screenHalfExtents);
 	pCoreData->m_Shapes.addShape(pRectShape);
 

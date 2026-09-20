@@ -45,7 +45,7 @@ class WindowUI(tk.Tk):
         self.destroy()
 
 def isWindowUIOpen():
-    return root.windowIsActive
+    return windowUI.windowIsActive
 
 
 
@@ -59,34 +59,48 @@ def createSomeSampleShapes(instance: ImageWriter):
     instance.GetCameraTransform(statusMessage, cameraTransform)
     print(f"camera scaleX = {cameraTransform.scaleX}, scaleY = {cameraTransform.scaleY}")
 
-    transform = Transform(positionX = cameraTransform.scaleX, positionY = cameraTransform.scaleY, scaleX = 1, scaleY = 1, angle = 0);
-    instance.AddEllipse(statusMessage, transform)
+    instance.AddEllipse(statusMessage, 
+        Transform(positionX = cameraTransform.scaleX, positionY = cameraTransform.scaleY, scaleX = 1, scaleY = 1, angle = 0), 
+        Color(red = 1, green = 0, blue = 0, alpha = 1)
+    )
 
-    transform = Transform(positionX = -cameraTransform.scaleX, positionY = -cameraTransform.scaleY, scaleX = 3, scaleY = 2, angle = 20)
-    instance.AddRectangle(statusMessage, transform)
+    instance.AddRectangle(statusMessage, 
+        Transform(positionX = -cameraTransform.scaleX, positionY = -cameraTransform.scaleY, scaleX = 3, scaleY = 2, angle = 20), 
+        Color(red = 0.5, green = 0.5, blue = 1, alpha = 1)
+    )
     
     input("Press Enter")
     instance.ClearImage(statusMessage);
 
     input("Press Enter")
-    transform = Transform(positionX = 0, positionY = 0, scaleX = cameraTransform.scaleX - 1, scaleY = cameraTransform.scaleY - 1, angle = -30)
-    instance.AddRectangle(statusMessage, transform)
+    instance.AddRectangle(statusMessage, 
+        Transform(positionX = 0, positionY = 0, scaleX = cameraTransform.scaleX - 1, scaleY = cameraTransform.scaleY - 1, angle = -30), 
+        Color(red = 0.5, green = 1, blue = 0.5, alpha = 0.35 )
+    )
 
-    transform = Transform(positionX = 3, positionY = -2, scaleX = 3, scaleY = 2, angle = -10);
-    instance.AddEllipse(statusMessage, transform);
+    instance.AddEllipse(statusMessage, 
+        Transform(positionX = 3, positionY = -2, scaleX = 3, scaleY = 2, angle = -10), 
+        Color(red = 0, green = 0, blue = 1, alpha = 0.4)
+    )
 
     input("Press Enter")
     instance.ClearImage(statusMessage);
 
     input("Press Enter")
-    transform = Transform(positionX = -5, positionY = 3, scaleX = 1, scaleY = 4, angle = -25)
-    instance.AddEllipse(statusMessage, transform)
+    instance.AddEllipse(statusMessage, 
+        Transform(positionX = -5, positionY = 3, scaleX = 1, scaleY = 4, angle = -25), 
+        Color(red = 0, green = 1, blue = 1, alpha = 0.6)
+    )
 
-    transform = Transform(positionX = 7, positionY = -4, scaleX = 0.5, scaleY = 1.5, angle = 60)
-    instance.AddEllipse(statusMessage, transform)
+    instance.AddEllipse(statusMessage, 
+        Transform(positionX = 7, positionY = -4, scaleX = 0.5, scaleY = 1.5, angle = 60), 
+        Color(red = 1, green = 1, blue = 0, alpha = 0.2)
+    )
 
-    transform = Transform(positionX = -8, positionY = -1, scaleX = 1, scaleY = 1, angle = 12)
-    instance.AddRectangle(statusMessage, transform)
+    instance.AddRectangle(statusMessage, 
+        Transform(positionX = -8, positionY = -1, scaleX = 1, scaleY = 1, angle = 12), 
+        Color(red = 1, green = 0.5, blue = 1, alpha = 0.6)
+    )
 
     input("Press Enter")
     instance.ClearImage(statusMessage);
@@ -95,14 +109,14 @@ def createSomeSampleShapes(instance: ImageWriter):
 if __name__ == "__main__":
 
     # create UI
-    root = WindowUI(name = "My Test App", windowSize="1920x1080")   
+    windowUI = WindowUI(name = "My Test App", windowSize="1920x1080")   
 
     # create ImageWriter
     imageWriter = ImageWriter()
-    imageWriter.Init(root.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = createSomeSampleShapes)
+    imageWriter.Init(windowUI.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = createSomeSampleShapes)
     
     # run UI
-    root.mainloop()
+    windowUI.mainloop()
     
     print("Disposing")
     

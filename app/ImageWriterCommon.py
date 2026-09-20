@@ -65,3 +65,42 @@ class Transform(ctypes.Structure):
         self.scaleX = payload.scaleX 
         self.scaleY = payload.scaleY 
         self.angle = payload.angle
+
+######## Color ########
+COLOR_DOC = (
+    "A Color consists of:" 
+    "red (float) = red channel value " 
+    "green (float)= green channel value "
+    "blue (float) = blue channel value "
+    "alpha (float) = alpha channel value"
+    "For each channel, 0 = no strength and 1 = max strength"
+)
+class ColorMCPPayload(BaseModel):
+    red: float = Field(..., description="(float), red channel value")
+    green: float = Field(..., description="(float), green channel value")
+    blue: float = Field(..., description="(float), blue channel value")
+    alpha: float = Field(..., description="(float), alpha channel value")
+
+class Color(ctypes.Structure):
+    _fields_ = [
+        ("red", ctypes.c_float),
+        ("green", ctypes.c_float),
+        ("blue", ctypes.c_float),
+        ("alpha", ctypes.c_float),
+    ]
+
+    def toString(self):
+        return f"(Color: red = {self.red}, green = {self.green}, blue = {self.blue}, alpha = {self.alpha})"
+
+    def toMCPPayload(self):
+        return TransformMCPPayload(
+            red = self.red, 
+            green = self.green,
+            blue = self.blue, 
+            alpha = self.alpha)
+
+    def fromMCPPayload(self, payload):
+        self.red = payload.red
+        self.green = payload.green
+        self.blue = payload.blue 
+        self.alpha = payload.alpha 

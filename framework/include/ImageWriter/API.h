@@ -15,6 +15,13 @@ struct Transform {
     float angle;
 };
 
+struct Color {
+    float red = 0;
+    float green = 0;
+    float blue = 0;
+    float alpha = 0;
+};
+
 typedef ImageWriter HImageWriterInstance;
 
 // App lifecycle
@@ -23,8 +30,8 @@ extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterIns
 
 // AI API
 extern "C" __declspec(dllexport) bool GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform);
-extern "C" __declspec(dllexport) bool AddEllipse(HImageWriterInstance instance, char* pStatusMessage, const Transform* pTransform);
-extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, const Transform* pCameraTransform);
+extern "C" __declspec(dllexport) bool AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color);
+extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color);
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage);
 
 // Window lifecycle

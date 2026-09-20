@@ -10,8 +10,8 @@ struct InstanceData;
 typedef bool (*PfnCoreInitialize)(InstanceData*);
 
 typedef bool (*PfnCoreGetCameraTransform)(InstanceData, Transform*);
-typedef bool (*PfnCoreAddEllipse)(InstanceData, const Transform*);
-typedef bool (*PfnCoreAddRectangle)(InstanceData, const Transform*);
+typedef bool (*PfnCoreAddEllipse)(InstanceData, Transform, Color);
+typedef bool (*PfnCoreAddRectangle)(InstanceData, Transform, Color);
 typedef bool (*PfnCoreClearImage)(InstanceData);
 
 typedef bool (*PfnCoreInitRenderWindow)(InstanceData, int64_t);

@@ -18,10 +18,10 @@ class ImageWriter(ctypes.Structure):
         self.framework.GetCameraTransform.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
         self.framework.GetCameraTransform.restype = ctypes.c_bool
 
-        self.framework.AddEllipse.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
+        self.framework.AddEllipse.argtypes = [ImageWriter, ctypes.c_char_p, Transform, Color]
         self.framework.AddEllipse.restype = ctypes.c_bool
 
-        self.framework.AddRectangle.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
+        self.framework.AddRectangle.argtypes = [ImageWriter, ctypes.c_char_p, Transform]
         self.framework.AddRectangle.restype = ctypes.c_bool
 
         self.framework.InitRenderWindow.argtypes = [ImageWriter, ctypes.c_int64]
@@ -66,7 +66,7 @@ class ImageWriter(ctypes.Structure):
 
         clock = pygame.time.Clock()
         while self.fnIsWindowOpen():
-            deltaSeconds = clock.tick(12) / 1000.0
+            deltaSeconds = clock.tick(120) / 1000.0
             self.framework.UpdateRenderWindow(self, deltaSeconds)
 
         self.framework.DisposeRenderWindow(self)
@@ -80,11 +80,11 @@ class ImageWriter(ctypes.Structure):
     def GetCameraTransform(self, statusMessage, cameraView):
         return self.framework.GetCameraTransform(self, statusMessage, ctypes.byref(cameraView))
 
-    def AddEllipse(self, statusMessage, transform):
-        return self.framework.AddEllipse(self, statusMessage, ctypes.byref(transform))
+    def AddEllipse(self, statusMessage, transform, color):
+        return self.framework.AddEllipse(self, statusMessage, transform, color)
 
-    def AddRectangle(self, statusMessage, transform):
-        return self.framework.AddRectangle(self, statusMessage, ctypes.byref(transform))
+    def AddRectangle(self, statusMessage, transform, color):
+        return self.framework.AddRectangle(self, statusMessage, transform, color)
 
     def ClearImage(self, statusMessage):
         return self.framework.ClearImage(self, statusMessage)
