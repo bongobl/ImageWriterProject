@@ -140,18 +140,6 @@ def clearImage() -> PlainReply.MCPPayload:
     return reply.toMCPPayload()
 
 @mcp.tool()
-def testAddColor(
-    color: Annotated[ColorMCPPayload, Field(description = f"A color value to test and print. {COLOR_DOC}")]
-):
-    """
-    Tests taking in color values and prints them to make sure they have correct values
-    """
-    colorRaw = Color()
-    colorRaw.fromMCPPayload(color)
-    logger.info(f"Received color value: {colorRaw.toString()}")
-
-
-@mcp.tool()
 def addEllipse(
         transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new ellipse. {TRANSFORM_DOC}")],
         color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")]
@@ -266,6 +254,94 @@ def addRectangle(
 
     return reply.toMCPPayload()
 
+@mcp.tool()
+def addTriangle(
+    point1: Annotated[Vec2MCPPayload, Field(description = f"position of first point. {VEC2_DOC}")],
+    point2: Annotated[Vec2MCPPayload, Field(description = f"position of second point. {VEC2_DOC}")],
+    point3: Annotated[Vec2MCPPayload, Field(description = f"position of third point. {VEC2_DOC}")],
+    transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {TRANSFORM_DOC}")],
+    color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")]
+) -> PlainReply.MCPPayload:
+    """
+    Places a new triangle within the world at specified transform and color
+    Note that a (scaleX, scaleY) value of (1,1) represents a square of width and height both equal to 2
+    Note that each point specifies a position in the shape's local space, whose world space is then computed
+    via transformation by the transform parameter
+    """
+
+    if not connectToImageWriterApp():
+        raise ToolError("addTriangle(): Failed to connect to ImageWriter app")
+
+    commIn = Command.AddTriangle
+    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
+
+    # create addTriangle command params
+
+    point1Raw = Vec2()
+    point1Raw.fromMCPPayload(point1)
+
+    point2Raw = Vec2()
+    point2Raw.fromMCPPayload(point2)
+
+    point3Raw = Vec2()
+    point3Raw.fromMCPPayload(point3)
+
+    transformRaw = Transform()
+    transformRaw.fromMCPPayload(transform)
+
+    colorRaw = Color()
+    colorRaw.fromMCPPayload(color)
+
+    triangleParams = AddTriangleParams(
+        point1 = point1Raw,
+        point2 = point2Raw,
+        point3 = point3Raw,
+        transform = transformRaw, 
+        color = colorRaw
+    )
+    logger.info(f"To server: {triangleParams.toString()}")
+
+    # serialize params
+    paramsBuffer = bytes(triangleParams)
+    # send message to server
+    try:
+        connToServer.sendall(commandBuffer)
+        connToServer.sendall(paramsBuffer)
+
+    # will fail if server had disconnected at time of sending message
+    except ConnectionResetError as e:
+        logger.error(f"ConnectionResetError: {e}\n\n")
+        disconnectFromImageWriter()
+        raise ToolError("addTriangle(): Failed to send command to ImageWriter app")
+
+    replyBuffer = bytearray()
+    
+    # wait here and receive message from client
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainReply))
+    if not success:
+        # log error message and return to connecting state
+        logger.error(errorMessage)
+        disconnectFromImageWriter()
+        raise ToolError("addTriangle(): Failed to receive reply from ImageWriter app")
+    
+    # deserialize client message and log
+    reply = PlainReply.from_buffer_copy(replyBuffer)
+    logger.info(f"From server: {reply.toString()}")
+
+    disconnectFromImageWriter()
+
+    return reply.toMCPPayload()
+
+@mcp.tool()
+def testAddVec2(
+    point: Annotated[Vec2MCPPayload, Field(description = f"A vec2 value to test and print. {VEC2_DOC}")]
+):
+    """
+    Tests taking in a vec2 and prints them to make sure they have correct values
+    """
+    pointRaw = Vec2()
+    pointRaw.fromMCPPayload(point)
+    logger.info(f"Received vec2 value: {pointRaw.toString()}")
 
 if __name__ == "__main__":
 

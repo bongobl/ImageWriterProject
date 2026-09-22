@@ -54,6 +54,14 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         return false;
     }
 
+    PfnCoreAddTriangle pfnCoreAddTriangle = (PfnCoreAddTriangle)GetProcAddress(hDll, "addTriangle");
+
+    if (pfnCoreAddRectangle == NULL) {
+        fprintf(stderr, "CreateImageWriterInstance: CoreEntry function addTriangle could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
+
     PfnCoreClearImage pfnCoreClearImage = (PfnCoreClearImage)GetProcAddress(hDll, "clearImage");
 
     if (pfnCoreClearImage == NULL) {
@@ -110,6 +118,7 @@ extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInst
         .pfnCoreGetCameraTransform = pfnCoreGetCameraTransform,
         .pfnCoreAddEllipse = pfnCoreAddEllipse,
         .pfnCoreAddRectangle = pfnCoreAddRectangle,
+        .pfnCoreAddTriangle = pfnCoreAddTriangle,
         .pfnCoreClearImage = pfnCoreClearImage,
         .pfnCoreInitRenderWindow = pfnCoreInitRenderWindow,
         .pfnCoreUpdateRenderWindow = pfnCoreUpdateRenderWindow,
@@ -159,6 +168,19 @@ extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
     return pInstanceData->pfnCoreAddRectangle(*pInstanceData, transform, color);
+}
+
+extern "C" __declspec(dllexport) bool AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Vec2 point1, Vec2 point2, Vec2 point3, Transform transform, Color color)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "AddTriangle: instance.pData was null\n");
+        strcpy(pStatusMessage, "ImageWiter app did not call AddTriangle() from its underlying framework correctly");
+        return false;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
+    return pInstanceData->pfnCoreAddTriangle(*pInstanceData, point1, point2, point3, transform, color);
 }
 
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage)

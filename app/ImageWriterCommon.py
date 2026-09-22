@@ -82,6 +82,7 @@ class ColorMCPPayload(BaseModel):
     alpha: float = Field(..., description="(float), alpha channel value")
 
 class Color(ctypes.Structure):
+    type MCPPayload = ColorMCPPayload
     _fields_ = [
         ("red", ctypes.c_float),
         ("green", ctypes.c_float),
@@ -97,10 +98,41 @@ class Color(ctypes.Structure):
             red = self.red, 
             green = self.green,
             blue = self.blue, 
-            alpha = self.alpha)
+            alpha = self.alpha
+        )
 
     def fromMCPPayload(self, payload):
         self.red = payload.red
         self.green = payload.green
         self.blue = payload.blue 
         self.alpha = payload.alpha 
+
+######## Vec2 ########
+VEC2_DOC = (
+    "A Vec2 consists of:" 
+    "x (float) = x spatial component" 
+    "y (float)= y spatial component"
+)
+class Vec2MCPPayload(BaseModel):
+    x: float = Field(..., description="(float), x spatial component")
+    y: float = Field(..., description="(float), y spatial component")
+
+class Vec2(ctypes.Structure):
+    type MCPPayload = Vec2MCPPayload
+    _fields_ = [
+        ("x", ctypes.c_float),
+        ("y", ctypes.c_float),
+    ]
+
+    def toString(self):
+        return f"(Vec2: x = {self.x}, y = {self.y})"
+
+    def toMCPPayload(self):
+        return Vec2MCPPayload(
+            x = self.x, 
+            y = self.y
+        )
+
+    def fromMCPPayload(self, payload):
+        self.x = payload.x
+        self.y = payload.y

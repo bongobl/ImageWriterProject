@@ -21,8 +21,11 @@ class ImageWriter(ctypes.Structure):
         self.framework.AddEllipse.argtypes = [ImageWriter, ctypes.c_char_p, Transform, Color]
         self.framework.AddEllipse.restype = ctypes.c_bool
 
-        self.framework.AddRectangle.argtypes = [ImageWriter, ctypes.c_char_p, Transform]
+        self.framework.AddRectangle.argtypes = [ImageWriter, ctypes.c_char_p, Transform, Color]
         self.framework.AddRectangle.restype = ctypes.c_bool
+
+        self.framework.AddTriangle.argtypes = [ImageWriter, ctypes.c_char_p, Vec2, Vec2, Vec2, Transform, Color]
+        self.framework.AddTriangle.restype = ctypes.c_bool
 
         self.framework.InitRenderWindow.argtypes = [ImageWriter, ctypes.c_int64]
         self.framework.InitRenderWindow.restype = ctypes.c_bool
@@ -85,6 +88,9 @@ class ImageWriter(ctypes.Structure):
 
     def AddRectangle(self, statusMessage, transform, color):
         return self.framework.AddRectangle(self, statusMessage, transform, color)
+
+    def AddTriangle(self, statusMessage, point1, point2, point3, transform, color):
+        return self.framework.AddTriangle(self, statusMessage, point1, point2, point3, transform, color)
 
     def ClearImage(self, statusMessage):
         return self.framework.ClearImage(self, statusMessage)

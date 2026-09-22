@@ -21,6 +21,12 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	AddRectangle(instance, statusMessage, 
 		{ .positionX = -cameraTransform.scaleX, .positionY = -cameraTransform.scaleY, .scaleX = 3, .scaleY = 2, .angle = 20 }, 
 		{ .red = 0.5f, .green = 0.5f, .blue = 1, .alpha = 1 });
+
+	AddTriangle(instance, statusMessage,
+		{ 1,-1 }, { 0,2 }, {-1,-1},
+		{.positionX = 0, .positionY = 0, .scaleX = 1, .scaleY = 1, .angle = 60},
+		{ .red = 0, .green = 1, .blue = 0, .alpha = 1 });
+
 	printf("%s\n", statusMessage);
 
 	system("pause");
@@ -30,6 +36,11 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	AddRectangle(instance, statusMessage, 
 		{ .positionX = 0, .positionY = 0, .scaleX = cameraTransform.scaleX - 1, .scaleY = cameraTransform.scaleY - 1, .angle = -30 }, 
 		{ .red = 0.5f, .green = 1, .blue = 0.5f, .alpha = 0.35f });
+
+	AddTriangle(instance, statusMessage,
+		{ 3,1 }, { 1,3 }, { -2,0 },
+		{ .positionX = 0, .positionY = 0, .scaleX = 1, .scaleY = 1, .angle = 0 },
+		{ .red = 1, .green = 1, .blue = 0, .alpha = 1 });
 
 	AddEllipse(instance, statusMessage, 
 		{ .positionX = 3, .positionY = -2, .scaleX = 3, .scaleY = 2, .angle = -10 }, 

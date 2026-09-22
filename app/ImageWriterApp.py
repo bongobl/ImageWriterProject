@@ -158,6 +158,28 @@ def runNetworkService(instance: ImageWriter):
                             
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
+                        
+                        case Command.AddTriangle:
+
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(AddTriangleParams))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+
+                            # deserialize addRectangle params
+                            triangleParams = AddTriangleParams.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {triangleParams.toString()}")
+                            frameworkFunctionSucceeded = instance.AddTriangle(
+                                frameworkFunctionMessage, 
+                                triangleParams.point1, 
+                                triangleParams.point2, 
+                                triangleParams.point3, 
+                                triangleParams.transform, 
+                                triangleParams.color)
+                            
+                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = PlainReply(status = commandStatus)
 
                         case Command.Disconnecting:
                             
@@ -170,7 +192,7 @@ def runNetworkService(instance: ImageWriter):
                             
                         case _:
                             print("Unrecognized command")
-                            reply = PlainStatusReply(
+                            reply = PlainReply(
                                 success = False,
                                 message = ("Unrecognized command sent to ImageWriterApp over socket").encode('utf-8')
                             )

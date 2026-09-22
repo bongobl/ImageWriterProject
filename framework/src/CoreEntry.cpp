@@ -10,6 +10,10 @@ namespace sf {
 			std::clamp(color.blue, 0.0f, 1.0f) * 255,
 			std::clamp(color.alpha, 0.0f, 1.0f) * 255);
 	}
+
+	static sf::Vector2f fromCore(Vec2 vector) {
+		return sf::Vector2f(vector.x, vector.y);
+	}
 }
 
 extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
@@ -90,6 +94,33 @@ extern "C" __declspec(dllexport) bool addRectangle(InstanceData instanceData, Tr
 	return true;
 }
 
+extern "C" __declspec(dllexport) bool addTriangle(InstanceData instanceData, Vec2 point1, Vec2 point2, Vec2 point3, Transform transform, Color color)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "addTriangle: instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on addTriangle()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	sf::ConvexShape* pTriangleShape = new sf::ConvexShape(3);
+	pTriangleShape->setFillColor(sf::fromCore(color));
+	pTriangleShape->setOrigin(pCoreData->screenFromWorld * sf::Vector2f(0, 0));
+
+	// Points
+	pTriangleShape->setPoint(0, pCoreData->screenFromWorld * sf::fromCore(point1));
+	pTriangleShape->setPoint(1, pCoreData->screenFromWorld * sf::fromCore(point2));
+	pTriangleShape->setPoint(2, pCoreData->screenFromWorld * sf::fromCore(point3));
+
+	pTriangleShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(transform.positionX, transform.positionY));
+	pTriangleShape->setRotation(-sf::degrees(transform.angle));
+	pTriangleShape->setScale(sf::Vector2f(transform.scaleX, transform.scaleY));	// For triangles, scale is specified in world space (not screen space)
+
+	pCoreData->m_Shapes.addShape(pTriangleShape);
+
+	return true;
+}
 extern "C" __declspec(dllexport) bool clearImage(InstanceData instanceData)
 {
 	if (!instanceData.pCoreData) {
@@ -167,7 +198,7 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 	}
 	
 	// Test just to make sure window updates every frame
-	//pCoreData->m_Shapes.dummyUpdateShapes(deltaTime);
+	//pCoreData->m_Shapes.dummyUpdateShapes(-deltaTime);
 
 	window.clear();
 	pCoreData->m_Shapes.drawShapes(window);

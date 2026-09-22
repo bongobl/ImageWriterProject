@@ -14,7 +14,8 @@ class Command(IntEnum):
     ClearImage = 2
     AddEllipse = 3
     AddRectangle = 4
-    Disconnecting = 5
+    AddTriangle = 5
+    Disconnecting = 6
 
 # Parameters
 
@@ -36,6 +37,17 @@ class AddRectangleParams(ctypes.Structure):
     def toString(self):
         return f"(AddRectangleParams: transform = {self.transform.toString()}, color = {self.color.toString()})"
 
+class AddTriangleParams(ctypes.Structure):
+    _fields_ = [
+        ("point1", Vec2),
+        ("point2", Vec2),
+        ("point3", Vec2),
+        ("transform", Transform),
+        ("color", Color)
+    ]
+
+    def toString(self):
+        return f"(AddTriangleParams: point1 = {self.point1.toString()}, point2 = {self.point2.toString()}, point3 = {self.point3.toString()}, transform = {self.transform.toString()}, color = {self.color.toString()})"
 # Replies
 
 class PlainReplyMCPPayload(BaseModel):

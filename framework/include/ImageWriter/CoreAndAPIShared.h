@@ -12,6 +12,7 @@ typedef bool (*PfnCoreInitialize)(InstanceData*);
 typedef bool (*PfnCoreGetCameraTransform)(InstanceData, Transform*);
 typedef bool (*PfnCoreAddEllipse)(InstanceData, Transform, Color);
 typedef bool (*PfnCoreAddRectangle)(InstanceData, Transform, Color);
+typedef bool (*PfnCoreAddTriangle)(InstanceData, Vec2, Vec2, Vec2, Transform, Color);
 typedef bool (*PfnCoreClearImage)(InstanceData);
 
 typedef bool (*PfnCoreInitRenderWindow)(InstanceData, int64_t);
@@ -29,6 +30,7 @@ struct InstanceData
     PfnCoreGetCameraTransform pfnCoreGetCameraTransform;
     PfnCoreAddEllipse pfnCoreAddEllipse;
     PfnCoreAddRectangle pfnCoreAddRectangle;
+    PfnCoreAddTriangle pfnCoreAddTriangle;
     PfnCoreClearImage pfnCoreClearImage;
 
     PfnCoreInitRenderWindow pfnCoreInitRenderWindow;
