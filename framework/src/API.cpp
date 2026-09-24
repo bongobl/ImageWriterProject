@@ -170,7 +170,7 @@ extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance
     return pInstanceData->pfnCoreAddRectangle(*pInstanceData, transform, color);
 }
 
-extern "C" __declspec(dllexport) bool AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Vec2 point1, Vec2 point2, Vec2 point3, Transform transform, Color color)
+extern "C" __declspec(dllexport) bool AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3)
 {
     if (!instance.pData) {
         fprintf(stderr, "AddTriangle: instance.pData was null\n");
@@ -180,7 +180,7 @@ extern "C" __declspec(dllexport) bool AddTriangle(HImageWriterInstance instance,
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCoreAddTriangle(*pInstanceData, point1, point2, point3, transform, color);
+    return pInstanceData->pfnCoreAddTriangle(*pInstanceData, transform, color, point1, point2, point3);
 }
 
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage)

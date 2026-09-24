@@ -59,7 +59,7 @@ extern "C" __declspec(dllexport) bool addRectangle(InstanceData instanceData, Tr
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool addTriangle(InstanceData instanceData, Vec2 point1, Vec2 point2, Vec2 point3, Transform transform, Color color)
+extern "C" __declspec(dllexport) bool addTriangle(InstanceData instanceData, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "addTriangle: instanceData.pCoreData was null" << std::endl;

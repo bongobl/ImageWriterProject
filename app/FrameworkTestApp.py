@@ -70,9 +70,9 @@ def createSomeSampleShapes(instance: ImageWriter):
     )
 
     instance.AddTriangle(statusMessage,
-		Vec2(1,-1), Vec2( 0,2 ), Vec2(-1,-1),
 		Transform(positionX = 0, positionY = 0, scaleX = 1, scaleY = 1, angle = 60),
-		Color(red = 0, green = 1, blue = 0, alpha = 1)
+		Color(red = 0, green = 1, blue = 0, alpha = 1),
+        Vec2(1,-1), Vec2( 0,2 ), Vec2(-1,-1)
     )
     
     input("Press Enter")
@@ -84,9 +84,9 @@ def createSomeSampleShapes(instance: ImageWriter):
         Color(red = 0.5, green = 1, blue = 0.5, alpha = 0.35 )
     )
     instance.AddTriangle(statusMessage,
-		Vec2(3,1), Vec2(1,3), Vec2(-2,0),
 		Transform(positionX = 0, positionY = 0, scaleX = 1, scaleY = 1, angle = 0),
-		Color(red = 1, green = 1, blue = 0, alpha = 1)
+		Color(red = 1, green = 1, blue = 0, alpha = 1),
+        Vec2(3,1), Vec2(1,3), Vec2(-2,0)
     )
     instance.AddEllipse(statusMessage, 
         Transform(positionX = 3, positionY = -2, scaleX = 3, scaleY = 2, angle = -10), 

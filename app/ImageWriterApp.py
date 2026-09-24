@@ -171,12 +171,13 @@ def runNetworkService(instance: ImageWriter):
                             triangleParams = AddTriangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {triangleParams.toString()}")
                             frameworkFunctionSucceeded = instance.AddTriangle(
-                                frameworkFunctionMessage, 
+                                frameworkFunctionMessage,
+                                triangleParams.transform, 
+                                triangleParams.color,
                                 triangleParams.point1, 
                                 triangleParams.point2, 
-                                triangleParams.point3, 
-                                triangleParams.transform, 
-                                triangleParams.color)
+                                triangleParams.point3
+                            )
                             
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)

@@ -39,15 +39,15 @@ class AddRectangleParams(ctypes.Structure):
 
 class AddTriangleParams(ctypes.Structure):
     _fields_ = [
+        ("transform", Transform),
+        ("color", Color),
         ("point1", Vec2),
         ("point2", Vec2),
-        ("point3", Vec2),
-        ("transform", Transform),
-        ("color", Color)
+        ("point3", Vec2)
     ]
 
     def toString(self):
-        return f"(AddTriangleParams: point1 = {self.point1.toString()}, point2 = {self.point2.toString()}, point3 = {self.point3.toString()}, transform = {self.transform.toString()}, color = {self.color.toString()})"
+        return f"(AddTriangleParams: transform = {self.transform.toString()}, color = {self.color.toString()}, point1 = {self.point1.toString()}, point2 = {self.point2.toString()}, point3 = {self.point3.toString()})"
 # Replies
 
 class PlainReplyMCPPayload(BaseModel):

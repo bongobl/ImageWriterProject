@@ -256,11 +256,11 @@ def addRectangle(
 
 @mcp.tool()
 def addTriangle(
+    transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {TRANSFORM_DOC}")],
+    color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")],
     point1: Annotated[Vec2MCPPayload, Field(description = f"position of first point. {VEC2_DOC}")],
     point2: Annotated[Vec2MCPPayload, Field(description = f"position of second point. {VEC2_DOC}")],
     point3: Annotated[Vec2MCPPayload, Field(description = f"position of third point. {VEC2_DOC}")],
-    transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {TRANSFORM_DOC}")],
-    color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")]
 ) -> PlainReply.MCPPayload:
     """
     Places a new triangle within the world at specified transform and color
@@ -276,6 +276,11 @@ def addTriangle(
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
     # create addTriangle command params
+    transformRaw = Transform()
+    transformRaw.fromMCPPayload(transform)
+
+    colorRaw = Color()
+    colorRaw.fromMCPPayload(color)
 
     point1Raw = Vec2()
     point1Raw.fromMCPPayload(point1)
@@ -286,18 +291,12 @@ def addTriangle(
     point3Raw = Vec2()
     point3Raw.fromMCPPayload(point3)
 
-    transformRaw = Transform()
-    transformRaw.fromMCPPayload(transform)
-
-    colorRaw = Color()
-    colorRaw.fromMCPPayload(color)
-
     triangleParams = AddTriangleParams(
+        transform = transformRaw, 
+        color = colorRaw,
         point1 = point1Raw,
         point2 = point2Raw,
-        point3 = point3Raw,
-        transform = transformRaw, 
-        color = colorRaw
+        point3 = point3Raw
     )
     logger.info(f"To server: {triangleParams.toString()}")
 

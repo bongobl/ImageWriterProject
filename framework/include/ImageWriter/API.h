@@ -37,7 +37,7 @@ extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterIns
 extern "C" __declspec(dllexport) bool GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform);
 extern "C" __declspec(dllexport) bool AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color);
 extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color);
-extern "C" __declspec(dllexport) bool AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Vec2 point1, Vec2 point2, Vec2 point3, Transform transform, Color color);
+extern "C" __declspec(dllexport) bool AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3);
 extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage);
 
 // Window lifecycle
