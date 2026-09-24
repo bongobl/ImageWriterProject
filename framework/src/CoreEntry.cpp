@@ -1,20 +1,7 @@
 #include <iostream>
 #include <ImageWriter/CoreEntry.h>
+#include <ImageWriter/Entity.h>
 #include <algorithm>
-using FrameworkColor = Color;
-namespace sf {
-	static sf::Color fromCore(FrameworkColor color) {
-		return sf::Color(
-			std::clamp(color.red, 0.0f, 1.0f) * 255,
-			std::clamp(color.green, 0.0f, 1.0f) * 255,
-			std::clamp(color.blue, 0.0f, 1.0f) * 255,
-			std::clamp(color.alpha, 0.0f, 1.0f) * 255);
-	}
-
-	static sf::Vector2f fromCore(Vec2 vector) {
-		return sf::Vector2f(vector.x, vector.y);
-	}
-}
 
 extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 {
@@ -55,20 +42,7 @@ extern "C" __declspec(dllexport) bool addEllipse(InstanceData instanceData, Tran
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-
-
-	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(transform.scaleX, transform.scaleY);
-	sf::CircleShape* pCircleShape = new sf::CircleShape(1);
-
-	pCircleShape->setFillColor(sf::fromCore(color));
-	pCircleShape->setOrigin(sf::Vector2f(1, 1));
-
-	pCircleShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(transform.positionX, transform.positionY));
-	pCircleShape->setRotation(-sf::degrees(transform.angle));
-	pCircleShape->setScale(screenHalfExtents);
-
-	pCoreData->m_Shapes.addShape(pCircleShape);
-
+	pCoreData->m_Entities.addEllipse(transform, color);
 	return true;
 }
 
@@ -81,16 +55,7 @@ extern "C" __declspec(dllexport) bool addRectangle(InstanceData instanceData, Tr
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-
-	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(transform.scaleX, transform.scaleY);
-	sf::RectangleShape* pRectShape = new sf::RectangleShape(sf::Vector2f(2,2));
-	pRectShape->setFillColor(sf::fromCore(color));
-	pRectShape->setOrigin(sf::Vector2f(1, 1));
-	pRectShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(transform.positionX, transform.positionY));
-	pRectShape->setRotation(-sf::degrees(transform.angle));
-	pRectShape->setScale(screenHalfExtents);
-	pCoreData->m_Shapes.addShape(pRectShape);
-
+	pCoreData->m_Entities.addRectangle(transform, color);
 	return true;
 }
 
@@ -103,22 +68,7 @@ extern "C" __declspec(dllexport) bool addTriangle(InstanceData instanceData, Vec
 	}
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-
-	sf::ConvexShape* pTriangleShape = new sf::ConvexShape(3);
-	pTriangleShape->setFillColor(sf::fromCore(color));
-	pTriangleShape->setOrigin(pCoreData->screenFromWorld * sf::Vector2f(0, 0));
-
-	// Points
-	pTriangleShape->setPoint(0, pCoreData->screenFromWorld * sf::fromCore(point1));
-	pTriangleShape->setPoint(1, pCoreData->screenFromWorld * sf::fromCore(point2));
-	pTriangleShape->setPoint(2, pCoreData->screenFromWorld * sf::fromCore(point3));
-
-	pTriangleShape->setPosition(pCoreData->screenFromWorld * sf::Vector2f(transform.positionX, transform.positionY));
-	pTriangleShape->setRotation(-sf::degrees(transform.angle));
-	pTriangleShape->setScale(sf::Vector2f(transform.scaleX, transform.scaleY));	// For triangles, scale is specified in world space (not screen space)
-
-	pCoreData->m_Shapes.addShape(pTriangleShape);
-
+	pCoreData->m_Entities.addTriangle(transform, color, point1, point2, point3);
 	return true;
 }
 extern "C" __declspec(dllexport) bool clearImage(InstanceData instanceData)
@@ -131,7 +81,7 @@ extern "C" __declspec(dllexport) bool clearImage(InstanceData instanceData)
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
-	pCoreData->m_Shapes.destroyAllShapes();
+	pCoreData->m_Entities.destroyAllShapes();
 
 	return true;
 }
@@ -198,10 +148,10 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 	}
 	
 	// Test just to make sure window updates every frame
-	//pCoreData->m_Shapes.dummyUpdateShapes(-deltaTime);
+	//pCoreData->m_Entities.dummyUpdateShapes(deltaTime);
 
 	window.clear();
-	pCoreData->m_Shapes.drawShapes(window);
+	pCoreData->m_Entities.drawShapes(window, pCoreData);
 	window.display();
 
 	return true;
@@ -215,7 +165,7 @@ extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceD
 
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
-	pCoreData->m_Shapes.destroyAllShapes();
+	pCoreData->m_Entities.destroyAllShapes();
 	delete pCoreData->pWindow;
 	pCoreData->pWindow = nullptr;
 
