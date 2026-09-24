@@ -24,11 +24,11 @@ class Status(ctypes.Structure):
 
 ######## Transform ########
 TRANSFORM_DOC = (
-    "A Transform consists of:" 
+    "A Transform consists of: " 
     "positionX (float) = X position, " 
-    "positionY (float)= Y position "
+    "positionY (float) = Y position, "
     "scaleX (float) = X scale, "
-    "scaleY (float) = Y scale"
+    "scaleY (float) = Y scale, "
     "angle (float) = counter clockwise angle orientation on world plane"
 )
 class TransformMCPPayload(BaseModel):
@@ -68,11 +68,11 @@ class Transform(ctypes.Structure):
 
 ######## Color ########
 COLOR_DOC = (
-    "A Color consists of:" 
-    "red (float) = red channel value " 
-    "green (float)= green channel value "
-    "blue (float) = blue channel value "
-    "alpha (float) = alpha channel value"
+    "A Color consists of: " 
+    "red (float) = red channel value, " 
+    "green (float)= green channel value, "
+    "blue (float) = blue channel value, "
+    "alpha (float) = alpha channel value, "
     "For each channel, 0 = no strength and 1 = max strength"
 )
 class ColorMCPPayload(BaseModel):
@@ -94,7 +94,7 @@ class Color(ctypes.Structure):
         return f"(Color: red = {self.red}, green = {self.green}, blue = {self.blue}, alpha = {self.alpha})"
 
     def toMCPPayload(self):
-        return TransformMCPPayload(
+        return ColorMCPPayload(
             red = self.red, 
             green = self.green,
             blue = self.blue, 
@@ -109,8 +109,8 @@ class Color(ctypes.Structure):
 
 ######## Vec2 ########
 VEC2_DOC = (
-    "A Vec2 consists of:" 
-    "x (float) = x spatial component" 
+    "A Vec2 consists of: " 
+    "x (float) = x spatial component, " 
     "y (float)= y spatial component"
 )
 class Vec2MCPPayload(BaseModel):

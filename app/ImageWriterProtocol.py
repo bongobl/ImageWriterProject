@@ -51,7 +51,7 @@ class AddTriangleParams(ctypes.Structure):
 # Replies
 
 class PlainReplyMCPPayload(BaseModel):
-    status: StatusMCPPayload = ()
+    status: StatusMCPPayload
 
 # Server reply to client after each command
 class PlainReply(ctypes.Structure):

@@ -25,11 +25,11 @@ logger = logging.getLogger("imagewriter")
 mcp = MCPServer(
     "ImageWriter",
     instructions=(
-        "This server connects to an image writer application tells it to draw whatever the user wishes"
-        "Note the coordinate system is such that (x,y) = (0,0) is the center of the image the"
-        "x axis range is roughly -12.5 to 12.5 and the y axis range is roughly -6.5 to 6.5"
-        "X values increase as you move toward the right of the image"
-        "Y values increase as you move toward the top of the image"
+        "This server connects to an image writer application tells it to draw whatever the user wishes. "
+        "Note the coordinate system is such that (x,y) = (0,0) is the center of the image. "
+        "The x axis range is roughly -12.5 to 12.5 and the y axis range is roughly -6.5 to 6.5. "
+        "x values increase as you move toward the right of the image. "
+        "y values increase as you move toward the top of the image"
     ),
 )
 
@@ -256,7 +256,7 @@ def addRectangle(
 
 @mcp.tool()
 def addTriangle(
-    transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {TRANSFORM_DOC}")],
+    transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new triangle. {TRANSFORM_DOC}")],
     color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")],
     point1: Annotated[Vec2MCPPayload, Field(description = f"position of first point. {VEC2_DOC}")],
     point2: Annotated[Vec2MCPPayload, Field(description = f"position of second point. {VEC2_DOC}")],
