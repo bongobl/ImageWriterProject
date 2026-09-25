@@ -26,10 +26,8 @@ mcp = MCPServer(
     "ImageWriter",
     instructions=(
         "This server connects to an image writer application tells it to draw whatever the user wishes. "
-        "Note the coordinate system is such that (x,y) = (0,0) is the center of the image. "
-        "The x axis range is roughly -12.5 to 12.5 and the y axis range is roughly -6.5 to 6.5. "
-        "x values increase as you move toward the right of the image. "
-        "y values increase as you move toward the top of the image"
+        "With every shape you draw, you specify a Transform describing its position, orientation and scale "
+        "in the 2D world, in addition you can also query the camera Transform to see what the user is currently looking at"
     ),
 )
 
@@ -64,7 +62,7 @@ def disconnectFromImageWriter():
 def getCameraTransform() -> TransformReply.MCPPayload:
     """returns the rectangle representing the camera's transform within the world which consists of a position, rotation
     and scale (in that order of most globally to most locally applied)
-    Note a scale value along an axis of x means it spans that axis from -x to x.
+    Note the scaleX and scaleY describe the half-extents of the camera rectangle in world units.
     """
 
     if not connectToImageWriterApp():

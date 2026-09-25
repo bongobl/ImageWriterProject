@@ -27,12 +27,14 @@ TriangleEntity::TriangleEntity(const Transform& transform, Color& color, Vec2 po
 
 sf::Shape& EllipseEntity::getDrawable(CoreData* pCoreData) const {
 
-	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
+	sf::Vector2f screenHalfExtents = pCoreData->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
 
 	sf::CircleShape& circleDrawing = static_cast<sf::CircleShape&>(m_Drawing);
 	circleDrawing.setFillColor(sf::fromCore(m_Color));
-	circleDrawing.setPosition(pCoreData->screenFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
-	circleDrawing.setRotation(-sf::degrees(m_Transform.angle));
+	circleDrawing.setPosition(pCoreData->screenFromCamera * pCoreData->cameraFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
+
+	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
+	circleDrawing.setRotation(-sf::degrees(-pCoreData->m_Camera.getOrientation() + m_Transform.angle));
 	circleDrawing.setScale(screenHalfExtents);
 
 	return circleDrawing;
@@ -40,12 +42,15 @@ sf::Shape& EllipseEntity::getDrawable(CoreData* pCoreData) const {
 
 sf::Shape& RectangleEntity::getDrawable(CoreData* pCoreData) const {
 
-	sf::Vector2f screenHalfExtents = pCoreData->screenFromWorldScaleFactor * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
+	sf::Vector2f screenHalfExtents = pCoreData->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
 
 	sf::RectangleShape& rectDrawing = static_cast<sf::RectangleShape&>(m_Drawing);
 	rectDrawing.setFillColor(sf::fromCore(m_Color));
-	rectDrawing.setPosition(pCoreData->screenFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
-	rectDrawing.setRotation(-sf::degrees(m_Transform.angle));
+	rectDrawing.setPosition(pCoreData->screenFromCamera * pCoreData->cameraFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
+	
+	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
+	rectDrawing.setRotation(-sf::degrees(-pCoreData->m_Camera.getOrientation() + m_Transform.angle));
+
 	rectDrawing.setScale(screenHalfExtents);
 
 	return rectDrawing;
@@ -55,14 +60,17 @@ sf::Shape& TriangleEntity::getDrawable(CoreData* pCoreData) const {
 	sf::ConvexShape& triangleDrawing = static_cast<sf::ConvexShape&>(m_Drawing);
 
 	triangleDrawing.setFillColor(sf::fromCore(m_Color));
-	triangleDrawing.setOrigin(pCoreData->screenFromWorld * sf::Vector2f(0, 0));
+
+	sf::Transform screenFromWorld = pCoreData->screenFromCamera * pCoreData->cameraFromWorld;
+
+	triangleDrawing.setOrigin(screenFromWorld * sf::Vector2f(0, 0));
 
 	// Points
-	triangleDrawing.setPoint(0, pCoreData->screenFromWorld * sf::fromCore(m_Point1));
-	triangleDrawing.setPoint(1, pCoreData->screenFromWorld * sf::fromCore(m_Point2));
-	triangleDrawing.setPoint(2, pCoreData->screenFromWorld * sf::fromCore(m_Point3));
+	triangleDrawing.setPoint(0, screenFromWorld * sf::fromCore(m_Point1));
+	triangleDrawing.setPoint(1, screenFromWorld * sf::fromCore(m_Point2));
+	triangleDrawing.setPoint(2, screenFromWorld * sf::fromCore(m_Point3));
 
-	triangleDrawing.setPosition(pCoreData->screenFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
+	triangleDrawing.setPosition(screenFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
 	triangleDrawing.setRotation(-sf::degrees(m_Transform.angle));
 	triangleDrawing.setScale(sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY));	// For triangles, scale is specified in world space (not screen space)
 
@@ -122,6 +130,8 @@ void EntityList::drawShapes(sf::RenderWindow& window, CoreData* pCoreData) {
 }
 
 void EntityList::destroyAllShapes() {
+
+	std::unique_lock<std::shared_mutex> lock(mutex);
 	for (int i = 0; i < m_Entities.size(); ++i) {
 		delete m_Entities.at(i);
 		m_Entities.at(i) = nullptr;

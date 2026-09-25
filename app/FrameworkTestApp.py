@@ -59,61 +59,100 @@ def createSomeSampleShapes(instance: ImageWriter):
     instance.GetCameraTransform(statusMessage, cameraTransform)
     print(f"camera scaleX = {cameraTransform.scaleX}, scaleY = {cameraTransform.scaleY}")
 
-    instance.AddEllipse(statusMessage, 
-        Transform(positionX = cameraTransform.scaleX, positionY = cameraTransform.scaleY, scaleX = 1, scaleY = 1, angle = 0), 
-        Color(red = 1, green = 0, blue = 0, alpha = 1)
-    )
+    dimX = 8
+    dimY = 6
+    spacingX = 2.4
+    spacingY = 1.3
 
-    instance.AddRectangle(statusMessage, 
-        Transform(positionX = -cameraTransform.scaleX, positionY = -cameraTransform.scaleY, scaleX = 3, scaleY = 2, angle = 20), 
-        Color(red = 0.5, green = 0.5, blue = 1, alpha = 1)
-    )
+    startX = (dimX - 1) / 2 * spacingX
+    startY = (dimY - 1) / 2 * spacingY
 
-    instance.AddTriangle(statusMessage,
-		Transform(positionX = 0, positionY = 0, scaleX = 1, scaleY = 1, angle = 60),
-		Color(red = 0, green = 1, blue = 0, alpha = 1),
-        Vec2(1,-1), Vec2( 0,2 ), Vec2(-1,-1)
-    )
+    for i in range(dimY):
+        for j in range(dimX):
+            instance.AddEllipse(statusMessage,
+                Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 0.5, scaleY = 0.35, angle = 0),
+                Color(red = 1, green = 0, blue = 0, alpha = 1)
+            )
     
     input("Press Enter")
     instance.ClearImage(statusMessage);
 
     input("Press Enter")
-    instance.AddRectangle(statusMessage, 
-        Transform(positionX = 0, positionY = 0, scaleX = cameraTransform.scaleX - 1, scaleY = cameraTransform.scaleY - 1, angle = -30), 
-        Color(red = 0.5, green = 1, blue = 0.5, alpha = 0.35 )
-    )
-    instance.AddTriangle(statusMessage,
-		Transform(positionX = 0, positionY = 0, scaleX = 1, scaleY = 1, angle = 0),
-		Color(red = 1, green = 1, blue = 0, alpha = 1),
-        Vec2(3,1), Vec2(1,3), Vec2(-2,0)
-    )
-    instance.AddEllipse(statusMessage, 
-        Transform(positionX = 3, positionY = -2, scaleX = 3, scaleY = 2, angle = -10), 
-        Color(red = 0, green = 0, blue = 1, alpha = 0.4)
-    )
-
+    for i in range(dimY):
+        for j in range(dimX):
+            instance.AddRectangle(statusMessage,
+                Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 0.5, scaleY = 0.35, angle = 0),
+                Color(red = 0, green = 1, blue = 1, alpha = 1)
+            )
+    
     input("Press Enter")
     instance.ClearImage(statusMessage);
 
     input("Press Enter")
-    instance.AddEllipse(statusMessage, 
-        Transform(positionX = -5, positionY = 3, scaleX = 1, scaleY = 4, angle = -25), 
-        Color(red = 0, green = 1, blue = 1, alpha = 0.6)
-    )
-
-    instance.AddEllipse(statusMessage, 
-        Transform(positionX = 7, positionY = -4, scaleX = 0.5, scaleY = 1.5, angle = 60), 
-        Color(red = 1, green = 1, blue = 0, alpha = 0.2)
-    )
-
-    instance.AddRectangle(statusMessage, 
-        Transform(positionX = -8, positionY = -1, scaleX = 1, scaleY = 1, angle = 12), 
-        Color(red = 1, green = 0.5, blue = 1, alpha = 0.6)
-    )
-
+    for i in range(dimY):
+        for j in range(dimX):
+            instance.AddTriangle(statusMessage,
+                Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 1, scaleY = 1, angle = 0),
+                Color(red = 1, green = 1, blue = 0, alpha = 1),
+                Vec2(-0.5, 0.35), Vec2(-0.5, -0.35), Vec2(0.5, 0)
+            )
+    
     input("Press Enter")
     instance.ClearImage(statusMessage);
+
+    # instance.AddEllipse(statusMessage, 
+    #     Transform(positionX = cameraTransform.scaleX, positionY = cameraTransform.scaleY, scaleX = 1, scaleY = 1, angle = 0), 
+    #     Color(red = 1, green = 0, blue = 0, alpha = 1)
+    # )
+
+    # instance.AddRectangle(statusMessage, 
+    #     Transform(positionX = -cameraTransform.scaleX, positionY = -cameraTransform.scaleY, scaleX = 3, scaleY = 2, angle = 20), 
+    #     Color(red = 0.5, green = 0.5, blue = 1, alpha = 1)
+    # )
+
+    # instance.AddTriangle(statusMessage,
+    # 	Transform(positionX = 0, positionY = 0, scaleX = 1, scaleY = 1, angle = 60),
+    # 	Color(red = 0, green = 1, blue = 0, alpha = 1),
+    #     Vec2(1,-1), Vec2( 0,2 ), Vec2(-1,-1)
+    # )
+    
+    # input("Press Enter")
+    # instance.ClearImage(statusMessage);
+
+    # input("Press Enter")
+    # instance.AddRectangle(statusMessage, 
+    #     Transform(positionX = 0, positionY = 0, scaleX = cameraTransform.scaleX - 1, scaleY = cameraTransform.scaleY - 1, angle = -30), 
+    #     Color(red = 0.5, green = 1, blue = 0.5, alpha = 0.35 )
+    # )
+    # instance.AddTriangle(statusMessage,
+    # 	Transform(positionX = 0, positionY = 0, scaleX = 1, scaleY = 1, angle = 0),
+    # 	Color(red = 1, green = 1, blue = 0, alpha = 1),
+    #     Vec2(3,1), Vec2(1,3), Vec2(-2,0)
+    # )
+    # instance.AddEllipse(statusMessage, 
+    #     Transform(positionX = 3, positionY = -2, scaleX = 3, scaleY = 2, angle = -10), 
+    #     Color(red = 0, green = 0, blue = 1, alpha = 0.4)
+    # )
+
+    # input("Press Enter")
+    # instance.ClearImage(statusMessage);
+
+    # input("Press Enter")
+    # instance.AddEllipse(statusMessage, 
+    #     Transform(positionX = -5, positionY = 3, scaleX = 1, scaleY = 4, angle = -25), 
+    #     Color(red = 0, green = 1, blue = 1, alpha = 0.6)
+    # )
+
+    # instance.AddEllipse(statusMessage, 
+    #     Transform(positionX = 7, positionY = -4, scaleX = 0.5, scaleY = 1.5, angle = 60), 
+    #     Color(red = 1, green = 1, blue = 0, alpha = 0.2)
+    # )
+
+    # instance.AddRectangle(statusMessage, 
+    #     Transform(positionX = -8, positionY = -1, scaleX = 1, scaleY = 1, angle = 12), 
+    #     Color(red = 1, green = 0.5, blue = 1, alpha = 0.6)
+    # )
+
 
 
 if __name__ == "__main__":
