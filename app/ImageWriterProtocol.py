@@ -11,7 +11,7 @@ COMMAND_SIZE = 1
 class Command(IntEnum):
 
     GetCameraTransform = 1
-    ClearImage = 2
+    RemoveAllEntities = 2
     AddEllipse = 3
     AddRectangle = 4
     AddTriangle = 5
@@ -48,6 +48,7 @@ class AddTriangleParams(ctypes.Structure):
 
     def toString(self):
         return f"(AddTriangleParams: transform = {self.transform.toString()}, color = {self.color.toString()}, point1 = {self.point1.toString()}, point2 = {self.point2.toString()}, point3 = {self.point3.toString()})"
+
 # Replies
 
 class PlainReplyMCPPayload(BaseModel):

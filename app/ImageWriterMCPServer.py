@@ -100,13 +100,13 @@ def getCameraTransform() -> TransformReply.MCPPayload:
     return reply.toMCPPayload()
 
 @mcp.tool()
-def clearImage() -> PlainReply.MCPPayload:
-    """clears the world of all drawn shapes"""
+def removeAllEntities() -> PlainReply.MCPPayload:
+    """clears the world of all spawned entities"""
 
     if not connectToImageWriterApp():
-        raise ToolError("clearImage(): Failed to connect to ImageWriter app")
+        raise ToolError("removeAllEntities(): Failed to connect to ImageWriter app")
 
-    commIn = Command.ClearImage
+    commIn = Command.RemoveAllEntities
     commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
 
     # send message to server
@@ -117,7 +117,7 @@ def clearImage() -> PlainReply.MCPPayload:
     except ConnectionResetError as e:
         logger.error(f"ConnectionResetError: {e}\n\n")
         disconnectFromImageWriter()
-        raise ToolError("clearImage(): Failed to send command to ImageWriter app")
+        raise ToolError("removeAllEntities(): Failed to send command to ImageWriter app")
 
     replyBuffer = bytearray()
     
@@ -127,7 +127,7 @@ def clearImage() -> PlainReply.MCPPayload:
         # log error message and return to connecting state
         logger.error(errorMessage)
         disconnectFromImageWriter()
-        raise ToolError("clearImage(): Failed to receive reply from ImageWriter app")
+        raise ToolError("removeAllEntities(): Failed to receive reply from ImageWriter app")
     
     # deserialize client message and log
     reply = PlainReply.from_buffer_copy(replyBuffer)

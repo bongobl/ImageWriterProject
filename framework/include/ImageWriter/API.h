@@ -29,20 +29,22 @@ struct Vec2 {
 
 typedef ImageWriter HImageWriterInstance;
 
-// App lifecycle
-extern "C" __declspec(dllexport) bool CreateImageWriterInstance(HImageWriterInstance* pInstance);
-extern "C" __declspec(dllexport) bool DestroyImageWriterInstance(HImageWriterInstance* instance);
+// instance
+extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWriterInstance* pInstance);
+extern "C" __declspec(dllexport) bool ImageWriter_Instance_Dispose(HImageWriterInstance* pInstance);
 
-// AI API
-extern "C" __declspec(dllexport) bool GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform);
-extern "C" __declspec(dllexport) bool AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color);
-extern "C" __declspec(dllexport) bool AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color);
-extern "C" __declspec(dllexport) bool AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3);
-extern "C" __declspec(dllexport) bool ClearImage(HImageWriterInstance instance, char* pStatusMessage);
+// scene lifecycle
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_Init(HImageWriterInstance instance, int64_t windowHandle);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_Dispose(HImageWriterInstance instance);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateFrame(HImageWriterInstance instance, float deltaTime);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_IsSelfManagedRenderWindowOpen(HImageWriterInstance instance);
 
-// Window lifecycle
-extern "C" __declspec(dllexport) bool InitRenderWindow(HImageWriterInstance instance, int64_t windowHandle);
-extern "C" __declspec(dllexport) bool UpdateRenderWindow(HImageWriterInstance instance, float deltaTime);
-extern "C" __declspec(dllexport) bool DisposeRenderWindow(HImageWriterInstance instance);
-extern "C" __declspec(dllexport) bool IsIsolatedRenderWindowOpen(HImageWriterInstance instance);
+// scene API
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveAllEntities(HImageWriterInstance instance, char* pStatusMessage);
+
+
 

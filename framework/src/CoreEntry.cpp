@@ -3,10 +3,10 @@
 #include <ImageWriter/Entity.h>
 #include <algorithm>
 
-extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
+extern "C" __declspec(dllexport) bool instance_initialize(InstanceData* pInstanceData)
 {
 	if (!pInstanceData) {
-		std::cerr << "initialize: pInstanceData was null" << std::endl;
+		std::cerr << "Core entry instance_initialize(): pInstanceData was null" << std::endl;
 		return false;
 	}
 	pInstanceData->pCoreData = new CoreData();
@@ -14,78 +14,27 @@ extern "C" __declspec(dllexport) bool initialize(InstanceData* pInstanceData)
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool getCameraTransform(InstanceData instanceData, Transform* pCameraTransform)
+extern "C" __declspec(dllexport) bool instance_dispose(InstanceData* pInstanceData)
 {
-	if (!instanceData.pCoreData) {
-		std::cerr << "getCameraTransform: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on getCameraTransform()");
+	if (!pInstanceData) {
+		std::cerr << "Core entry instance_dispose(): pInstanceData was null" << std::endl;
 		return false;
 	}
 
-	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-	const Camera& camera = pCoreData->m_Camera;
-	const float widthFromHeight = pCoreData->initialWindowWidth / pCoreData->initialWindowHeight;
-
-	*pCameraTransform = camera.getTransform();
-
-	return true;
-}
-extern "C" __declspec(dllexport) bool addEllipse(InstanceData instanceData, Transform transform, Color color)
-{
-	if (!instanceData.pCoreData) {
-		std::cerr << "drawCircle: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on drawCircle()");
+	if (!pInstanceData->pCoreData) {
+		std::cerr << "Core entry instance_dispose(): pInstanceData->pCoreData was null" << std::endl;
 		return false;
 	}
 
-	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-	pCoreData->m_Entities.addEllipse(transform, color);
+	delete static_cast<CoreData*>(pInstanceData->pCoreData);
+	pInstanceData->pCoreData = nullptr;
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool addRectangle(InstanceData instanceData, Transform transform, Color color)
+extern "C" __declspec(dllexport) bool scene_initialize(InstanceData instanceData, int64_t windowHandle)
 {
 	if (!instanceData.pCoreData) {
-		std::cerr << "addRectangle: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on addRectangle()");
-		return false;
-	}
-
-	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-	pCoreData->m_Entities.addRectangle(transform, color);
-	return true;
-}
-
-extern "C" __declspec(dllexport) bool addTriangle(InstanceData instanceData, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3)
-{
-	if (!instanceData.pCoreData) {
-		std::cerr << "addTriangle: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on addTriangle()");
-		return false;
-	}
-
-	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-	pCoreData->m_Entities.addTriangle(transform, color, point1, point2, point3);
-	return true;
-}
-extern "C" __declspec(dllexport) bool clearImage(InstanceData instanceData)
-{
-	if (!instanceData.pCoreData) {
-		std::cerr << "clearImage: instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on clearImage()");
-		return false;
-	}
-
-	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-
-	pCoreData->m_Entities.destroyAllShapes();
-
-	return true;
-}
-extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData, int64_t windowHandle)
-{
-	if (!instanceData.pCoreData) {
-		std::cerr << "initRenderWindow: instanceData.pCoreData was null" << std::endl;
+		std::cerr << "Core entry scene_initialize(): instanceData.pCoreData was null" << std::endl;
 		return false;
 	}
 
@@ -93,15 +42,14 @@ extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData
 
 	if (windowHandle) {
 		pCoreData->pWindow = new sf::RenderWindow((HWND)windowHandle);
-		
 	}
 	else {
 		pCoreData->pWindow = new sf::RenderWindow(sf::VideoMode({ 1920, 1080 }), "Image Writer App");
 	}
-	
+
 
 	sf::RenderWindow& window = *pCoreData->pWindow;
-	
+
 
 	window.setKeyRepeatEnabled(false);
 	window.setFramerateLimit(120);
@@ -118,8 +66,8 @@ extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData
 		.translate(sf::Vector2f(pCoreData->initialWindowWidth / 2, pCoreData->initialWindowHeight / 2))
 		.scale(sf::Vector2f(pCoreData->initialWindowWidth / 2, -pCoreData->initialWindowHeight / 2))
 		.scale(sf::Vector2f((float)pCoreData->initialWindowHeight / pCoreData->initialWindowWidth, 1))
-	;
-	
+		;
+
 	pCoreData->mousePosition = sf::Mouse::getPosition(window);
 
 	// The thread that initializes this window may not be the one that renders to it
@@ -129,10 +77,27 @@ extern "C" __declspec(dllexport) bool initRenderWindow(InstanceData instanceData
 
 	return true;
 }
-extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceData, float deltaTime)
+
+extern "C" __declspec(dllexport) bool scene_dispose(InstanceData instanceData)
 {
 	if (!instanceData.pCoreData) {
-		std::cerr << "updateRenderWindow: instanceData.pCoreData was null" << std::endl;
+		std::cerr << "Core entry scene_dispose(): instanceData.pCoreData was null" << std::endl;
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	pCoreData->m_Entities.destroyAllShapes();
+	delete pCoreData->pWindow;
+	pCoreData->pWindow = nullptr;
+
+	return true;
+}
+
+extern "C" __declspec(dllexport) bool scene_updateFrame(InstanceData instanceData, float deltaTime)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_updateFrame(): instanceData.pCoreData was null" << std::endl;
 		return false;
 	}
 
@@ -148,7 +113,7 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 	pCoreData->mousePosition = sf::Mouse::getPosition(window);
 	sf::Vector2f deltaMouseScreenSpace = (sf::Vector2f)(pCoreData->mousePosition - prevFrameMousePosition);
 
-	
+
 	Camera& camera = pCoreData->m_Camera;
 
 	// Camera controls (and event loop)
@@ -193,8 +158,8 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 		.scale(sf::Vector2f(1 / camera.getScaleY(), 1 / camera.getScaleY())) // inverse camera scale
 		.rotate(-sf::degrees(camera.getOrientation())) // inverse camera orientation
 		.translate(-sf::fromCore(camera.getPosition())) // inverse camera position
-	;
-	
+		;
+
 
 	// Draw
 	window.clear();
@@ -203,26 +168,11 @@ extern "C" __declspec(dllexport) bool updateRenderWindow(InstanceData instanceDa
 
 	return true;
 }
-extern "C" __declspec(dllexport) bool disposeRenderWindow(InstanceData instanceData)
+
+extern "C" __declspec(dllexport) bool scene_isSelfManagedRenderWindowOpen(InstanceData instanceData)
 {
 	if (!instanceData.pCoreData) {
-		std::cerr << "disposeRenderWindow: instanceData.pCoreData was null" << std::endl;
-		return false;
-	}
-
-	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-
-	pCoreData->m_Entities.destroyAllShapes();
-	delete pCoreData->pWindow;
-	pCoreData->pWindow = nullptr;
-
-	return true;
-}
-
-extern "C" __declspec(dllexport) bool isIsolatedRenderWindowOpen(InstanceData instanceData)
-{
-	if (!instanceData.pCoreData) {
-		std::cerr << "temp_IsRenderWindowOpen: instanceData.pCoreData was null" << std::endl;
+		std::cerr << "Core entry scene_isSelfManagedRenderWindowOpen(): instanceData.pCoreData was null" << std::endl;
 		return false;
 	}
 
@@ -232,19 +182,72 @@ extern "C" __declspec(dllexport) bool isIsolatedRenderWindowOpen(InstanceData in
 	return window.isOpen();
 
 }
-extern "C" __declspec(dllexport) bool dispose(InstanceData* pInstanceData)
+
+extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, Transform* pCameraTransform)
 {
-	if (!pInstanceData) {
-		std::cerr << "dispose: pInstanceData was null" << std::endl;
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_getCameraTransform(): instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_getCameraTransform()");
 		return false;
 	}
 
-	if (!pInstanceData->pCoreData) {
-		std::cerr << "dispose: pInstanceData->pCoreData was null" << std::endl;
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+	const Camera& camera = pCoreData->m_Camera;
+	const float widthFromHeight = pCoreData->initialWindowWidth / pCoreData->initialWindowHeight;
+
+	*pCameraTransform = camera.getTransform();
+
+	return true;
+}
+extern "C" __declspec(dllexport) bool scene_addEllipse(InstanceData instanceData, Transform transform, Color color)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_addEllipse(): instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_addEllipse()");
 		return false;
 	}
 
-	delete static_cast<CoreData*>(pInstanceData->pCoreData);
-	pInstanceData->pCoreData = nullptr;
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+	pCoreData->m_Entities.addEllipse(transform, color);
+	return true;
+}
+
+extern "C" __declspec(dllexport) bool scene_addRectangle(InstanceData instanceData, Transform transform, Color color)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_addRectangle(): instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_addRectangle()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+	pCoreData->m_Entities.addRectangle(transform, color);
+	return true;
+}
+
+extern "C" __declspec(dllexport) bool scene_addTriangle(InstanceData instanceData, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_addTriangle(): instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_addTriangle()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+	pCoreData->m_Entities.addTriangle(transform, color, point1, point2, point3);
+	return true;
+}
+extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_removeAllEntities(): instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_removeAllEntities()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	pCoreData->m_Entities.destroyAllShapes();
+
 	return true;
 }

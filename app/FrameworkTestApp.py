@@ -16,7 +16,7 @@ class WindowUI(tk.Tk):
 
         button = tk.Button(
             self, 
-            text="Clear Image",
+            text="Clear Scene",
             command=self.onClickedClearButton,
             font=("Helvetica", 16, "bold"),
             padx=5,
@@ -34,7 +34,7 @@ class WindowUI(tk.Tk):
 
     def onClickedClearButton(self):
         statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-        imageWriter.ClearImage(statusMessage)
+        imageWriter.RemoveAllEntities(statusMessage)
 
     def on_window_close(self):
     
@@ -75,7 +75,7 @@ def createSomeSampleShapes(instance: ImageWriter):
             )
     
     input("Press Enter")
-    instance.ClearImage(statusMessage);
+    instance.RemoveAllEntities(statusMessage);
 
     input("Press Enter")
     for i in range(dimY):
@@ -86,7 +86,7 @@ def createSomeSampleShapes(instance: ImageWriter):
             )
     
     input("Press Enter")
-    instance.ClearImage(statusMessage);
+    instance.RemoveAllEntities(statusMessage);
 
     input("Press Enter")
     for i in range(dimY):
@@ -98,7 +98,7 @@ def createSomeSampleShapes(instance: ImageWriter):
             )
     
     input("Press Enter")
-    instance.ClearImage(statusMessage);
+    instance.RemoveAllEntities(statusMessage);
 
     # instance.AddEllipse(statusMessage, 
     #     Transform(positionX = cameraTransform.scaleX, positionY = cameraTransform.scaleY, scaleX = 1, scaleY = 1, angle = 0), 
@@ -117,7 +117,7 @@ def createSomeSampleShapes(instance: ImageWriter):
     # )
     
     # input("Press Enter")
-    # instance.ClearImage(statusMessage);
+    # instance.RemoveAllEntities(statusMessage);
 
     # input("Press Enter")
     # instance.AddRectangle(statusMessage, 
@@ -135,7 +135,7 @@ def createSomeSampleShapes(instance: ImageWriter):
     # )
 
     # input("Press Enter")
-    # instance.ClearImage(statusMessage);
+    # instance.RemoveAllEntities(statusMessage);
 
     # input("Press Enter")
     # instance.AddEllipse(statusMessage, 
@@ -167,7 +167,9 @@ if __name__ == "__main__":
     # run UI
     windowUI.mainloop()
     
-    print("Disposing")
+    print("Disposing scene")
     
     # dispose
     imageWriter.Dispose()
+
+    print("Disposing instance")

@@ -10,7 +10,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 
 	Transform cameraTransform = {};
 
-	GetCameraTransform(instance, statusMessage, &cameraTransform);
+	ImageWriter_Scene_GetCameraTransform(instance, statusMessage, &cameraTransform);
 	std::cout << "scaleX = " << cameraTransform.scaleX << ", scaleY = " << cameraTransform.scaleY << std::endl;
 
 
@@ -26,34 +26,34 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	system("pause");
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
-			AddEllipse(instance, statusMessage,
+			ImageWriter_Scene_AddEllipse(instance, statusMessage,
 				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 0.5f, .scaleY = 0.35f, .angle = 0 },
 				{ .red = 1, .green = 0, .blue = 0, .alpha = 1 });
 		}
 	}
 
 	system("pause");
-	ClearImage(instance, statusMessage);
+	ImageWriter_Scene_RemoveAllEntities(instance, statusMessage);
 
 	// Rectangles
 	system("pause");
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
-			AddRectangle(instance, statusMessage,
+			ImageWriter_Scene_AddRectangle(instance, statusMessage,
 				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 0.5f, .scaleY = 0.35f, .angle = 0 },
 				{ .red = 0, .green = 1, .blue = 1, .alpha = 1 });
 		}
 	}
 
 	system("pause");
-	ClearImage(instance, statusMessage);
+	ImageWriter_Scene_RemoveAllEntities(instance, statusMessage);
 
 	// Triangles
 	system("pause");
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
 
-			AddTriangle(instance, statusMessage,
+			ImageWriter_Scene_AddTriangle(instance, statusMessage,
 				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 1, .scaleY = 1, .angle = 0 },
 				{ .red = 1, .green = 1, .blue = 0, .alpha = 1 },
 				{ -0.5f, 0.35f }, { -0.5f, -0.35f }, { 0.5f, 0 });
@@ -61,7 +61,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	}
 
 	system("pause");
-	ClearImage(instance, statusMessage);
+	ImageWriter_Scene_RemoveAllEntities(instance, statusMessage);
 
 	//system("pause");
 	//AddEllipse(instance, statusMessage, 
@@ -114,26 +114,26 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	//	{ .red = 1, .green = 0.5, .blue = 1, .alpha = 0.6f });
 
 	system("pause");
-	ClearImage(instance, statusMessage);
+	ImageWriter_Scene_RemoveAllEntities(instance, statusMessage);
 }
 int main(void)
 {
 	HImageWriterInstance instance = {};
 
-	if (!CreateImageWriterInstance(&instance)) {
+	if (!ImageWriter_Instance_Intialize(&instance)) {
 		return EXIT_FAILURE;
 	}
 
 	// Create an isolated window with a handle value of 0
 	int windowHwnd = 0;
-	InitRenderWindow(instance, windowHwnd);
+	ImageWriter_Scene_Init(instance, windowHwnd);
 
 	std::thread imageWriterThread(runImageWriterFlow, instance);
 
 
 	auto prevTime = std::chrono::steady_clock::now();
 
-	while (IsIsolatedRenderWindowOpen(instance)) {
+	while (ImageWriter_Scene_IsSelfManagedRenderWindowOpen(instance)) {
 		auto currentTime = std::chrono::steady_clock::now();
 
 		std::chrono::duration<float> elapsed = currentTime - prevTime;
@@ -142,17 +142,17 @@ int main(void)
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
-		UpdateRenderWindow(instance, deltaTime);
+		ImageWriter_Scene_UpdateFrame(instance, deltaTime);
 
 		prevTime = currentTime;
 	}
 
-	DisposeRenderWindow(instance);
+	ImageWriter_Scene_Dispose(instance);
 
 	if (imageWriterThread.joinable()) {
 		imageWriterThread.join();
 	}
-	DestroyImageWriterInstance(&instance);
+	ImageWriter_Instance_Dispose(&instance);
 	
 	
 	return EXIT_SUCCESS;

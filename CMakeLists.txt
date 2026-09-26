@@ -40,11 +40,13 @@ set(CORE_HEADER_FILES
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreCommon.h"
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/Entity.h"
+    "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/Scene.h"
 )
 
 set(CORE_SRC_FILES
 	"${FRAMEWORK_SRC_DIR}/CoreEntry.cpp"
     "${FRAMEWORK_SRC_DIR}/Entity.cpp"
+    "${FRAMEWORK_SRC_DIR}/Scene.cpp"
 )
 
 add_library(ImageWriterCore SHARED ${CORE_SRC_FILES} ${CORE_HEADER_FILES})

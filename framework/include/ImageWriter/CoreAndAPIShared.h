@@ -7,37 +7,44 @@
 
 
 struct InstanceData;
-typedef bool (*PfnCoreInitialize)(InstanceData*);
 
-typedef bool (*PfnCoreGetCameraTransform)(InstanceData, Transform*);
-typedef bool (*PfnCoreAddEllipse)(InstanceData, Transform, Color);
-typedef bool (*PfnCoreAddRectangle)(InstanceData, Transform, Color);
-typedef bool (*PfnCoreAddTriangle)(InstanceData, Transform, Color, Vec2, Vec2, Vec2);
-typedef bool (*PfnCoreClearImage)(InstanceData);
+// instance
+typedef bool (*PfnCore_Instance_Initialize)(InstanceData*);
+typedef bool (*PfnCore_Instance_Dispose)(InstanceData*);
 
-typedef bool (*PfnCoreInitRenderWindow)(InstanceData, int64_t);
-typedef bool (*PfnCoreUpdateRenderWindow)(InstanceData, float);
-typedef bool (*PfnCoreDisposeRenderWindow)(InstanceData);
-typedef bool (*PfnIsIsolatedRenderWindowOpen)(InstanceData);
-typedef bool (*PfnCoreDispose)(InstanceData*);
+// scene lifecycle
+typedef bool (*PfnCore_Scene_Initialize)(InstanceData, int64_t);
+typedef bool (*PfnCore_Scene_Dispose)(InstanceData);
+typedef bool (*PfnCore_Scene_UpdateFrame)(InstanceData, float);
+typedef bool (*PfnCore_Scene_isSelfManagedRenderWindowOpen)(InstanceData);
+
+
+// scene API
+typedef bool (*PfnCore_Scene_GetCameraTransform)(InstanceData, Transform*);
+typedef bool (*PfnCore_Scene_AddEllipse)(InstanceData, Transform, Color);
+typedef bool (*PfnCore_Scene_AddRectangle)(InstanceData, Transform, Color);
+typedef bool (*PfnCore_Scene_AddTriangle)(InstanceData, Transform, Color, Vec2, Vec2, Vec2);
+typedef bool (*PfnCore_Scene_removeAllEntities)(InstanceData);
+
+
 
 struct InstanceData
 {
     HMODULE hDll;
 
-    PfnCoreInitialize pfnCoreInitialize;
+    PfnCore_Instance_Initialize pfnCore_Instance_Initialize;
+    PfnCore_Instance_Dispose pfnCore_Instance_Dispose;
 
-    PfnCoreGetCameraTransform pfnCoreGetCameraTransform;
-    PfnCoreAddEllipse pfnCoreAddEllipse;
-    PfnCoreAddRectangle pfnCoreAddRectangle;
-    PfnCoreAddTriangle pfnCoreAddTriangle;
-    PfnCoreClearImage pfnCoreClearImage;
+    PfnCore_Scene_Initialize pfnCore_Scene_Initialize;
+    PfnCore_Scene_Dispose pfnCore_Scene_Dispose;
+    PfnCore_Scene_UpdateFrame pfnCore_Scene_UpdateFrame;
+    PfnCore_Scene_isSelfManagedRenderWindowOpen pfnCore_Scene_isSelfManagedRenderWindowOpen;
 
-    PfnCoreInitRenderWindow pfnCoreInitRenderWindow;
-    PfnCoreUpdateRenderWindow pfnCoreUpdateRenderWindow;
-    PfnCoreDisposeRenderWindow pfnCoreDisposeRenderWindow;
-    PfnIsIsolatedRenderWindowOpen pfnIsIsolatedRenderWindowOpen;
-    PfnCoreDispose pfnCoreDispose;
+    PfnCore_Scene_GetCameraTransform pfnCore_Scene_GetCameraTransform;
+    PfnCore_Scene_AddEllipse pfnCore_Scene_AddEllipse;
+    PfnCore_Scene_AddRectangle pfnCore_Scene_AddRectangle;
+    PfnCore_Scene_AddTriangle pfnCore_Scene_AddTriangle;
+    PfnCore_Scene_removeAllEntities pfnCore_Scene_removeAllEntities;
 
     void* pCoreData;
     char* pPublicStatusMessage;

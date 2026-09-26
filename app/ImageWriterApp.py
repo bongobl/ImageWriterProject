@@ -20,7 +20,7 @@ class WindowUI(tk.Tk):
 
         button = tk.Button(
             self, 
-            text="Clear Image",
+            text="Clear Scene",
             command=self.onClickedClearButton,
             font=("Helvetica", 16, "bold"),
             padx=5,
@@ -38,7 +38,7 @@ class WindowUI(tk.Tk):
 
     def onClickedClearButton(self):
         statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-        imageWriter.ClearImage(statusMessage)
+        imageWriter.RemoveAllEntities(statusMessage)
 
     def on_window_close(self):
     
@@ -111,17 +111,17 @@ def runNetworkService(instance: ImageWriter):
                         
                         case Command.GetCameraTransform:
 
-                            print("From client: Getting the camera view")
+                            print("From client: Getting the camera transform")
                             cameraTransform = Transform()
                             frameworkFunctionSucceeded = instance.GetCameraTransform(frameworkFunctionMessage, cameraTransform)
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = TransformReply(status = commandStatus, transform = cameraTransform)
 
-                        case Command.ClearImage:
+                        case Command.RemoveAllEntities:
 
-                            print("From client: Clearing image")
-                            frameworkFunctionSucceeded = instance.ClearImage(frameworkFunctionMessage)
+                            print("From client: removing all entities from scene")
+                            frameworkFunctionSucceeded = instance.RemoveAllEntities(frameworkFunctionMessage)
 
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
