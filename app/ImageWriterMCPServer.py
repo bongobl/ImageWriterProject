@@ -93,7 +93,7 @@ def getCameraTransform() -> TransformReply.MCPPayload:
     
     # deserialize client message and log
     reply = TransformReply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply.toString()}")
+    logger.info(f"From server: {reply}")
 
     disconnectFromImageWriter()
 
@@ -131,7 +131,7 @@ def removeAllEntities() -> PlainReply.MCPPayload:
     
     # deserialize client message and log
     reply = PlainReply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply.toString()}")
+    logger.info(f"From server: {reply}")
 
     disconnectFromImageWriter()
 
@@ -161,7 +161,7 @@ def addEllipse(
     colorRaw.fromMCPPayload(color)
 
     ellipseParams = AddEllipseParams(transform = transformRaw, color = colorRaw)
-    logger.info(f"To server: {ellipseParams.toString()}")
+    logger.info(f"To server: {ellipseParams}")
 
     # serialize params
     paramsBuffer = bytes(ellipseParams)
@@ -189,7 +189,7 @@ def addEllipse(
     
     # deserialize client message and log
     reply = PlainReply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply.toString()}")
+    logger.info(f"From server: {reply}")
 
     disconnectFromImageWriter()
 
@@ -219,7 +219,7 @@ def addRectangle(
     colorRaw.fromMCPPayload(color)
 
     rectangleParams = AddRectangleParams(transform = transformRaw, color = colorRaw)
-    logger.info(f"To server: {rectangleParams.toString()}")
+    logger.info(f"To server: {rectangleParams}")
 
     # serialize params
     paramsBuffer = bytes(rectangleParams)
@@ -246,7 +246,7 @@ def addRectangle(
     
     # deserialize client message and log
     reply = PlainReply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply.toString()}")
+    logger.info(f"From server: {reply}")
 
     disconnectFromImageWriter()
 
@@ -296,7 +296,7 @@ def addTriangle(
         point2 = point2Raw,
         point3 = point3Raw
     )
-    logger.info(f"To server: {triangleParams.toString()}")
+    logger.info(f"To server: {triangleParams}")
 
     # serialize params
     paramsBuffer = bytes(triangleParams)
@@ -323,7 +323,7 @@ def addTriangle(
     
     # deserialize client message and log
     reply = PlainReply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply.toString()}")
+    logger.info(f"From server: {reply}")
 
     disconnectFromImageWriter()
 
@@ -338,7 +338,7 @@ def testAddVec2(
     """
     pointRaw = Vec2()
     pointRaw.fromMCPPayload(point)
-    logger.info(f"Received vec2 value: {pointRaw.toString()}")
+    logger.info(f"Received vec2 value: {pointRaw}")
 
 if __name__ == "__main__":
 

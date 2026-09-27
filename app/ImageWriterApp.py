@@ -137,7 +137,7 @@ def runNetworkService(instance: ImageWriter):
 
                             # deserialize addEllipse params
                             ellipseParams = AddEllipseParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {ellipseParams.toString()}")
+                            print(f"From client: {ellipseParams}")
                             frameworkFunctionSucceeded = instance.AddEllipse(frameworkFunctionMessage, ellipseParams.transform, ellipseParams.color)
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
@@ -153,7 +153,7 @@ def runNetworkService(instance: ImageWriter):
 
                             # deserialize addRectangle params
                             rectangleParams = AddRectangleParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {rectangleParams.toString()}")
+                            print(f"From client: {rectangleParams}")
                             frameworkFunctionSucceeded = instance.AddRectangle(frameworkFunctionMessage, rectangleParams.transform, rectangleParams.color)
                             
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
@@ -169,7 +169,7 @@ def runNetworkService(instance: ImageWriter):
 
                             # deserialize addRectangle params
                             triangleParams = AddTriangleParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {triangleParams.toString()}")
+                            print(f"From client: {triangleParams}")
                             frameworkFunctionSucceeded = instance.AddTriangle(
                                 frameworkFunctionMessage,
                                 triangleParams.transform, 
@@ -199,7 +199,7 @@ def runNetworkService(instance: ImageWriter):
                             )
 
 
-                    print(f"To client: {reply.toString()}")
+                    print(f"To client: {reply}")
 
                     # serialize client message
                     replyBuffer = bytes(reply)

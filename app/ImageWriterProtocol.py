@@ -25,8 +25,8 @@ class AddEllipseParams(ctypes.Structure):
         ("color", Color)
     ]
 
-    def toString(self):
-        return f"(AddEllipseParams: transform = {self.transform.toString()}, color = {self.color.toString()})"
+    def __str__(self):
+        return f"(AddEllipseParams: transform = {self.transform}, color = {self.color})"
 
 class AddRectangleParams(ctypes.Structure):
     _fields_ = [
@@ -34,8 +34,8 @@ class AddRectangleParams(ctypes.Structure):
         ("color", Color)
     ]
 
-    def toString(self):
-        return f"(AddRectangleParams: transform = {self.transform.toString()}, color = {self.color.toString()})"
+    def __str__(self):
+        return f"(AddRectangleParams: transform = {self.transform}, color = {self.color})"
 
 class AddTriangleParams(ctypes.Structure):
     _fields_ = [
@@ -46,8 +46,8 @@ class AddTriangleParams(ctypes.Structure):
         ("point3", Vec2)
     ]
 
-    def toString(self):
-        return f"(AddTriangleParams: transform = {self.transform.toString()}, color = {self.color.toString()}, point1 = {self.point1.toString()}, point2 = {self.point2.toString()}, point3 = {self.point3.toString()})"
+    def __str__(self):
+        return f"(AddTriangleParams: transform = {self.transform}, color = {self.color}, point1 = {self.point1}, point2 = {self.point2}, point3 = {self.point3})"
 
 # Replies
 
@@ -61,8 +61,8 @@ class PlainReply(ctypes.Structure):
         ("status", Status)
     ]
 
-    def toString(self):
-        return f"(PlainReply: status = {self.status.toString()})"
+    def __str__(self):
+        return f"(PlainReply: status = {self.status})"
 
     def toMCPPayload(self) -> MCPPayload:
         return PlainReplyMCPPayload(status = self.status.toMCPPayload())
@@ -79,8 +79,8 @@ class TransformReply(ctypes.Structure):
         ("transform", Transform),
     ]
 
-    def toString(self):
-        return f"(TransformReply: status = {self.status.toString()}, transform = {self.transform.toString()})"
+    def __str__(self):
+        return f"(TransformReply: status = {self.status}, transform = {self.transform})"
 
     def toMCPPayload(self) -> MCPPayload:
 

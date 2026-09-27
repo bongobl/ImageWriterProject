@@ -16,7 +16,7 @@ class Status(ctypes.Structure):
         ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
     ]
 
-    def toString(self):
+    def __str__(self):
         return f"(Status: success = {self.success}, message = {self.message.decode('utf-8')})"
 
     def toMCPPayload(self) -> MCPPayload:
@@ -48,7 +48,7 @@ class Transform(ctypes.Structure):
         ("angle", ctypes.c_float)
     ]
 
-    def toString(self):
+    def __str__(self):
         return f"(Transform: positionX = {self.positionX}, positionY = {self.positionY}, scaleX = {self.scaleX}, scaleY = {self.scaleY}, angle = {self.angle})"
 
     def toMCPPayload(self):
@@ -90,7 +90,7 @@ class Color(ctypes.Structure):
         ("alpha", ctypes.c_float),
     ]
 
-    def toString(self):
+    def __str__(self):
         return f"(Color: red = {self.red}, green = {self.green}, blue = {self.blue}, alpha = {self.alpha})"
 
     def toMCPPayload(self):
@@ -124,7 +124,7 @@ class Vec2(ctypes.Structure):
         ("y", ctypes.c_float),
     ]
 
-    def toString(self):
+    def __str__(self):
         return f"(Vec2: x = {self.x}, y = {self.y})"
 
     def toMCPPayload(self):
