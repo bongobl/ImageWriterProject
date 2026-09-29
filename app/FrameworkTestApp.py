@@ -49,15 +49,17 @@ def isWindowUIOpen():
 
 
 
-def createSomeSampleShapes(instance: ImageWriter):
+def createSomeSampleShapes():
 
     statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
     input("Wait for a bit here for Window to initialize... Press Enter")
 
     cameraTransform = Transform()
-    instance.GetCameraTransform(statusMessage, cameraTransform)
-    print(f"camera scaleX = {cameraTransform.scaleX}, scaleY = {cameraTransform.scaleY}")
+    if not imageWriter.GetCameraTransform(statusMessage, cameraTransform):
+        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+    else:
+        print(f"camera scaleX = {cameraTransform.scaleX}, scaleY = {cameraTransform.scaleY}")
 
     dimX = 8
     dimY = 6
@@ -69,36 +71,42 @@ def createSomeSampleShapes(instance: ImageWriter):
 
     for i in range(dimY):
         for j in range(dimX):
-            instance.AddEllipse(statusMessage,
+            if not imageWriter.AddEllipse(statusMessage,
                 Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 0.5, scaleY = 0.35, angle = 0),
                 Color(red = 1, green = 0, blue = 0, alpha = 1)
-            )
+            ):
+                print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
     input("Press Enter")
-    instance.RemoveAllEntities(statusMessage);
+    if not imageWriter.RemoveAllEntities(statusMessage):
+        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
 
     input("Press Enter")
     for i in range(dimY):
         for j in range(dimX):
-            instance.AddRectangle(statusMessage,
+            if not imageWriter.AddRectangle(statusMessage,
                 Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 0.5, scaleY = 0.35, angle = 0),
                 Color(red = 0, green = 1, blue = 1, alpha = 1)
-            )
+            ):
+                print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
     input("Press Enter")
-    instance.RemoveAllEntities(statusMessage);
+    if not imageWriter.RemoveAllEntities(statusMessage):
+        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
 
     input("Press Enter")
     for i in range(dimY):
         for j in range(dimX):
-            instance.AddTriangle(statusMessage,
+            if not imageWriter.AddTriangle(statusMessage,
                 Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 1, scaleY = 1, angle = 0),
                 Color(red = 1, green = 1, blue = 0, alpha = 1),
                 Vec2(-0.5, 0.35), Vec2(-0.5, -0.35), Vec2(0.5, 0)
-            )
+            ):
+                print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
     input("Press Enter")
-    instance.RemoveAllEntities(statusMessage);
+    if not imageWriter.RemoveAllEntities(statusMessage):
+        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
 
     # instance.AddEllipse(statusMessage, 
     #     Transform(positionX = cameraTransform.scaleX, positionY = cameraTransform.scaleY, scaleX = 1, scaleY = 1, angle = 0), 
@@ -162,13 +170,17 @@ if __name__ == "__main__":
 
     # create ImageWriter
     imageWriter = ImageWriter()
-    imageWriter.Init(windowUI.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = createSomeSampleShapes)
+    imageWriter.Init(windowUI.canvasId, fnIsWindowOpen = isWindowUIOpen)
     
+    apiThread = threading.Thread(target = createSomeSampleShapes)
+    apiThread.start()
+
     # run UI
     windowUI.mainloop()
     
     print("Disposing scene")
     
+    apiThread.join()
     # dispose
     imageWriter.Dispose()
 

@@ -1,4 +1,4 @@
-import pygame, threading, tkinter as tk
+import pygame, threading, time, tkinter as tk
 from ctypes import *
 from ImageWriterCommon import *
 
@@ -8,6 +8,8 @@ class ImageWriter(ctypes.Structure):
         ("pData", ctypes.c_void_p),
     ]
 
+    isSceneReady = False
+    sceneReadyCondition = threading.Condition()
     def __init__(self):
         
         self.framework = ctypes.CDLL("./ImageWriterAPI.dll")
@@ -46,7 +48,7 @@ class ImageWriter(ctypes.Structure):
         self.framework.ImageWriter_Scene_RemoveAllEntities.restype = ctypes.c_bool
 
 
-    def Init(self, windowHandle, fnIsWindowOpen, fnReceiveCommands):
+    def Init(self, windowHandle, fnIsWindowOpen):
         if not self.framework.ImageWriter_Instance_Intialize(ctypes.byref(self)):
             print("Image writer: Failed to create image writer instance")
             exit(1)
@@ -63,19 +65,17 @@ class ImageWriter(ctypes.Structure):
         self.renderThread = threading.Thread(target = self.initAndRunScene, args=(windowHandle, ))
         self.renderThread.start()
 
-        # TODO: use thread condition to block here until InitScene has finished in the render thread so we 
-        # don't end up submitting commands to a non-existet scene. We could then probably remove the command 
-        # receiver thread member here and have it maintained by the app.
-
-        # span command receiver thread
-        self.fnReceiveCommands = fnReceiveCommands
-        self.commandReceiverThread = threading.Thread(target = fnReceiveCommands, args=(self,))
-        self.commandReceiverThread.start()
+        with self.sceneReadyCondition:
+            self.sceneReadyCondition.wait_for(lambda: self.isSceneReady is True)
 
 
     def initAndRunScene(self, windowHandle):
 
         self.framework.ImageWriter_Scene_Init(self, windowHandle)
+
+        with self.sceneReadyCondition:
+            self.isSceneReady = True
+            self.sceneReadyCondition.notify()
 
         clock = pygame.time.Clock()
         while self.fnIsWindowOpen():
@@ -87,7 +87,6 @@ class ImageWriter(ctypes.Structure):
     def Dispose(self):
 
         self.renderThread.join()
-        self.commandReceiverThread.join()
         self.framework.ImageWriter_Instance_Dispose(ctypes.byref(self))
 
     def GetCameraTransform(self, statusMessage, cameraView):

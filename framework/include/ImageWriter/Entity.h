@@ -5,8 +5,7 @@
 #include <shared_mutex>
 #include <mutex>
 
-struct CoreData;
-
+class Scene;
 enum class EntityType
 {
 	None = 0,
@@ -23,21 +22,21 @@ struct Entity {
 	sf::Shape& m_Drawing;
 
 	Entity(Type type, const Transform& transform, Color& color, sf::Shape& drawable);
-	virtual sf::Shape& getDrawable(CoreData* pCoreData) const = 0;
+	virtual sf::Shape& getDrawable(Scene* pScene) const = 0;
 };
 
 struct EllipseEntity : Entity {
 
 	EllipseEntity(const Transform& transform, Color& color, sf::Shape& drawable);
 
-	sf::Shape& getDrawable(CoreData* pCoreData) const override;
+	sf::Shape& getDrawable(Scene* pScene) const override;
 };
 
 struct RectangleEntity : Entity {
 
 	RectangleEntity(const Transform& transform, Color& color, sf::Shape& drawable);
 
-	sf::Shape& getDrawable(CoreData* pCoreData) const override;
+	sf::Shape& getDrawable(Scene* pScene) const override;
 };
 
 struct TriangleEntity : Entity {
@@ -47,7 +46,7 @@ struct TriangleEntity : Entity {
 
 	TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3, sf::Shape& drawable);
 
-	sf::Shape& getDrawable(CoreData* pCoreData) const override;
+	sf::Shape& getDrawable(Scene* pScene) const override;
 };
 
 struct EntityList {
@@ -63,12 +62,11 @@ public:
 
 	EntityList();
 	~EntityList();
-	void addShape(Entity* pEntity);
 
 	void addEllipse(const Transform& transform, Color& color);
 	void addRectangle(const Transform& transform, Color& color);
 	void addTriangle(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
 	void dummyUpdateShapes(float deltaTime);
-	void drawShapes(sf::RenderWindow& window, CoreData* pCoreData);
+	void drawShapes(sf::RenderWindow& window, Scene* pScene);
 	void destroyAllShapes();
 };

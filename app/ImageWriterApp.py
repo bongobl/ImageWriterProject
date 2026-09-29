@@ -52,7 +52,7 @@ def isWindowUIOpen():
     return windowUI.windowIsActive
 
 
-def runNetworkService(instance: ImageWriter):
+def runNetworkService():
 
     global connToClient
     global serverSocket
@@ -79,7 +79,8 @@ def runNetworkService(instance: ImageWriter):
                 connToClient, clientAddr = serverSocket.accept()
             except OSError as e:
 
-                # Check if the error is due to the socket being closed or invalidated
+                # Check if the error is due to the socket being intentionally closed or invalidated
+                # from another thread
                 if e.errno in (errno.EBADF, errno.EINVAL) or getattr(e, 'winerror', None) == WSAENOTSOCK:
                     print("Listening socket was closed. exiting service loop.")
                     return
@@ -113,7 +114,7 @@ def runNetworkService(instance: ImageWriter):
 
                             print("From client: Getting the camera transform")
                             cameraTransform = Transform()
-                            frameworkFunctionSucceeded = instance.GetCameraTransform(frameworkFunctionMessage, cameraTransform)
+                            frameworkFunctionSucceeded = imageWriter.GetCameraTransform(frameworkFunctionMessage, cameraTransform)
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = TransformReply(status = commandStatus, transform = cameraTransform)
@@ -121,7 +122,7 @@ def runNetworkService(instance: ImageWriter):
                         case Command.RemoveAllEntities:
 
                             print("From client: removing all entities from scene")
-                            frameworkFunctionSucceeded = instance.RemoveAllEntities(frameworkFunctionMessage)
+                            frameworkFunctionSucceeded = imageWriter.RemoveAllEntities(frameworkFunctionMessage)
 
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
@@ -138,7 +139,7 @@ def runNetworkService(instance: ImageWriter):
                             # deserialize addEllipse params
                             ellipseParams = AddEllipseParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {ellipseParams}")
-                            frameworkFunctionSucceeded = instance.AddEllipse(frameworkFunctionMessage, ellipseParams.transform, ellipseParams.color)
+                            frameworkFunctionSucceeded = imageWriter.AddEllipse(frameworkFunctionMessage, ellipseParams.transform, ellipseParams.color)
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
@@ -154,7 +155,7 @@ def runNetworkService(instance: ImageWriter):
                             # deserialize addRectangle params
                             rectangleParams = AddRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams}")
-                            frameworkFunctionSucceeded = instance.AddRectangle(frameworkFunctionMessage, rectangleParams.transform, rectangleParams.color)
+                            frameworkFunctionSucceeded = imageWriter.AddRectangle(frameworkFunctionMessage, rectangleParams.transform, rectangleParams.color)
                             
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
@@ -170,7 +171,7 @@ def runNetworkService(instance: ImageWriter):
                             # deserialize addRectangle params
                             triangleParams = AddTriangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {triangleParams}")
-                            frameworkFunctionSucceeded = instance.AddTriangle(
+                            frameworkFunctionSucceeded = imageWriter.AddTriangle(
                                 frameworkFunctionMessage,
                                 triangleParams.transform, 
                                 triangleParams.color,
@@ -221,8 +222,11 @@ if __name__ == "__main__":
 
     # create ImageWriter
     imageWriter = ImageWriter()
-    imageWriter.Init(windowUI.canvasId, fnIsWindowOpen = isWindowUIOpen, fnReceiveCommands = runNetworkService)
+    imageWriter.Init(windowUI.canvasId, fnIsWindowOpen = isWindowUIOpen)
     
+    serviceThread = threading.Thread(target = runNetworkService)
+    serviceThread.start()
+
     # run UI
     windowUI.mainloop()
     
@@ -236,5 +240,6 @@ if __name__ == "__main__":
         connToClient.close()
     serverSocket.close()
 
+    serviceThread.join()
     # dispose
     imageWriter.Dispose()

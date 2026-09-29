@@ -1,29 +1,18 @@
 #pragma once
 #include <ImageWriter/API.h>
-#include <ImageWriter/Entity.h>
-#include <ImageWriter/Scene.h>
 #include <SFML/Graphics.hpp>
-
+#include <shared_mutex>
+#include <mutex>
 
 // C++ constructs allowed here
 
-
-// TODO: move to a "Scene" class
-struct CoreData {
-
-	sf::RenderWindow* pWindow = nullptr;
-	float initialWindowWidth = 0;
-	float initialWindowHeight = 0;
-
-	// screen space from world space conversion
-	float pixelsPerWorldUnit = 1;
-	sf::Transform screenFromCamera = sf::Transform::Identity;
-	sf::Transform cameraFromWorld = sf::Transform::Identity;
-
-	Camera m_Camera;
-	EntityList m_Entities;
-	sf::Vector2i mousePosition;
-
+class Scene;
+struct CoreData 
+{
+	Scene* m_pScene = nullptr;
+	
+	// keeps reads/writes to the scene pointer atomic
+	mutable std::shared_mutex m_SceneMutex;
 };
 
 using FrameworkColor = Color;

@@ -21,6 +21,3 @@ extern "C" __declspec(dllexport) bool scene_addRectangle(InstanceData instanceDa
 extern "C" __declspec(dllexport) bool scene_addTriangle(InstanceData instanceData, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3);
 extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData);
 
-
-
-

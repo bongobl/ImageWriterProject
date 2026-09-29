@@ -1,5 +1,7 @@
 #include <ImageWriter/Entity.h>
+#include <ImageWriter/Scene.h>
 #include <ImageWriter/CoreCommon.h>
+
 
 Entity::Entity(Type type, const Transform& transform, Color& color, sf::Shape& drawable) :
 	m_Type(type),
@@ -25,43 +27,43 @@ TriangleEntity::TriangleEntity(const Transform& transform, Color& color, Vec2 po
 {
 }
 
-sf::Shape& EllipseEntity::getDrawable(CoreData* pCoreData) const {
+sf::Shape& EllipseEntity::getDrawable(Scene* pScene) const {
 
-	sf::Vector2f screenHalfExtents = pCoreData->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
+	sf::Vector2f screenHalfExtents = pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
 
 	sf::CircleShape& circleDrawing = static_cast<sf::CircleShape&>(m_Drawing);
 	circleDrawing.setFillColor(sf::fromCore(m_Color));
-	circleDrawing.setPosition(pCoreData->screenFromCamera * pCoreData->cameraFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
+	circleDrawing.setPosition(pScene->screenFromCamera * pScene->cameraFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
 
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
-	circleDrawing.setRotation(-sf::degrees(-pCoreData->m_Camera.getOrientation() + m_Transform.angle));
+	circleDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.angle));
 	circleDrawing.setScale(screenHalfExtents);
 
 	return circleDrawing;
 }
 
-sf::Shape& RectangleEntity::getDrawable(CoreData* pCoreData) const {
+sf::Shape& RectangleEntity::getDrawable(Scene* pScene) const {
 
-	sf::Vector2f screenHalfExtents = pCoreData->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
+	sf::Vector2f screenHalfExtents = pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
 
 	sf::RectangleShape& rectDrawing = static_cast<sf::RectangleShape&>(m_Drawing);
 	rectDrawing.setFillColor(sf::fromCore(m_Color));
-	rectDrawing.setPosition(pCoreData->screenFromCamera * pCoreData->cameraFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
+	rectDrawing.setPosition(pScene->screenFromCamera * pScene->cameraFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
 	
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
-	rectDrawing.setRotation(-sf::degrees(-pCoreData->m_Camera.getOrientation() + m_Transform.angle));
+	rectDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.angle));
 
 	rectDrawing.setScale(screenHalfExtents);
 
 	return rectDrawing;
 }
 
-sf::Shape& TriangleEntity::getDrawable(CoreData* pCoreData) const {
+sf::Shape& TriangleEntity::getDrawable(Scene* pScene) const {
 	sf::ConvexShape& triangleDrawing = static_cast<sf::ConvexShape&>(m_Drawing);
 
 	triangleDrawing.setFillColor(sf::fromCore(m_Color));
 
-	sf::Transform screenFromWorld = pCoreData->screenFromCamera * pCoreData->cameraFromWorld;
+	sf::Transform screenFromWorld = pScene->screenFromCamera * pScene->cameraFromWorld;
 
 	triangleDrawing.setOrigin(screenFromWorld * sf::Vector2f(0, 0));
 
@@ -84,48 +86,43 @@ EntityList::EntityList() :
 {
 	m_CircleDrawing.setOrigin(sf::Vector2f(1, 1));
 	m_RectangleDrawing.setOrigin(sf::Vector2f(1, 1));
-
-	m_RectangleDrawing.setOrigin(sf::Vector2f(1, 1));
 }
 
 EntityList::~EntityList()
 {
 	destroyAllShapes();
 }
-void EntityList::addShape(Entity* pEntity) {
-
-	std::unique_lock<std::shared_mutex> lock(mutex);
-
-	m_Entities.push_back(pEntity);
-}
 
 void EntityList::addEllipse(const Transform& transform, Color& color) 
 {
+	std::unique_lock<std::shared_mutex> lock(mutex);
 	m_Entities.push_back(new EllipseEntity(transform, color, m_CircleDrawing));
 }
 
 void EntityList::addRectangle(const Transform& transform, Color& color)
 {
+	std::unique_lock<std::shared_mutex> lock(mutex);
 	m_Entities.push_back(new RectangleEntity(transform, color, m_RectangleDrawing));
 }
 
 void EntityList::addTriangle(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3)
 {
+	std::unique_lock<std::shared_mutex> lock(mutex);
 	m_Entities.push_back(new TriangleEntity(transform, color, point1, point2, point3, m_TriangleDrawing));
 }
 void EntityList::dummyUpdateShapes(float deltaTime) {
-	std::shared_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(mutex);
 
 	for (int i = 0; i < m_Entities.size(); ++i) {
 		m_Entities.at(i)->m_Transform.angle += sf::radians(deltaTime).asDegrees();
 	}
 }
-void EntityList::drawShapes(sf::RenderWindow& window, CoreData* pCoreData) {
+void EntityList::drawShapes(sf::RenderWindow& window, Scene* pScene) {
 
 	std::shared_lock<std::shared_mutex> lock(mutex);
 
 	for (int i = 0; i < m_Entities.size(); ++i) {
-		window.draw(m_Entities.at(i)->getDrawable(pCoreData));
+		window.draw(m_Entities.at(i)->getDrawable(pScene));
 	}
 }
 
