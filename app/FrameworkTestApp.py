@@ -14,6 +14,17 @@ class WindowUI(tk.Tk):
         self.canvas = tk.Canvas(self, width=640, height=480, bg="black")
         self.canvas.pack(padx=50, pady=50, expand=True, fill=tk.BOTH)
 
+        self.mousePosition = self.winfo_pointerxy()
+        self.mouseButtons = {1:False, 2: False, 3: False}
+        self.mouseScrollDelta = 0
+
+        # register mouse events
+        for i in range(1,4):
+            self.canvas.bind(f"<Button-{i}>", self.onMouseButtonPressed)
+            self.canvas.bind(f"<ButtonRelease-{i}>", self.onMouseButtonReleased)
+        
+        self.canvas.bind("<MouseWheel>", self.onMouseScroll)
+
         button = tk.Button(
             self, 
             text="Clear Scene",
@@ -32,6 +43,51 @@ class WindowUI(tk.Tk):
 
         self.windowIsActive = True
 
+    def onMouseButtonPressed(self, event):
+        self.mouseButtons[event.num] = True
+
+        if event.num == 2:
+            statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
+            imageWriter.SetCameraTransform(statusMessage,
+                Transform(
+                    positionX = 0, 
+                    positionY = 0, 
+                    scaleX = 0, 
+                    scaleY = 7, 
+                    angle = 0
+                )
+        )
+
+    def onMouseButtonReleased(self, event):
+        self.mouseButtons[event.num] = False
+
+
+    def onMouseScroll(self, event):
+        self.mouseScrollDelta = -1 if event.delta > 0 else 1
+
+    def onFrameUpdate(self):
+        prevMousePosition = self.mousePosition
+        self.mousePosition = self.winfo_pointerxy()
+        
+        currX, currY = self.mousePosition 
+        prevX, prevY = prevMousePosition
+
+        deltaX, deltaY = (currX - prevX, currY - prevY)
+
+        statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
+        imageWriter.TEMP_MoveCameraLocalSpace(statusMessage,
+            Transform(
+                positionX = deltaX if self.mouseButtons[1] else 0, 
+                positionY = deltaY if self.mouseButtons[1] else 0, 
+                scaleX = 0, 
+                scaleY = self.mouseScrollDelta, 
+                angle = deltaX / 14 if self.mouseButtons[3] else 0)
+        )
+        self.after(9, self.onFrameUpdate)
+
+        # reset for next frame  so we don't double use it
+        self.mouseScrollDelta = 0
+
     def onClickedClearButton(self):
         statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
         imageWriter.RemoveAllEntities(statusMessage)
@@ -41,7 +97,7 @@ class WindowUI(tk.Tk):
         self.windowIsActive = False
     
         # wait some time for render thread to finish
-        time.sleep(0.07) 
+        time.sleep(0.07)
         self.destroy()
 
 def isWindowUIOpen():
@@ -176,6 +232,7 @@ if __name__ == "__main__":
     apiThread.start()
 
     # run UI
+    windowUI.onFrameUpdate()
     windowUI.mainloop()
     
     print("Disposing scene")

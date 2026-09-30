@@ -101,6 +101,30 @@ extern "C" __declspec(dllexport) bool scene_isSelfManagedRenderWindowOpen(Instan
 
 }
 
+extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, Transform transform)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_setCameraTransform(): instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_setCameraTransform()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
+
+	if (!pCoreData->m_pScene) {
+		std::cerr << "Core entry scene_setCameraTransform(): pCoreData->m_pScene was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_setCameraTransform() on non-existent scene");
+		return false;
+	}
+
+	Camera& camera = pCoreData->m_pScene->m_Camera;
+	camera.setTransform(transform);
+
+	return true;
+}
+
 extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, Transform* pCameraTransform)
 {
 	if (!instanceData.pCoreData) {
@@ -121,6 +145,41 @@ extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData inst
 
 	const Camera& camera = pCoreData->m_pScene->m_Camera;
 	*pCameraTransform = camera.getTransform();
+
+	return true;
+}
+
+extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, Transform delta)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_TEMP_moveCameraLocalSpace(): instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_TEMP_moveCameraLocalSpace()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
+
+	if (!pCoreData->m_pScene) {
+		std::cerr << "Core entry scene_TEMP_moveCameraLocalSpace(): pCoreData->m_pScene was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_TEMP_moveCameraLocalSpace() on non-existent scene");
+		return false;
+	}
+
+	Scene& scene = *pCoreData->m_pScene;
+	Camera& camera = scene.m_Camera;
+	sf::Vector2f deltaMouseScreenSpace(delta.positionX, delta.positionY);
+
+	// Move
+	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(camera.getOrientation())) / pCoreData->m_pScene->pixelsPerWorldUnit;
+	camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
+
+	// Rotate
+	camera.rotate(delta.angle);
+
+	// Scale
+	camera.incrementScaleY(delta.scaleY);
 
 	return true;
 }

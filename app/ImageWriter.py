@@ -32,8 +32,14 @@ class ImageWriter(ctypes.Structure):
         self.framework.ImageWriter_Scene_IsSelfManagedRenderWindowOpen.argtypes = [ImageWriter]
         self.framework.ImageWriter_Scene_IsSelfManagedRenderWindowOpen.restype = ctypes.c_bool
 
+        self.framework.ImageWriter_Scene_SetCameraTransform.argtypes = [ImageWriter, ctypes.c_char_p, Transform]
+        self.framework.ImageWriter_Scene_SetCameraTransform.restype = ctypes.c_bool
+
         self.framework.ImageWriter_Scene_GetCameraTransform.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
         self.framework.ImageWriter_Scene_GetCameraTransform.restype = ctypes.c_bool
+
+        self.framework.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.argtypes = [ImageWriter, ctypes.c_char_p, Transform]
+        self.framework.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.restype = ctypes.c_bool
 
         self.framework.ImageWriter_Scene_AddEllipse.argtypes = [ImageWriter, ctypes.c_char_p, Transform, Color]
         self.framework.ImageWriter_Scene_AddEllipse.restype = ctypes.c_bool
@@ -89,8 +95,14 @@ class ImageWriter(ctypes.Structure):
         self.renderThread.join()
         self.framework.ImageWriter_Instance_Dispose(ctypes.byref(self))
 
-    def GetCameraTransform(self, statusMessage, cameraView):
-        return self.framework.ImageWriter_Scene_GetCameraTransform(self, statusMessage, ctypes.byref(cameraView))
+    def SetCameraTransform(self, statusMessage, transform):
+        return self.framework.ImageWriter_Scene_SetCameraTransform(self, statusMessage, transform)
+
+    def GetCameraTransform(self, statusMessage, outTransform):
+        return self.framework.ImageWriter_Scene_GetCameraTransform(self, statusMessage, ctypes.byref(outTransform))
+
+    def TEMP_MoveCameraLocalSpace(self, statusMessage, transform):
+        return self.framework.ImageWriter_Scene_TEMP_MoveCameraLocalSpace(self, statusMessage, transform)
 
     def AddEllipse(self, statusMessage, transform, color):
         return self.framework.ImageWriter_Scene_AddEllipse(self, statusMessage, transform, color)

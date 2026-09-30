@@ -33,6 +33,7 @@ public:
 	float getOrientation() const;
 	float getScaleY() const;
 
+	void setTransform(const Transform& transform);
 	Transform getTransform() const;
 };
 

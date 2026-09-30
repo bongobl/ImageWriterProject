@@ -66,10 +66,26 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         return false;
     }
 
+    PfnCore_Scene_SetCameraTransform pfnCore_Scene_SetCameraTransform = (PfnCore_Scene_SetCameraTransform)GetProcAddress(hDll, "scene_setCameraTransform");
+
+    if (pfnCore_Scene_SetCameraTransform == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_getCameraTransform could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
+
     PfnCore_Scene_GetCameraTransform pfnCore_Scene_GetCameraTransform = (PfnCore_Scene_GetCameraTransform)GetProcAddress(hDll, "scene_getCameraTransform");
 
     if (pfnCore_Scene_GetCameraTransform == NULL) {
         fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_getCameraTransform could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
+
+    PfnCore_Scene_TEMP_MoveCameraLocalSpace pfnCore_Scene_TEMP_MoveCameraLocalSpace = (PfnCore_Scene_TEMP_MoveCameraLocalSpace)GetProcAddress(hDll, "scene_TEMP_moveCameraLocalSpace");
+
+    if (pfnCore_Scene_TEMP_MoveCameraLocalSpace == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_TEMP_moveCameraLocalSpace could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -120,7 +136,9 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         .pfnCore_Scene_UpdateFrame = pfnCore_Scene_UpdateFrame,
         .pfnCore_Scene_isSelfManagedRenderWindowOpen = pfnCore_Scene_isSelfManagedRenderWindowOpen,
 
+        .pfnCore_Scene_SetCameraTransform = pfnCore_Scene_SetCameraTransform,
         .pfnCore_Scene_GetCameraTransform = pfnCore_Scene_GetCameraTransform,
+        .pfnCore_Scene_TEMP_MoveCameraLocalSpace = pfnCore_Scene_TEMP_MoveCameraLocalSpace,
         .pfnCore_Scene_AddEllipse = pfnCore_Scene_AddEllipse,
         .pfnCore_Scene_AddRectangle = pfnCore_Scene_AddRectangle,
         .pfnCore_Scene_AddTriangle = pfnCore_Scene_AddTriangle,
@@ -197,6 +215,19 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_IsSelfManagedRenderWindo
     return pInstanceData->pfnCore_Scene_isSelfManagedRenderWindowOpen(*pInstanceData);
 }
 
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_SetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform transform)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "ImageWriter_Scene_SetCameraTransform: instance.pData was null\n");
+        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_SetCameraTransform() from its underlying framework correctly");
+        return false;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
+    return pInstanceData->pfnCore_Scene_SetCameraTransform(*pInstanceData, transform);
+}
+
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform)
 {
     if (!instance.pData) {
@@ -208,6 +239,19 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImag
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
     return pInstanceData->pfnCore_Scene_GetCameraTransform(*pInstanceData, pCameraTransform);
+}
+
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_TEMP_MoveCameraLocalSpace(HImageWriterInstance instance, char* pStatusMessage, Transform delta)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "ImageWriter_Scene_TEMP_MoveCameraLocalSpace: instance.pData was null\n");
+        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_TEMP_MoveCameraLocalSpace() from its underlying framework correctly");
+        return false;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    pInstanceData->pPublicStatusMessage = pStatusMessage;
+    return pInstanceData->pfnCore_Scene_TEMP_MoveCameraLocalSpace(*pInstanceData, delta);
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color)

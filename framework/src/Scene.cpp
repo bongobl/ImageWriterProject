@@ -60,14 +60,23 @@ float Camera::getScaleY() const {
 	return m_ScaleY;
 }
 
+void Camera::setTransform(const Transform& transform) {
+
+	std::unique_lock<std::shared_mutex> lock(mutex);
+	m_Position.x = transform.positionX;
+	m_Position.y = transform.positionY;
+	m_ScaleY = transform.scaleY;
+	m_Orientation = transform.angle;
+}
+
 Transform Camera::getTransform() const {
 	std::shared_lock<std::shared_mutex> lock(mutex);
 	return {
 		.positionX = m_Position.x,
-			.positionY = m_Position.y,
-			.scaleX = m_widthFromHeight * m_ScaleY,
-			.scaleY = m_ScaleY,
-			.angle = m_Orientation
+		.positionY = m_Position.y,
+		.scaleX = m_widthFromHeight * m_ScaleY,
+		.scaleY = m_ScaleY,
+		.angle = m_Orientation
 	};
 }
 
@@ -125,39 +134,41 @@ void Scene::updateState(float deltaTime)
 	mousePosition = sf::Mouse::getPosition(*m_pWindow);
 	sf::Vector2f deltaMouseScreenSpace = (sf::Vector2f)(mousePosition - prevFrameMousePosition);
 
+	
+	// Scene controls for self managed windows
+	if (m_isWindowSelfManaged && m_pWindow->hasFocus()) {
 
-	// Camera controls (and event loop)
-	while (const std::optional event = m_pWindow->pollEvent())
-	{
-		if (event->is<sf::Event::Closed>())
-			m_pWindow->close();
+		while (const std::optional event = m_pWindow->pollEvent())
+		{
+			if (event->is<sf::Event::Closed>())
+				m_pWindow->close();
 
-		if (const sf::Event::MouseWheelScrolled* mouseWheelScrolled = event->getIf<sf::Event::MouseWheelScrolled>()) {
+			if (const sf::Event::MouseWheelScrolled* mouseWheelScrolled = event->getIf<sf::Event::MouseWheelScrolled>()) {
 
-			float scrollDelta = mouseWheelScrolled->delta;
-			m_Camera.incrementScaleY(-scrollDelta);
-		}
+				float scrollDelta = mouseWheelScrolled->delta;
+				m_Camera.incrementScaleY(-scrollDelta);
+			}
 
-		if (const sf::Event::MouseButtonPressed* MouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
+			if (const sf::Event::MouseButtonPressed* MouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
 
-			if (MouseButtonPressed->button == sf::Mouse::Button::Middle) {
-				m_Camera.setPosition(Vec2(0, 0));
-				m_Camera.setOrientation(0);
-				m_Camera.setScaleY(7);
+				if (MouseButtonPressed->button == sf::Mouse::Button::Middle) {
+					m_Camera.setPosition(Vec2(0, 0));
+					m_Camera.setOrientation(0);
+					m_Camera.setScaleY(7);
+				}
 			}
 		}
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+			sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(m_Camera.getOrientation())) / pixelsPerWorldUnit;
+
+			m_Camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
+		}
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+			m_Camera.rotate(deltaMouseScreenSpace.x / 14);
+		}
 	}
-
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-		sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(m_Camera.getOrientation())) / pixelsPerWorldUnit;
-
-		m_Camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
-	}
-
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-		m_Camera.rotate(deltaMouseScreenSpace.x / 14);
-	}
-
 	// Test just to make sure window updates every frame
 	//m_Entities.dummyUpdateShapes(deltaTime);
 
