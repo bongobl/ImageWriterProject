@@ -8,8 +8,10 @@ class ImageWriter(ctypes.Structure):
         ("pData", ctypes.c_void_p),
     ]
 
-    isSceneReady = False
-    sceneReadyCondition = threading.Condition()
+    doesSceneExist = False
+    sceneInitializedCondition = threading.Condition()
+    sceneDisposedCondition = threading.Condition()
+
     def __init__(self):
         
         self.framework = ctypes.CDLL("./ImageWriterAPI.dll")
@@ -71,17 +73,17 @@ class ImageWriter(ctypes.Structure):
         self.renderThread = threading.Thread(target = self.initAndRunScene, args=(windowHandle, ))
         self.renderThread.start()
 
-        with self.sceneReadyCondition:
-            self.sceneReadyCondition.wait_for(lambda: self.isSceneReady is True)
+        with self.sceneInitializedCondition:
+            self.sceneInitializedCondition.wait_for(lambda: self.doesSceneExist is True)
 
 
     def initAndRunScene(self, windowHandle):
 
         self.framework.ImageWriter_Scene_Init(self, windowHandle)
 
-        with self.sceneReadyCondition:
-            self.isSceneReady = True
-            self.sceneReadyCondition.notify()
+        with self.sceneInitializedCondition:
+            self.doesSceneExist = True
+            self.sceneInitializedCondition.notify()
 
         clock = pygame.time.Clock()
         while self.fnIsWindowOpen():
@@ -89,11 +91,19 @@ class ImageWriter(ctypes.Structure):
             self.framework.ImageWriter_Scene_UpdateFrame(self, deltaSeconds)
 
         self.framework.ImageWriter_Scene_Dispose(self)
+        with self.sceneDisposedCondition:
+            self.doesSceneExist = False
+            self.sceneDisposedCondition.notify()
 
     def Dispose(self):
 
         self.renderThread.join()
         self.framework.ImageWriter_Instance_Dispose(ctypes.byref(self))
+
+    def WaitForSceneToDispose(self):
+        
+        with self.sceneDisposedCondition:
+             self.sceneDisposedCondition.wait_for(lambda: self.doesSceneExist is False)
 
     def SetCameraTransform(self, statusMessage, transform):
         return self.framework.ImageWriter_Scene_SetCameraTransform(self, statusMessage, transform)

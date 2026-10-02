@@ -70,6 +70,11 @@ class WindowUI(tk.Tk):
         self.mouseScrollDelta = -1 if event.delta > 0 else 1
 
     def onFrameUpdate(self):
+
+        if not imageWriter.doesSceneExist:
+            self.destroy()
+            return
+
         prevMousePosition = self.mousePosition
         self.mousePosition = self.winfo_pointerxy()
         
@@ -100,8 +105,7 @@ class WindowUI(tk.Tk):
     
         self.windowIsActive = False
     
-        # wait some time for render thread to finish
-        time.sleep(0.07)
+        imageWriter.WaitForSceneToDispose()
         self.destroy()
 
 def isWindowUIOpen():
