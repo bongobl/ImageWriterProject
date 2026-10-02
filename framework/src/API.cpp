@@ -254,7 +254,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_TEMP_MoveCameraLocalSpac
     return pInstanceData->pfnCore_Scene_TEMP_MoveCameraLocalSpace(*pInstanceData, delta);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 halfExtents)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_AddEllipse: instance.pData was null\n");
@@ -264,10 +264,10 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEllipse(HImageWriterI
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_AddEllipse(*pInstanceData, transform, color);
+    return pInstanceData->pfnCore_Scene_AddEllipse(*pInstanceData, transform, color, halfExtents);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 halfExtents)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_AddRectangle: instance.pData was null\n");
@@ -277,7 +277,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddRectangle(HImageWrite
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_AddRectangle(*pInstanceData, transform, color);
+    return pInstanceData->pfnCore_Scene_AddRectangle(*pInstanceData, transform, color, halfExtents);
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3)

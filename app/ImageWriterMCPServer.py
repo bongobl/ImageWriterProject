@@ -191,11 +191,13 @@ def removeAllEntities() -> PlainReply.MCPPayload:
 @mcp.tool()
 def addEllipse(
         transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new ellipse. {TRANSFORM_DOC}")],
-        color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")]
+        color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")],
+        halfExtents: Annotated[Vec2MCPPayload, Field(description = f"half extents of the ellipse in its local space. {VEC2_DOC}")],
 ) -> PlainReply.MCPPayload:
     """
     Places a new ellipse within the world at specified transform and color
-    Note that a (scaleX, scaleY) value of (1,1) represents a unit circle of radius 1
+    Note that the half extents define the shape's size in its own local space, where its global size is then obtained by multiplying
+    the extents by the shape's scale transform
     """
 
     if not connectToImageWriterApp():
@@ -211,7 +213,10 @@ def addEllipse(
     colorRaw = Color()
     colorRaw.fromMCPPayload(color)
 
-    ellipseParams = AddEllipseParams(transform = transformRaw, color = colorRaw)
+    halfExtentsRaw = Vec2()
+    halfExtentsRaw.fromMCPPayload(halfExtents)
+
+    ellipseParams = AddEllipseParams(transform = transformRaw, color = colorRaw, halfExtents = halfExtentsRaw)
     logger.info(f"To server: {ellipseParams}")
 
     # serialize params
@@ -249,11 +254,13 @@ def addEllipse(
 @mcp.tool()
 def addRectangle(
     transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {TRANSFORM_DOC}")],
-    color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")]
+    color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")],
+    halfExtents: Annotated[Vec2MCPPayload, Field(description = f"half extents of the rectangle in its local space. {VEC2_DOC}")],
 ) -> PlainReply.MCPPayload:
     """
     Places a new rectangle within the world at specified transform and color
-    Note that a (scaleX, scaleY) value of (1,1) represents a square of width and height both equal to 2
+    Note that the half extents define the shape's size in its own local space, where its global size is then obtained by multiplying
+    the extents by the shape's scale transform
     """
 
     if not connectToImageWriterApp():
@@ -269,7 +276,10 @@ def addRectangle(
     colorRaw = Color()
     colorRaw.fromMCPPayload(color)
 
-    rectangleParams = AddRectangleParams(transform = transformRaw, color = colorRaw)
+    halfExtentsRaw = Vec2()
+    halfExtentsRaw.fromMCPPayload(halfExtents)
+
+    rectangleParams = AddRectangleParams(transform = transformRaw, color = colorRaw, halfExtents = halfExtentsRaw)
     logger.info(f"To server: {rectangleParams}")
 
     # serialize params
@@ -313,7 +323,6 @@ def addTriangle(
 ) -> PlainReply.MCPPayload:
     """
     Places a new triangle within the world at specified transform and color
-    Note that a (scaleX, scaleY) value of (1,1) represents a square of width and height both equal to 2
     Note that each point specifies a position in the shape's local space, whose world space is then computed
     via transformation by the transform parameter
     """

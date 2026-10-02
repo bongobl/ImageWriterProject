@@ -102,7 +102,7 @@ Scene::Scene(int64_t windowHandle)
 	initialWindowWidth = size.x;
 	initialWindowHeight = size.y;
 
-	m_Camera.m_widthFromHeight = size.x / size.y;
+	m_Camera.m_widthFromHeight = (float)size.x / size.y;
 
 	// Set screen from camera transform, it will never change
 	screenFromCamera = sf::Transform()
@@ -136,38 +136,44 @@ void Scene::updateState(float deltaTime)
 
 	
 	// Scene controls for self managed windows
-	if (m_isWindowSelfManaged && m_pWindow->hasFocus()) {
+	if (m_isWindowSelfManaged) {
 
 		while (const std::optional event = m_pWindow->pollEvent())
 		{
 			if (event->is<sf::Event::Closed>())
 				m_pWindow->close();
 
-			if (const sf::Event::MouseWheelScrolled* mouseWheelScrolled = event->getIf<sf::Event::MouseWheelScrolled>()) {
+			if (m_pWindow->hasFocus()) {
+				if (const sf::Event::MouseWheelScrolled* mouseWheelScrolled = event->getIf<sf::Event::MouseWheelScrolled>()) {
 
-				float scrollDelta = mouseWheelScrolled->delta;
-				m_Camera.incrementScaleY(-scrollDelta);
-			}
 
-			if (const sf::Event::MouseButtonPressed* MouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
+					float scrollDelta = mouseWheelScrolled->delta;
+					m_Camera.incrementScaleY(-scrollDelta);
+				}
 
-				if (MouseButtonPressed->button == sf::Mouse::Button::Middle) {
-					m_Camera.setPosition(Vec2(0, 0));
-					m_Camera.setOrientation(0);
-					m_Camera.setScaleY(7);
+				if (const sf::Event::MouseButtonPressed* MouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
+
+					if (MouseButtonPressed->button == sf::Mouse::Button::Middle) {
+						m_Camera.setPosition(Vec2(0, 0));
+						m_Camera.setOrientation(0);
+						m_Camera.setScaleY(7);
+					}
 				}
 			}
 		}
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-			sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(m_Camera.getOrientation())) / pixelsPerWorldUnit;
+		if (m_pWindow->hasFocus()) {
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+				sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(m_Camera.getOrientation())) / pixelsPerWorldUnit;
 
-			m_Camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
-		}
+				m_Camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
+			}
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-			m_Camera.rotate(deltaMouseScreenSpace.x / 14);
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+				m_Camera.rotate(deltaMouseScreenSpace.x / 14);
+			}
 		}
+		
 	}
 	// Test just to make sure window updates every frame
 	//m_Entities.dummyUpdateShapes(deltaTime);

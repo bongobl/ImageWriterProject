@@ -183,7 +183,7 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 
 	return true;
 }
-extern "C" __declspec(dllexport) bool scene_addEllipse(InstanceData instanceData, Transform transform, Color color)
+extern "C" __declspec(dllexport) bool scene_addEllipse(InstanceData instanceData, Transform transform, Color color, Vec2 halfExtents)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_addEllipse(): instanceData.pCoreData was null" << std::endl;
@@ -201,11 +201,11 @@ extern "C" __declspec(dllexport) bool scene_addEllipse(InstanceData instanceData
 		return false;
 	}
 
-	pCoreData->m_pScene->m_Entities.addEllipse(transform, color);
+	pCoreData->m_pScene->m_Entities.addEllipse(transform, color, halfExtents);
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool scene_addRectangle(InstanceData instanceData, Transform transform, Color color)
+extern "C" __declspec(dllexport) bool scene_addRectangle(InstanceData instanceData, Transform transform, Color color, Vec2 halfExtents)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_addRectangle(): instanceData.pCoreData was null" << std::endl;
@@ -223,7 +223,7 @@ extern "C" __declspec(dllexport) bool scene_addRectangle(InstanceData instanceDa
 		return false;
 	}
 
-	pCoreData->m_pScene->m_Entities.addRectangle(transform, color);
+	pCoreData->m_pScene->m_Entities.addRectangle(transform, color, halfExtents);
 	return true;
 }
 

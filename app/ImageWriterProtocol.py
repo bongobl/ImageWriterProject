@@ -31,20 +31,22 @@ class SetCameraTransformParams(ctypes.Structure):
 class AddEllipseParams(ctypes.Structure):
     _fields_ = [
         ("transform", Transform),
-        ("color", Color)
+        ("color", Color),
+        ("halfExtents", Vec2)
     ]
 
     def __str__(self):
-        return f"(AddEllipseParams: transform = {self.transform}, color = {self.color})"
+        return f"(AddEllipseParams: transform = {self.transform}, color = {self.color}, halfExtents = {self.halfExtents})"
 
 class AddRectangleParams(ctypes.Structure):
     _fields_ = [
         ("transform", Transform),
-        ("color", Color)
+        ("color", Color),
+        ("halfExtents", Vec2)
     ]
 
     def __str__(self):
-        return f"(AddRectangleParams: transform = {self.transform}, color = {self.color})"
+        return f"(AddRectangleParams: transform = {self.transform}, color = {self.color}, halfExtents = {self.halfExtents})"
 
 class AddTriangleParams(ctypes.Structure):
     _fields_ = [

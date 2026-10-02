@@ -128,8 +128,9 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddEllipse(statusMessage,
-                Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 0.5, scaleY = 0.35, angle = 0),
-                Color(red = 1, green = 0, blue = 0, alpha = 1)
+                Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 1, scaleY = 1, angle = 0),
+                Color(red = 1, green = 0, blue = 0, alpha = 1),
+                Vec2(0.5, 0.35)
             ):
                 print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
@@ -141,8 +142,9 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddRectangle(statusMessage,
-                Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 0.5, scaleY = 0.35, angle = 0),
-                Color(red = 0, green = 1, blue = 1, alpha = 1)
+                Transform(positionX = j * spacingX - startX, positionY = i * spacingY - startY, scaleX = 1, scaleY = 1, angle = 0),
+                Color(red = 0, green = 1, blue = 1, alpha = 1),
+                Vec2(0.5, 0.35)
             ):
                 print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     

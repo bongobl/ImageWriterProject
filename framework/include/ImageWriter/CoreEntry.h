@@ -18,8 +18,8 @@ extern "C" __declspec(dllexport) bool scene_isSelfManagedRenderWindowOpen(Instan
 extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, Transform transform);
 extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, Transform* pCameraTransform);
 extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, Transform delta);
-extern "C" __declspec(dllexport) bool scene_addEllipse(InstanceData instanceData, Transform transform, Color color);
-extern "C" __declspec(dllexport) bool scene_addRectangle(InstanceData instanceData, Transform transform, Color color);
+extern "C" __declspec(dllexport) bool scene_addEllipse(InstanceData instanceData, Transform transform, Color color, Vec2 halfExtents);
+extern "C" __declspec(dllexport) bool scene_addRectangle(InstanceData instanceData, Transform transform, Color color, Vec2 halfExtents);
 extern "C" __declspec(dllexport) bool scene_addTriangle(InstanceData instanceData, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3);
 extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData);
 

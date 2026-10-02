@@ -212,7 +212,12 @@ def runNetworkService():
                             # deserialize addEllipse params
                             ellipseParams = AddEllipseParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {ellipseParams}")
-                            frameworkFunctionSucceeded = imageWriter.AddEllipse(frameworkFunctionMessage, ellipseParams.transform, ellipseParams.color)
+                            frameworkFunctionSucceeded = imageWriter.AddEllipse(
+                                frameworkFunctionMessage, 
+                                ellipseParams.transform, 
+                                ellipseParams.color,
+                                ellipseParams.halfExtents
+                            )
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
@@ -228,7 +233,12 @@ def runNetworkService():
                             # deserialize addRectangle params
                             rectangleParams = AddRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams}")
-                            frameworkFunctionSucceeded = imageWriter.AddRectangle(frameworkFunctionMessage, rectangleParams.transform, rectangleParams.color)
+                            frameworkFunctionSucceeded = imageWriter.AddRectangle(
+                                frameworkFunctionMessage, 
+                                rectangleParams.transform, 
+                                rectangleParams.color,
+                                rectangleParams.halfExtents
+                            )
                             
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)

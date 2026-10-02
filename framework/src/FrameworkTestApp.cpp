@@ -34,8 +34,9 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddEllipse(instance, statusMessage,
-				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 0.5f, .scaleY = 0.35f, .angle = 0 },
-				{ .red = 1, .green = 0, .blue = 0, .alpha = 1 }))
+				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 1, .scaleY = 1, .angle = 0 },
+				{ .red = 1, .green = 0, .blue = 0, .alpha = 1 },
+				{ 0.5f, 0.35f }))
 			{
 				std::cerr << "ImageWriter error: " << statusMessage << std::endl;
 			}
@@ -53,8 +54,9 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddRectangle(instance, statusMessage,
-				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 0.5f, .scaleY = 0.35f, .angle = 0 },
-				{ .red = 0, .green = 1, .blue = 1, .alpha = 1 }))
+				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 1, .scaleY = 1, .angle = 0 },
+				{ .red = 0, .green = 1, .blue = 1, .alpha = 1 },
+				{ 0.5f, 0.35f }))
 			{
 				std::cerr << "ImageWriter error: " << statusMessage << std::endl;
 			}

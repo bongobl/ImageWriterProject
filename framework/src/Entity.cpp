@@ -11,14 +11,14 @@ Entity::Entity(Type type, const Transform& transform, Color& color, sf::Shape& d
 {
 }
 
-EllipseEntity::EllipseEntity(const Transform& transform, Color& color, sf::Shape& drawable) : 
-	Entity(EntityType::Ellipse, transform, color, drawable)
+EllipseEntity::EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Shape& drawable) :
+	Entity(EntityType::Ellipse, transform, color, drawable), m_HalfExtents(halfExtents)
 {
 
 }
 
-RectangleEntity::RectangleEntity(const Transform& transform, Color& color, sf::Shape& drawable) :
-	Entity(EntityType::Rectangle, transform, color, drawable) 
+RectangleEntity::RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Shape& drawable) :
+	Entity(EntityType::Rectangle, transform, color, drawable), m_HalfExtents(halfExtents)
 {
 }
 
@@ -29,31 +29,38 @@ TriangleEntity::TriangleEntity(const Transform& transform, Color& color, Vec2 po
 
 sf::Shape& EllipseEntity::getDrawable(Scene* pScene) const {
 
-	sf::Vector2f screenHalfExtents = pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
-
+	
 	sf::CircleShape& circleDrawing = static_cast<sf::CircleShape&>(m_Drawing);
 	circleDrawing.setFillColor(sf::fromCore(m_Color));
-	circleDrawing.setPosition(pScene->screenFromCamera * pScene->cameraFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
 
+	sf::Transform screenFromWorld = pScene->screenFromCamera * pScene->cameraFromWorld;
+	circleDrawing.setOrigin(sf::Vector2f(1, 1));
+
+	circleDrawing.setRadius(1.0f);
+
+	circleDrawing.setPosition(screenFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
 	circleDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.angle));
-	circleDrawing.setScale(screenHalfExtents);
+	circleDrawing.setScale(pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX * m_HalfExtents.x, m_Transform.scaleY * m_HalfExtents.y));
 
 	return circleDrawing;
 }
 
 sf::Shape& RectangleEntity::getDrawable(Scene* pScene) const {
 
-	sf::Vector2f screenHalfExtents = pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX, m_Transform.scaleY);
-
 	sf::RectangleShape& rectDrawing = static_cast<sf::RectangleShape&>(m_Drawing);
 	rectDrawing.setFillColor(sf::fromCore(m_Color));
-	rectDrawing.setPosition(pScene->screenFromCamera * pScene->cameraFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
+
+	sf::Transform screenFromWorld = pScene->screenFromCamera * pScene->cameraFromWorld;
+
+	rectDrawing.setOrigin(sf::Vector2f(1, 1));
+
+	rectDrawing.setSize(sf::Vector2f(2,2));
 	
+	rectDrawing.setPosition(screenFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
 	rectDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.angle));
-
-	rectDrawing.setScale(screenHalfExtents);
+	rectDrawing.setScale(pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scaleX * m_HalfExtents.x, m_Transform.scaleY * m_HalfExtents.y));
 
 	return rectDrawing;
 }
@@ -85,7 +92,6 @@ EntityList::EntityList() :
 	m_TriangleDrawing(3) // <- num points
 {
 	m_CircleDrawing.setOrigin(sf::Vector2f(1, 1));
-	m_RectangleDrawing.setOrigin(sf::Vector2f(1, 1));
 }
 
 EntityList::~EntityList()
@@ -93,16 +99,16 @@ EntityList::~EntityList()
 	destroyAllShapes();
 }
 
-void EntityList::addEllipse(const Transform& transform, Color& color) 
+void EntityList::addEllipse(const Transform& transform, Color& color, Vec2 halfExtents)
 {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Entities.push_back(new EllipseEntity(transform, color, m_CircleDrawing));
+	m_Entities.push_back(new EllipseEntity(transform, color, halfExtents, m_CircleDrawing));
 }
 
-void EntityList::addRectangle(const Transform& transform, Color& color)
+void EntityList::addRectangle(const Transform& transform, Color& color, Vec2 halfExtents)
 {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Entities.push_back(new RectangleEntity(transform, color, m_RectangleDrawing));
+	m_Entities.push_back(new RectangleEntity(transform, color, halfExtents, m_RectangleDrawing));
 }
 
 void EntityList::addTriangle(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3)

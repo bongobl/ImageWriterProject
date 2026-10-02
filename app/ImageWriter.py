@@ -41,10 +41,10 @@ class ImageWriter(ctypes.Structure):
         self.framework.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.argtypes = [ImageWriter, ctypes.c_char_p, Transform]
         self.framework.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.restype = ctypes.c_bool
 
-        self.framework.ImageWriter_Scene_AddEllipse.argtypes = [ImageWriter, ctypes.c_char_p, Transform, Color]
+        self.framework.ImageWriter_Scene_AddEllipse.argtypes = [ImageWriter, ctypes.c_char_p, Transform, Color, Vec2]
         self.framework.ImageWriter_Scene_AddEllipse.restype = ctypes.c_bool
 
-        self.framework.ImageWriter_Scene_AddRectangle.argtypes = [ImageWriter, ctypes.c_char_p, Transform, Color]
+        self.framework.ImageWriter_Scene_AddRectangle.argtypes = [ImageWriter, ctypes.c_char_p, Transform, Color, Vec2]
         self.framework.ImageWriter_Scene_AddRectangle.restype = ctypes.c_bool
 
         self.framework.ImageWriter_Scene_AddTriangle.argtypes = [ImageWriter, ctypes.c_char_p, Transform, Color, Vec2, Vec2, Vec2]
@@ -104,11 +104,11 @@ class ImageWriter(ctypes.Structure):
     def TEMP_MoveCameraLocalSpace(self, statusMessage, transform):
         return self.framework.ImageWriter_Scene_TEMP_MoveCameraLocalSpace(self, statusMessage, transform)
 
-    def AddEllipse(self, statusMessage, transform, color):
-        return self.framework.ImageWriter_Scene_AddEllipse(self, statusMessage, transform, color)
+    def AddEllipse(self, statusMessage, transform, color, halfExtents):
+        return self.framework.ImageWriter_Scene_AddEllipse(self, statusMessage, transform, color, halfExtents)
 
-    def AddRectangle(self, statusMessage, transform, color):
-        return self.framework.ImageWriter_Scene_AddRectangle(self, statusMessage, transform, color)
+    def AddRectangle(self, statusMessage, transform, color, halfExtents):
+        return self.framework.ImageWriter_Scene_AddRectangle(self, statusMessage, transform, color, halfExtents)
 
     def AddTriangle(self, statusMessage, transform, color, point1, point2, point3):
         return self.framework.ImageWriter_Scene_AddTriangle(self, statusMessage, transform, color, point1, point2, point3)
