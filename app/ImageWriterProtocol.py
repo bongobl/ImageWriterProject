@@ -10,14 +10,23 @@ COMMAND_SIZE = 1
 # Commands
 class Command(IntEnum):
 
-    GetCameraTransform = 1
-    RemoveAllEntities = 2
-    AddEllipse = 3
-    AddRectangle = 4
-    AddTriangle = 5
-    Disconnecting = 6
+    SetCameraTransform = 1
+    GetCameraTransform = 2
+    RemoveAllEntities = 3
+    AddEllipse = 4
+    AddRectangle = 5
+    AddTriangle = 6
+    Disconnecting = 7
 
 # Parameters
+class SetCameraTransformParams(ctypes.Structure):
+    _fields_ = [
+        ("transform", Transform)
+    ]
+
+    def __str__(self):
+        return f"(AddEllipseParams: transform = {self.transform})"
+
 
 class AddEllipseParams(ctypes.Structure):
     _fields_ = [

@@ -166,6 +166,23 @@ def runNetworkService():
                     frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
                     match command:
                         
+                        case Command.SetCameraTransform:
+                            
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(SetCameraTransformParams))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+
+                            # deserialize addEllipse params
+                            params = SetCameraTransformParams.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {params}")
+
+                            frameworkFunctionSucceeded = imageWriter.SetCameraTransform(frameworkFunctionMessage, params.transform)
+
+                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = PlainReply(status = commandStatus)
+
                         case Command.GetCameraTransform:
 
                             print("From client: Getting the camera transform")

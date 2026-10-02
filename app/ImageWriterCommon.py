@@ -29,8 +29,7 @@ TRANSFORM_DOC = (
     "positionY (float) = Y position, "
     "scaleX (float) = X scale, "
     "scaleY (float) = Y scale, "
-    "angle (float) = counter clockwise angle orientation on world plane, "
-    "The transform is applied with TRS order, (M = T * R * S)"
+    "angle (float) = counter clockwise angle orientation on world plane"
 )
 class TransformMCPPayload(BaseModel):
     positionX: float = Field(..., description="(float), X position")

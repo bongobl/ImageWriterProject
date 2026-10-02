@@ -59,6 +59,57 @@ def disconnectFromImageWriter():
         connToServer.close()
 
 @mcp.tool()
+def setCameraTransform(
+    transform: Annotated[TransformMCPPayload, Field(description = f"specifies the new transform of the camera. {TRANSFORM_DOC}")],
+) -> PlainReply.MCPPayload:
+    """sets the transform of the camera, note that only scaleY is read, scaleX is set based on scaleY and the """
+    """aspect ratio to prevent anyone from changing the aspect ratio """
+
+    if not connectToImageWriterApp():
+        raise ToolError("setCameraTransform(): Failed to connect to ImageWriter app")
+
+    commIn = Command.SetCameraTransform
+    commandBuffer = bytes(commIn.value.to_bytes(COMMAND_SIZE))
+
+    transformRaw = Transform()
+    transformRaw.fromMCPPayload(transform)
+
+    params = SetCameraTransformParams(transform = transformRaw)
+    logger.info(f"To server: {params}")
+
+    # serialize params
+    paramsBuffer = bytes(params)
+
+    # send message to server
+    try:
+        connToServer.sendall(commandBuffer)
+        connToServer.sendall(paramsBuffer)
+
+    # will fail if server had disconnected at time of sending message
+    except ConnectionResetError as e:
+        logger.error(f"ConnectionResetError: {e}\n\n")
+        disconnectFromImageWriter()
+        raise ToolError("setCameraTransform(): Failed to send command to ImageWriter app")
+
+    replyBuffer = bytearray()
+    
+    # wait here and receive message from client
+    success, errorMessage = receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(PlainReply))
+    if not success:
+        # log error message and return to connecting state
+        logger.error(errorMessage)
+        disconnectFromImageWriter()
+        raise ToolError("setCameraTransform(): Failed to receive reply from ImageWriter app")
+    
+    # deserialize client message and log
+    reply = PlainReply.from_buffer_copy(replyBuffer)
+    logger.info(f"From server: {reply}")
+
+    disconnectFromImageWriter()
+
+    return reply.toMCPPayload()
+
+@mcp.tool()
 def getCameraTransform() -> TransformReply.MCPPayload:
     """returns the rectangle representing the camera's transform within the world which consists of a position, rotation
     and scale (in that order of most globally to most locally applied)
