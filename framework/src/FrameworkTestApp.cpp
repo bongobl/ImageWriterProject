@@ -9,14 +9,14 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	char statusMessage[256] = "Command executed successfully";
 
 	Transform cameraTransform = {};
-
-	if (!ImageWriter_Scene_GetCameraTransform(instance, statusMessage, &cameraTransform)) 
+	float widthFromHeight = 0;
+	if (!ImageWriter_Scene_GetCameraTransform(instance, statusMessage, &cameraTransform, &widthFromHeight))
 	{
 		std::cerr << "ImageWriter error: " << statusMessage << std::endl;
 	}
 	else 
 	{
-		std::cout << "scaleX = " << cameraTransform.scaleX << ", scaleY = " << cameraTransform.scaleY << std::endl;
+		std::cout << "scaleX = " << cameraTransform.scale * widthFromHeight << ", scaleY = " << cameraTransform.scale << std::endl;
 	}
 	
 
@@ -34,7 +34,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddEllipse(instance, statusMessage,
-				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 1, .scaleY = 1, .angle = 0 },
+				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scale = 1, .angle = 0 },
 				{ .red = 1, .green = 0, .blue = 0, .alpha = 1 },
 				{ 0.5f, 0.35f }))
 			{
@@ -54,7 +54,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddRectangle(instance, statusMessage,
-				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 1, .scaleY = 1, .angle = 0 },
+				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scale = 1, .angle = 0 },
 				{ .red = 0, .green = 1, .blue = 1, .alpha = 1 },
 				{ 0.5f, 0.35f }))
 			{
@@ -75,7 +75,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 		for (int j = 0; j < dimX; ++j) {
 
 			if (!ImageWriter_Scene_AddTriangle(instance, statusMessage,
-				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scaleX = 1, .scaleY = 1, .angle = 0 },
+				{ .positionX = j * spacingX - startX, .positionY = i * spacingY - startY, .scale = 1, .angle = 0 },
 				{ .red = 1, .green = 1, .blue = 0, .alpha = 1 },
 				{ -0.5f, 0.35f }, { -0.5f, -0.35f }, { 0.5f, 0 }))
 			{

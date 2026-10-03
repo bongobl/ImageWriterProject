@@ -83,21 +83,35 @@ class TransformReplyMCPPayload(BaseModel):
     status: StatusMCPPayload
     transform: TransformMCPPayload
 
+class CameraTransformReplyMCPPayload(TransformReplyMCPPayload):
+    widthFromHeight: float = Field(..., description="(float), aspect ratio of the camera view, ie the width / height")
+
 class TransformReply(ctypes.Structure):
     type MCPPayload = TransformReplyMCPPayload
+    type CamerMCPPayload = CameraTransformReplyMCPPayload
+
     _fields_ = [
         ("status", Status),
         ("transform", Transform),
+        ("cameraWidthFromHeight", ctypes.c_float), # only used when getting camera transform
     ]
 
     def __str__(self):
-        return f"(TransformReply: status = {self.status}, transform = {self.transform})"
+        return f"(TransformReply: status = {self.status}, transform = {self.transform}, cameraWidthFromHeight = {self.cameraWidthFromHeight})"
 
     def toMCPPayload(self) -> MCPPayload:
 
         return TransformReplyMCPPayload(
             status = self.status.toMCPPayload(),
             transform = self.transform.toMCPPayload()
+        )
+
+    def toCameraMCPPayload(self) -> CamerMCPPayload:
+
+        return CameraTransformReplyMCPPayload(
+            status = self.status.toMCPPayload(),
+            transform = self.transform.toMCPPayload(),
+            widthFromHeight = self.cameraWidthFromHeight
         )
 
 

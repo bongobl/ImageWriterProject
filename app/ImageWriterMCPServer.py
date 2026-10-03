@@ -110,10 +110,11 @@ def setCameraTransform(
     return reply.toMCPPayload()
 
 @mcp.tool()
-def getCameraTransform() -> TransformReply.MCPPayload:
-    """returns the rectangle representing the camera's transform within the world which consists of a position, rotation
-    and scale (in that order of most globally to most locally applied)
-    Note the scaleX and scaleY describe the half-extents of the camera rectangle in world units.
+def getCameraTransform() -> TransformReply.CamerMCPPayload:
+    """returns the rectangle representing the camera's world transform. Note that the "scale" parameter denotes the
+    half Y extent of the camera in world units where the half X extent can be obtained from multiplying that by the 
+    returned widthFromHeight value
+  
     """
 
     if not connectToImageWriterApp():
@@ -148,7 +149,7 @@ def getCameraTransform() -> TransformReply.MCPPayload:
 
     disconnectFromImageWriter()
 
-    return reply.toMCPPayload()
+    return reply.toCameraMCPPayload()
 
 @mcp.tool()
 def removeAllEntities() -> PlainReply.MCPPayload:

@@ -38,7 +38,7 @@ void Camera::rotate(float deltaDegrees) {
 	m_Orientation += deltaDegrees;
 }
 
-void Camera::incrementScaleY(float deltaScale) {
+void Camera::incrementScale(float deltaScale) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
 	m_ScaleY += deltaScale;
 	m_ScaleY = m_ScaleY < 0 ? 0 : m_ScaleY;
@@ -65,7 +65,7 @@ void Camera::setTransform(const Transform& transform) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
 	m_Position.x = transform.positionX;
 	m_Position.y = transform.positionY;
-	m_ScaleY = transform.scaleY;
+	m_ScaleY = transform.scale;
 	m_Orientation = transform.angle;
 }
 
@@ -74,8 +74,7 @@ Transform Camera::getTransform() const {
 	return {
 		.positionX = m_Position.x,
 		.positionY = m_Position.y,
-		.scaleX = m_widthFromHeight * m_ScaleY,
-		.scaleY = m_ScaleY,
+		.scale = m_ScaleY,
 		.angle = m_Orientation
 	};
 }
@@ -148,7 +147,7 @@ void Scene::updateState(float deltaTime)
 
 
 					float scrollDelta = mouseWheelScrolled->delta;
-					m_Camera.incrementScaleY(-scrollDelta);
+					m_Camera.incrementScale(-scrollDelta);
 				}
 
 				if (const sf::Event::MouseButtonPressed* MouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {

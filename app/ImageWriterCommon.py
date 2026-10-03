@@ -27,43 +27,38 @@ TRANSFORM_DOC = (
     "A Transform consists of: " 
     "positionX (float) = X position, " 
     "positionY (float) = Y position, "
-    "scaleX (float) = X scale, "
-    "scaleY (float) = Y scale, "
-    "angle (float) = counter clockwise angle orientation on world plane"
+    "scale (float) = scale, "
+    "angle (float) = counter clockwise angle orientation on world plane in degrees"
 )
 class TransformMCPPayload(BaseModel):
     positionX: float = Field(..., description="(float), X position")
     positionY: float = Field(..., description="(float), Y position")
-    scaleX: float = Field(..., description="(float), X scale")
-    scaleY: float = Field(..., description="(float), Y scale")
-    angle: float = Field(..., description="(float), counter clockwise angle orientation")
+    scale: float = Field(..., description="(float), scale")
+    angle: float = Field(..., description="(float), counter clockwise angle orientation in degrees")
 
 class Transform(ctypes.Structure):
     type MCPPayload = TransformMCPPayload
     _fields_ = [
         ("positionX", ctypes.c_float),
         ("positionY", ctypes.c_float),
-        ("scaleX", ctypes.c_float),
-        ("scaleY", ctypes.c_float),
+        ("scale", ctypes.c_float),
         ("angle", ctypes.c_float)
     ]
 
     def __str__(self):
-        return f"(Transform: positionX = {self.positionX}, positionY = {self.positionY}, scaleX = {self.scaleX}, scaleY = {self.scaleY}, angle = {self.angle})"
+        return f"(Transform: positionX = {self.positionX}, positionY = {self.positionY}, scale = {self.scale}, angle = {self.angle})"
 
     def toMCPPayload(self):
         return TransformMCPPayload(
             positionX = self.positionX, 
             positionY = self.positionY,
-            scaleX = self.scaleX, 
-            scaleY = self.scaleY, 
+            scale = self.scale, 
             angle = self.angle)
 
     def fromMCPPayload(self, payload):
         self.positionX = payload.positionX
         self.positionY = payload.positionY
-        self.scaleX = payload.scaleX 
-        self.scaleY = payload.scaleY 
+        self.scale = payload.scale 
         self.angle = payload.angle
 
 ######## Color ########

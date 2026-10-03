@@ -21,7 +21,7 @@ typedef bool (*PfnCore_Scene_isSelfManagedRenderWindowOpen)(InstanceData);
 
 // scene API
 typedef bool (*PfnCore_Scene_SetCameraTransform)(InstanceData, Transform);
-typedef bool (*PfnCore_Scene_GetCameraTransform)(InstanceData, Transform*);
+typedef bool (*PfnCore_Scene_GetCameraTransform)(InstanceData, Transform*, float*);
 typedef bool (*PfnCore_Scene_TEMP_MoveCameraLocalSpace)(InstanceData, Transform);
 typedef bool (*PfnCore_Scene_AddEllipse)(InstanceData, Transform, Color, Vec2);
 typedef bool (*PfnCore_Scene_AddRectangle)(InstanceData, Transform, Color, Vec2);

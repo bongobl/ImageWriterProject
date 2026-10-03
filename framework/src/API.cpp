@@ -228,7 +228,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_SetCameraTransform(HImag
     return pInstanceData->pfnCore_Scene_SetCameraTransform(*pInstanceData, transform);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform, float* pWidthFromheight)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_GetCameraTransform: instance.pData was null\n");
@@ -238,7 +238,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImag
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_GetCameraTransform(*pInstanceData, pCameraTransform);
+    return pInstanceData->pfnCore_Scene_GetCameraTransform(*pInstanceData, pCameraTransform, pWidthFromheight);
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_TEMP_MoveCameraLocalSpace(HImageWriterInstance instance, char* pStatusMessage, Transform delta)

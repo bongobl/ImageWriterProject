@@ -10,8 +10,7 @@ struct ImageWriter
 struct Transform {
     float positionX;
     float positionY;
-    float scaleX;
-    float scaleY;
+    float scale;
     float angle;
 };
 
@@ -41,7 +40,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_IsSelfManagedRenderWindo
 
 // scene API
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_SetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform transform);
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform, float* pWidthFromheight);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_TEMP_MoveCameraLocalSpace(HImageWriterInstance instance, char* pStatusMessage, Transform delta);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 halfExtents);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 halfExtents);

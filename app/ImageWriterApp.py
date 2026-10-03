@@ -56,8 +56,7 @@ class WindowUI(tk.Tk):
                 Transform(
                     positionX = 0, 
                     positionY = 0, 
-                    scaleX = 0, 
-                    scaleY = 7, 
+                    scale = 7, 
                     angle = 0
                 )
         )
@@ -88,8 +87,7 @@ class WindowUI(tk.Tk):
             Transform(
                 positionX = deltaX if self.mouseButtons[1] else 0, 
                 positionY = deltaY if self.mouseButtons[1] else 0, 
-                scaleX = 0, 
-                scaleY = self.mouseScrollDelta, 
+                scale = self.mouseScrollDelta, 
                 angle = deltaX / 14 if self.mouseButtons[3] else 0)
         )
         self.after(9, self.onFrameUpdate)
@@ -191,10 +189,15 @@ def runNetworkService():
 
                             print("From client: Getting the camera transform")
                             cameraTransform = Transform()
-                            frameworkFunctionSucceeded = imageWriter.GetCameraTransform(frameworkFunctionMessage, cameraTransform)
+                            widthFromheight = ctypes.c_float(0.0)
+                            frameworkFunctionSucceeded = imageWriter.GetCameraTransform(frameworkFunctionMessage, cameraTransform, widthFromheight)
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = TransformReply(status = commandStatus, transform = cameraTransform)
+                            reply = TransformReply(
+                                status = commandStatus, 
+                                transform = cameraTransform, 
+                                cameraWidthFromHeight = widthFromheight
+                            )
 
                         case Command.RemoveAllEntities:
 

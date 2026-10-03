@@ -26,7 +26,7 @@ public:
 	// delta setters
 	void move(Vec2 delta);
 	void rotate(float deltaDegrees);
-	void incrementScaleY(float deltaScale);
+	void incrementScale(float deltaScale);
 
 	// getters
 	Vec2 getPosition() const;

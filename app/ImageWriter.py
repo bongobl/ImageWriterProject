@@ -37,7 +37,7 @@ class ImageWriter(ctypes.Structure):
         self.framework.ImageWriter_Scene_SetCameraTransform.argtypes = [ImageWriter, ctypes.c_char_p, Transform]
         self.framework.ImageWriter_Scene_SetCameraTransform.restype = ctypes.c_bool
 
-        self.framework.ImageWriter_Scene_GetCameraTransform.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform)]
+        self.framework.ImageWriter_Scene_GetCameraTransform.argtypes = [ImageWriter, ctypes.c_char_p, ctypes.POINTER(Transform), ctypes.POINTER(ctypes.c_float)]
         self.framework.ImageWriter_Scene_GetCameraTransform.restype = ctypes.c_bool
 
         self.framework.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.argtypes = [ImageWriter, ctypes.c_char_p, Transform]
@@ -108,8 +108,8 @@ class ImageWriter(ctypes.Structure):
     def SetCameraTransform(self, statusMessage, transform):
         return self.framework.ImageWriter_Scene_SetCameraTransform(self, statusMessage, transform)
 
-    def GetCameraTransform(self, statusMessage, outTransform):
-        return self.framework.ImageWriter_Scene_GetCameraTransform(self, statusMessage, ctypes.byref(outTransform))
+    def GetCameraTransform(self, statusMessage, outTransform, outWidthFromHeight):
+        return self.framework.ImageWriter_Scene_GetCameraTransform(self, statusMessage, ctypes.byref(outTransform), ctypes.byref(outWidthFromHeight))
 
     def TEMP_MoveCameraLocalSpace(self, statusMessage, transform):
         return self.framework.ImageWriter_Scene_TEMP_MoveCameraLocalSpace(self, statusMessage, transform)

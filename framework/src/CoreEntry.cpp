@@ -125,7 +125,7 @@ extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData inst
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, Transform* pCameraTransform)
+extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, Transform* pCameraTransform, float* pWidthFromheight)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_getCameraTransform(): instanceData.pCoreData was null" << std::endl;
@@ -146,6 +146,8 @@ extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData inst
 	const Camera& camera = pCoreData->m_pScene->m_Camera;
 	*pCameraTransform = camera.getTransform();
 
+	// Note: a bit sloppy here accessing it without a mutex but it will never change
+	*pWidthFromheight = camera.m_widthFromHeight; 
 	return true;
 }
 
@@ -179,7 +181,7 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 	camera.rotate(delta.angle);
 
 	// Scale
-	camera.incrementScaleY(delta.scaleY);
+	camera.incrementScale(delta.scale);
 
 	return true;
 }
