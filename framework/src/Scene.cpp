@@ -41,8 +41,6 @@ void Camera::rotate(float deltaDegrees) {
 void Camera::incrementScale(float deltaScale) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
 	m_ScaleY += deltaScale;
-	m_ScaleY = m_ScaleY < 0 ? 0 : m_ScaleY;
-	m_ScaleY = m_ScaleY > 100 ? 100 : m_ScaleY;
 }
 
 Vec2 Camera::getPosition() const {
@@ -63,8 +61,7 @@ float Camera::getScaleY() const {
 void Camera::setTransform(const Transform& transform) {
 
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Position.x = transform.positionX;
-	m_Position.y = transform.positionY;
+	m_Position = transform.position;
 	m_ScaleY = transform.scale;
 	m_Orientation = transform.angle;
 }
@@ -72,8 +69,7 @@ void Camera::setTransform(const Transform& transform) {
 Transform Camera::getTransform() const {
 	std::shared_lock<std::shared_mutex> lock(mutex);
 	return {
-		.positionX = m_Position.x,
-		.positionY = m_Position.y,
+		.position = m_Position,
 		.scale = m_ScaleY,
 		.angle = m_Orientation
 	};

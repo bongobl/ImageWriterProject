@@ -54,8 +54,7 @@ class WindowUI(tk.Tk):
             statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
             imageWriter.SetCameraTransform(statusMessage,
                 Transform(
-                    positionX = 0, 
-                    positionY = 0, 
+                    position = Vec2(x = 0, y = 0), 
                     scale = 7, 
                     angle = 0
                 )
@@ -85,8 +84,7 @@ class WindowUI(tk.Tk):
         statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
         imageWriter.TEMP_MoveCameraLocalSpace(statusMessage,
             Transform(
-                positionX = deltaX if self.mouseButtons[1] else 0, 
-                positionY = deltaY if self.mouseButtons[1] else 0, 
+                position = Vec2(x = deltaX if self.mouseButtons[1] else 0, y = deltaY if self.mouseButtons[1] else 0), 
                 scale = self.mouseScrollDelta, 
                 angle = deltaX / 14 if self.mouseButtons[3] else 0)
         )

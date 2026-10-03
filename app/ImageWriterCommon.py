@@ -22,42 +22,68 @@ class Status(ctypes.Structure):
     def toMCPPayload(self) -> MCPPayload:
         return StatusMCPPayload(success = self.success, message = self.message.decode('utf-8'))
 
+######## Vec2 ########
+VEC2_DOC = (
+    "A Vec2 consists of: " 
+    "x (float) = x spatial component, " 
+    "y (float)= y spatial component"
+)
+class Vec2MCPPayload(BaseModel):
+    x: float = Field(..., description="(float), x spatial component")
+    y: float = Field(..., description="(float), y spatial component")
+
+class Vec2(ctypes.Structure):
+    type MCPPayload = Vec2MCPPayload
+    _fields_ = [
+        ("x", ctypes.c_float),
+        ("y", ctypes.c_float),
+    ]
+
+    def __str__(self):
+        return f"(Vec2: x = {self.x}, y = {self.y})"
+
+    def toMCPPayload(self):
+        return Vec2MCPPayload(
+            x = self.x, 
+            y = self.y
+        )
+
+    def fromMCPPayload(self, payload):
+        self.x = payload.x
+        self.y = payload.y
+
 ######## Transform ########
 TRANSFORM_DOC = (
     "A Transform consists of: " 
-    "positionX (float) = X position, " 
-    "positionY (float) = Y position, "
+    "position (Vec2MCPPayload) = 2D (x and y) position" 
     "scale (float) = scale, "
     "angle (float) = counter clockwise angle orientation on world plane in degrees"
 )
+
 class TransformMCPPayload(BaseModel):
-    positionX: float = Field(..., description="(float), X position")
-    positionY: float = Field(..., description="(float), Y position")
+    position: Vec2MCPPayload = Field(..., description="(Vec2MCPPayload), position")
     scale: float = Field(..., description="(float), scale")
     angle: float = Field(..., description="(float), counter clockwise angle orientation in degrees")
 
 class Transform(ctypes.Structure):
     type MCPPayload = TransformMCPPayload
     _fields_ = [
-        ("positionX", ctypes.c_float),
-        ("positionY", ctypes.c_float),
+        ("position", Vec2),
         ("scale", ctypes.c_float),
         ("angle", ctypes.c_float)
     ]
 
     def __str__(self):
-        return f"(Transform: positionX = {self.positionX}, positionY = {self.positionY}, scale = {self.scale}, angle = {self.angle})"
+        return f"(Transform: position = {self.position}, scale = {self.scale}, angle = {self.angle})"
 
     def toMCPPayload(self):
         return TransformMCPPayload(
-            positionX = self.positionX, 
-            positionY = self.positionY,
+            position = self.position.toMCPPayload(),
             scale = self.scale, 
             angle = self.angle)
 
     def fromMCPPayload(self, payload):
-        self.positionX = payload.positionX
-        self.positionY = payload.positionY
+        self.position.fromMCPPayload(payload.position)
         self.scale = payload.scale 
         self.angle = payload.angle
 
@@ -101,33 +127,3 @@ class Color(ctypes.Structure):
         self.green = payload.green
         self.blue = payload.blue 
         self.alpha = payload.alpha 
-
-######## Vec2 ########
-VEC2_DOC = (
-    "A Vec2 consists of: " 
-    "x (float) = x spatial component, " 
-    "y (float)= y spatial component"
-)
-class Vec2MCPPayload(BaseModel):
-    x: float = Field(..., description="(float), x spatial component")
-    y: float = Field(..., description="(float), y spatial component")
-
-class Vec2(ctypes.Structure):
-    type MCPPayload = Vec2MCPPayload
-    _fields_ = [
-        ("x", ctypes.c_float),
-        ("y", ctypes.c_float),
-    ]
-
-    def __str__(self):
-        return f"(Vec2: x = {self.x}, y = {self.y})"
-
-    def toMCPPayload(self):
-        return Vec2MCPPayload(
-            x = self.x, 
-            y = self.y
-        )
-
-    def fromMCPPayload(self, payload):
-        self.x = payload.x
-        self.y = payload.y

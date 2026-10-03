@@ -171,7 +171,7 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 
 	Scene& scene = *pCoreData->m_pScene;
 	Camera& camera = scene.m_Camera;
-	sf::Vector2f deltaMouseScreenSpace(delta.positionX, delta.positionY);
+	sf::Vector2f deltaMouseScreenSpace = sf::fromCore(delta.position);
 
 	// Move
 	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(camera.getOrientation())) / pCoreData->m_pScene->pixelsPerWorldUnit;

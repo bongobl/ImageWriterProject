@@ -2,14 +2,20 @@
 #include <stdio.h>
 #include <cstdint>
 
+struct Vec2 {
+    float x;
+    float y;
+};
+
 struct ImageWriter
 {
     void* pData;
 };
 
+// TODO: don't let scale go below or equal to 0, 
+// rename angle to orientation and flop order with scale
 struct Transform {
-    float positionX;
-    float positionY;
+    Vec2 position;
     float scale;
     float angle;
 };
@@ -19,11 +25,6 @@ struct Color {
     float green = 0;
     float blue = 0;
     float alpha = 0;
-};
-
-struct Vec2 {
-    float x;
-    float y;
 };
 
 typedef ImageWriter HImageWriterInstance;

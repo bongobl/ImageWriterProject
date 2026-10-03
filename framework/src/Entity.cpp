@@ -38,7 +38,7 @@ sf::Shape& EllipseEntity::getDrawable(Scene* pScene) const {
 
 	circleDrawing.setRadius(1.0f);
 
-	circleDrawing.setPosition(screenFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
+	circleDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
 	circleDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.angle));
 	circleDrawing.setScale(pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scale * m_HalfExtents.x, m_Transform.scale * m_HalfExtents.y));
@@ -57,7 +57,7 @@ sf::Shape& RectangleEntity::getDrawable(Scene* pScene) const {
 
 	rectDrawing.setSize(sf::Vector2f(2,2));
 	
-	rectDrawing.setPosition(screenFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
+	rectDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
 	rectDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.angle));
 	rectDrawing.setScale(pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scale * m_HalfExtents.x, m_Transform.scale * m_HalfExtents.y));
@@ -79,7 +79,7 @@ sf::Shape& TriangleEntity::getDrawable(Scene* pScene) const {
 	triangleDrawing.setPoint(1, screenFromWorld * sf::fromCore(m_Point2));
 	triangleDrawing.setPoint(2, screenFromWorld * sf::fromCore(m_Point3));
 
-	triangleDrawing.setPosition(screenFromWorld * sf::Vector2f(m_Transform.positionX, m_Transform.positionY));
+	triangleDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
 	triangleDrawing.setRotation(-sf::degrees(m_Transform.angle));
 	triangleDrawing.setScale(sf::Vector2f(m_Transform.scale, m_Transform.scale));	// For triangles, scale is specified in world space (not screen space)
 
