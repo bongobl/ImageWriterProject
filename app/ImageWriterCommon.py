@@ -56,36 +56,38 @@ class Vec2(ctypes.Structure):
 TRANSFORM_DOC = (
     "A Transform consists of: " 
     "position (Vec2MCPPayload) = 2D (x and y) position" 
-    "scale (float) = scale, "
-    "angle (float) = counter clockwise angle orientation on world plane in degrees"
+    "orientation (float) = counter clockwise angle orientation on world plane in degrees, "
+    "scale (float) = scale"
 )
 
 class TransformMCPPayload(BaseModel):
     position: Vec2MCPPayload = Field(..., description="(Vec2MCPPayload), position")
+    orientation: float = Field(..., description="(float), counter clockwise angle orientation in degrees")
     scale: float = Field(..., description="(float), scale")
-    angle: float = Field(..., description="(float), counter clockwise angle orientation in degrees")
 
 class Transform(ctypes.Structure):
     type MCPPayload = TransformMCPPayload
     _fields_ = [
         ("position", Vec2),
-        ("scale", ctypes.c_float),
-        ("angle", ctypes.c_float)
+        ("orientation", ctypes.c_float),
+        ("scale", ctypes.c_float)
+        
     ]
 
     def __str__(self):
-        return f"(Transform: position = {self.position}, scale = {self.scale}, angle = {self.angle})"
+        return f"(Transform: position = {self.position}, orientation = {self.orientation}, scale = {self.scale})"
 
     def toMCPPayload(self):
         return TransformMCPPayload(
             position = self.position.toMCPPayload(),
-            scale = self.scale, 
-            angle = self.angle)
+            orientation = self.orientation,
+            scale = self.scale
+        )
 
     def fromMCPPayload(self, payload):
         self.position.fromMCPPayload(payload.position)
+        self.orientation = payload.orientation
         self.scale = payload.scale 
-        self.angle = payload.angle
 
 ######## Color ########
 COLOR_DOC = (

@@ -55,8 +55,8 @@ class WindowUI(tk.Tk):
             imageWriter.SetCameraTransform(statusMessage,
                 Transform(
                     position = Vec2(x = 0, y = 0), 
-                    scale = 7, 
-                    angle = 0
+                    orientation = 0,
+                    scale = 7
                 )
         )
 
@@ -85,8 +85,9 @@ class WindowUI(tk.Tk):
         imageWriter.TEMP_MoveCameraLocalSpace(statusMessage,
             Transform(
                 position = Vec2(x = deltaX if self.mouseButtons[1] else 0, y = deltaY if self.mouseButtons[1] else 0), 
-                scale = self.mouseScrollDelta, 
-                angle = deltaX / 14 if self.mouseButtons[3] else 0)
+                orientation = deltaX / 14 if self.mouseButtons[3] else 0,
+                scale = self.mouseScrollDelta
+            )
         )
         self.after(9, self.onFrameUpdate)
 

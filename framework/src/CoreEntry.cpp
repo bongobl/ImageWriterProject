@@ -178,7 +178,7 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 	camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
 
 	// Rotate
-	camera.rotate(delta.angle);
+	camera.rotate(delta.orientation);
 
 	// Scale
 	camera.incrementScale(delta.scale);

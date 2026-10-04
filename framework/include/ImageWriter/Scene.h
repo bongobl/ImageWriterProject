@@ -20,7 +20,7 @@ public:
 
 	// setters
 	void setPosition(Vec2 position);
-	void setOrientation(float angleAsDegrees);
+	void setOrientation(float orientation);
 	void setScaleY(float scale);
 
 	// delta setters

@@ -14,9 +14,9 @@ void Camera::setPosition(Vec2 position) {
 	m_Position.y = position.y;
 }
 
-void Camera::setOrientation(float angleAsDegrees) {
+void Camera::setOrientation(float orientation) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Orientation = angleAsDegrees;
+	m_Orientation = orientation;
 }
 
 void Camera::setScaleY(float scale) {
@@ -63,15 +63,15 @@ void Camera::setTransform(const Transform& transform) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
 	m_Position = transform.position;
 	m_ScaleY = transform.scale;
-	m_Orientation = transform.angle;
+	m_Orientation = transform.orientation;
 }
 
 Transform Camera::getTransform() const {
 	std::shared_lock<std::shared_mutex> lock(mutex);
 	return {
 		.position = m_Position,
+		.orientation = m_Orientation,
 		.scale = m_ScaleY,
-		.angle = m_Orientation
 	};
 }
 

@@ -40,7 +40,7 @@ sf::Shape& EllipseEntity::getDrawable(Scene* pScene) const {
 
 	circleDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
-	circleDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.angle));
+	circleDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.orientation));
 	circleDrawing.setScale(pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scale * m_HalfExtents.x, m_Transform.scale * m_HalfExtents.y));
 
 	return circleDrawing;
@@ -59,7 +59,7 @@ sf::Shape& RectangleEntity::getDrawable(Scene* pScene) const {
 	
 	rectDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
-	rectDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.angle));
+	rectDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.orientation));
 	rectDrawing.setScale(pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scale * m_HalfExtents.x, m_Transform.scale * m_HalfExtents.y));
 
 	return rectDrawing;
@@ -80,7 +80,7 @@ sf::Shape& TriangleEntity::getDrawable(Scene* pScene) const {
 	triangleDrawing.setPoint(2, screenFromWorld * sf::fromCore(m_Point3));
 
 	triangleDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
-	triangleDrawing.setRotation(-sf::degrees(m_Transform.angle));
+	triangleDrawing.setRotation(-sf::degrees(m_Transform.orientation));
 	triangleDrawing.setScale(sf::Vector2f(m_Transform.scale, m_Transform.scale));	// For triangles, scale is specified in world space (not screen space)
 
 	return triangleDrawing;
@@ -120,7 +120,7 @@ void EntityList::dummyUpdateShapes(float deltaTime) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
 
 	for (int i = 0; i < m_Entities.size(); ++i) {
-		m_Entities.at(i)->m_Transform.angle += sf::radians(deltaTime).asDegrees();
+		m_Entities.at(i)->m_Transform.orientation += sf::radians(deltaTime).asDegrees();
 	}
 }
 void EntityList::drawShapes(sf::RenderWindow& window, Scene* pScene) {

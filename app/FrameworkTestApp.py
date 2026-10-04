@@ -51,8 +51,8 @@ class WindowUI(tk.Tk):
             imageWriter.SetCameraTransform(statusMessage,
                 Transform(
                     position = Vec2(x = 0, y = 0), 
-                    scale = 7, 
-                    angle = 0
+                    orientation = 0,
+                    scale = 7
                 )
         )
 
@@ -81,8 +81,9 @@ class WindowUI(tk.Tk):
         imageWriter.TEMP_MoveCameraLocalSpace(statusMessage,
             Transform(
                 position = Vec2(x = deltaX if self.mouseButtons[1] else 0, y = deltaY if self.mouseButtons[1] else 0), 
-                scale = self.mouseScrollDelta, 
-                angle = deltaX / 14 if self.mouseButtons[3] else 0)
+                orientation = deltaX / 14 if self.mouseButtons[3] else 0,
+                scale = self.mouseScrollDelta
+            )
         )
         self.after(9, self.onFrameUpdate)
 
@@ -129,7 +130,7 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddEllipse(statusMessage,
-                Transform(position = Vec2(x = j * spacingX - startX, y = i * spacingY - startY), scale = 1, angle = 0),
+                Transform(position = Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
                 Color(red = 1, green = 0, blue = 0, alpha = 1),
                 Vec2(0.5, 0.35)
             ):
@@ -143,7 +144,7 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddRectangle(statusMessage,
-                Transform(position = Vec2(x = j * spacingX - startX, y = i * spacingY - startY), scale = 1, angle = 0),
+                Transform(position = Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
                 Color(red = 0, green = 1, blue = 1, alpha = 1),
                 Vec2(0.5, 0.35)
             ):
@@ -157,7 +158,7 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddTriangle(statusMessage,
-                Transform(position = Vec2(x = j * spacingX - startX, y = i * spacingY - startY), scale = 1, angle = 0),
+                Transform(position = Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
                 Color(red = 1, green = 1, blue = 0, alpha = 1),
                 Vec2(-0.5, 0.35), Vec2(-0.5, -0.35), Vec2(0.5, 0)
             ):

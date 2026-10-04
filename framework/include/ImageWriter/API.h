@@ -2,22 +2,24 @@
 #include <stdio.h>
 #include <cstdint>
 
-struct Vec2 {
-    float x;
-    float y;
-};
+
 
 struct ImageWriter
 {
     void* pData;
 };
 
+struct Vec2 {
+    float x;
+    float y;
+};
+
 // TODO: don't let scale go below or equal to 0, 
 // rename angle to orientation and flop order with scale
 struct Transform {
     Vec2 position;
+    float orientation;
     float scale;
-    float angle;
 };
 
 struct Color {
