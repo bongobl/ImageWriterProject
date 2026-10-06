@@ -175,7 +175,7 @@ int main(void)
 
 		float deltaTime = elapsed.count();
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(16));
+		std::this_thread::sleep_for(std::chrono::milliseconds(8));
 
 		ImageWriter_Scene_UpdateFrame(instance, deltaTime);
 

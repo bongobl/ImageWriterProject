@@ -83,19 +83,27 @@ void Camera::validate(char* pPublicStatusMessage)
 }
 Scene::Scene(int64_t windowHandle)
 {
+	sf::ContextSettings settings;
+	settings.antiAliasingLevel = 8;
+
 	if (windowHandle) {
 		m_isWindowSelfManaged = false;
-		m_pWindow = new sf::RenderWindow((HWND)windowHandle);
+		m_pWindow = new sf::RenderWindow((HWND)windowHandle, settings);
 	}
 	else {
 		m_isWindowSelfManaged = true;
-		m_pWindow = new sf::RenderWindow(sf::VideoMode({ 1920, 1080 }), "Image Writer App");
+		m_pWindow = new sf::RenderWindow(sf::VideoMode({ 1920, 1480 }), "Image Writer App", sf::State::Windowed, settings);
+
+		m_pWindow->setKeyRepeatEnabled(false);
+		
 	}
 
 	sf::RenderWindow& window = *m_pWindow;
 
-
-	window.setKeyRepeatEnabled(false);
+	// TODO: We also have a frame rate limiter in the app layer which gives us the delta time.
+	// We might be able to get away with keeping frame rate limiting + delta time calculations here in the core layer,
+	// and have the app call update inside a non-stalled loop. But we'll need to be mindful that
+	// this takes away game-clock control from the app.
 	window.setFramerateLimit(120);
 
 	// read window initial size
@@ -159,7 +167,7 @@ void Scene::updateState(float deltaTime)
 					if (MouseButtonPressed->button == sf::Mouse::Button::Middle) {
 						m_Camera.setPosition(Vec2(0, 0));
 						m_Camera.setOrientation(0);
-						m_Camera.setScale(7);
+						m_Camera.setScale(Camera::StartingScale);
 					}
 				}
 			}
@@ -198,8 +206,46 @@ void Scene::render()
 		.translate(-sf::fromCore(cameraTransform.position)) // inverse camera position
 		;
 
+
+	sf::Transform screenFromWorld = screenFromCamera * cameraFromWorld;
+	
+
 	// Draw
 	m_pWindow->clear();
+
+	// Grid
+
+	// vertical lines
+	for (int i = 0; i < Scene::NumLinesPerAxis; ++i) {
+
+		sf::Vertex& vertexA = m_GridVerts[2 * i];
+		sf::Vertex& vertexB = m_GridVerts[2 * i + 1];
+
+		vertexA.color = vertexB.color = sf::Color::Cyan;
+
+		const int lineX = i - Scene::GridSpan;
+		vertexA.color.a = vertexB.color.a = lineX ? (lineX % 10 ? 40 : 100) : 200;
+		vertexA.position = screenFromWorld * sf::Vector2f(lineX, -Scene::GridSpan);
+		vertexB.position = screenFromWorld * sf::Vector2f(lineX, Scene::GridSpan);
+	}
+
+	// horizontal lines
+	for (int i = 0; i < Scene::NumLinesPerAxis; ++i) {
+
+		int indexOffset = Scene::NumLinesPerAxis * 2;
+		sf::Vertex& vertexA = m_GridVerts[2 * i + indexOffset];
+		sf::Vertex& vertexB = m_GridVerts[2 * i + 1 + indexOffset];
+
+		vertexA.color = vertexB.color = sf::Color::Cyan;
+
+		const int lineY = i - Scene::GridSpan;
+		vertexA.color.a = vertexB.color.a = lineY ? (lineY % 10 ? 40 : 100) : 200;
+		vertexA.position = screenFromWorld * sf::Vector2f(-Scene::GridSpan, lineY);
+		vertexB.position = screenFromWorld * sf::Vector2f(Scene::GridSpan, lineY);
+	}
+
+	m_pWindow->draw(m_GridVerts, Scene::NumTotalVertices, sf::PrimitiveType::Lines);
+
 	m_Entities.drawShapes(*m_pWindow, this);
 	m_pWindow->display();
 }

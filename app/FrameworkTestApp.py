@@ -52,7 +52,7 @@ class WindowUI(tk.Tk):
                 Transform(
                     position = Vec2(x = 0, y = 0), 
                     orientation = 0,
-                    scale = 7
+                    scale = 13
                 )
         )
 
@@ -226,7 +226,7 @@ def createSomeSampleShapes():
 if __name__ == "__main__":
 
     # create UI
-    windowUI = WindowUI(name = "My Test App", windowSize="1920x1080")   
+    windowUI = WindowUI(name = "My Test App", windowSize="1920x1480")   
 
     # create ImageWriter
     imageWriter = ImageWriter()

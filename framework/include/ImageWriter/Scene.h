@@ -15,7 +15,7 @@ public:
 	float m_widthFromHeight;
 	static constexpr float MaxScale = 100.0f;
 	static constexpr float MinScale = 1.0f;
-	static constexpr float StartingScale = 7.0f;
+	static constexpr float StartingScale = 13.0f;
 
 	Camera();
 
@@ -51,6 +51,12 @@ public:
 	Camera m_Camera;
 	EntityList m_Entities;
 	sf::Vector2i mousePosition;
+	
+	// Grid
+	static constexpr int GridSpan = 100;
+	static constexpr int NumLinesPerAxis = GridSpan * 2 + 1;
+	static constexpr int NumTotalVertices = NumLinesPerAxis * 2 * 2;
+	sf::Vertex m_GridVerts[NumTotalVertices];
 
 public:
 	Scene(int64_t windowHandle);
