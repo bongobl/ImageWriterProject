@@ -3,78 +3,84 @@
 #include <windows.h>
 #include <iostream>
 
-Camera::Camera() : m_Position(0, 0), m_Orientation(0), m_ScaleY(7), m_widthFromHeight(0) {
+Camera::Camera() : 
+	m_Transform({ .position = { .x = 0, .y = 0 }, .orientation = 0, .scale = Camera::StartingScale }),
+	m_widthFromHeight(0)
+{
 
 }
 
 void Camera::setPosition(Vec2 position) {
 
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Position.x = position.x;
-	m_Position.y = position.y;
+	m_Transform.position = position;
 }
 
 void Camera::setOrientation(float orientation) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Orientation = orientation;
+	m_Transform.orientation = orientation;
 }
 
-void Camera::setScaleY(float scale) {
+void Camera::setScale(float scale) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_ScaleY = scale;
-	m_ScaleY = m_ScaleY < 0 ? 0 : m_ScaleY;
-	m_ScaleY = m_ScaleY > 100 ? 100 : m_ScaleY;
+	m_Transform.scale = scale;
 }
 
 void Camera::move(Vec2 delta) {
 
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Position.x += delta.x;
-	m_Position.y += delta.y;
+	m_Transform.position.x += delta.x;
+	m_Transform.position.y += delta.y;
 }
 
 void Camera::rotate(float deltaDegrees) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Orientation += deltaDegrees;
+	m_Transform.orientation += deltaDegrees;
 }
 
 void Camera::incrementScale(float deltaScale) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_ScaleY += deltaScale;
-}
-
-Vec2 Camera::getPosition() const {
-	std::shared_lock<std::shared_mutex> lock(mutex);
-	return m_Position;
-}
-
-float Camera::getOrientation() const {
-	std::shared_lock<std::shared_mutex> lock(mutex);
-	return m_Orientation;
-}
-
-float Camera::getScaleY() const {
-	std::shared_lock<std::shared_mutex> lock(mutex);
-	return m_ScaleY;
+	m_Transform.scale += deltaScale;
 }
 
 void Camera::setTransform(const Transform& transform) {
 
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Position = transform.position;
-	m_ScaleY = transform.scale;
-	m_Orientation = transform.orientation;
+	m_Transform = transform;
+
 }
 
 Transform Camera::getTransform() const {
 	std::shared_lock<std::shared_mutex> lock(mutex);
-	return {
-		.position = m_Position,
-		.orientation = m_Orientation,
-		.scale = m_ScaleY,
-	};
+	return m_Transform;
 }
 
+void Camera::validate(char* pPublicStatusMessage)
+{
+	// TODO: need to take in streamstream and append to it rather than writing to raw C string, 
+	// this will allow additional validate functions to attach their message to the MCP string
+	std::unique_lock<std::shared_mutex> lock(mutex);
+	if (m_Transform.scale > Camera::MaxScale) {
+
+		if (pPublicStatusMessage) {
+			std::stringstream warningString;
+			warningString << "Warning: camera scale can not be greater than " << Camera::MaxScale << ", setting camera scale to " << Camera::MaxScale;
+			strcpy(pPublicStatusMessage, warningString.str().c_str());
+		}
+		
+		m_Transform.scale = Camera::MaxScale;
+	}
+	else if (m_Transform.scale < Camera::MinScale) {
+
+		if (pPublicStatusMessage) {
+			std::stringstream warningString;
+			warningString << "Warning: camera scale can not be less than " << Camera::MinScale << ", setting camera scale to " << Camera::MinScale;
+			strcpy(pPublicStatusMessage, warningString.str().c_str());
+		}
+		
+		m_Transform.scale = Camera::MinScale;
+	}
+}
 Scene::Scene(int64_t windowHandle)
 {
 	if (windowHandle) {
@@ -143,7 +149,9 @@ void Scene::updateState(float deltaTime)
 
 
 					float scrollDelta = mouseWheelScrolled->delta;
+
 					m_Camera.incrementScale(-scrollDelta);
+					m_Camera.validate(nullptr);
 				}
 
 				if (const sf::Event::MouseButtonPressed* MouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
@@ -151,7 +159,7 @@ void Scene::updateState(float deltaTime)
 					if (MouseButtonPressed->button == sf::Mouse::Button::Middle) {
 						m_Camera.setPosition(Vec2(0, 0));
 						m_Camera.setOrientation(0);
-						m_Camera.setScaleY(7);
+						m_Camera.setScale(7);
 					}
 				}
 			}
@@ -159,7 +167,10 @@ void Scene::updateState(float deltaTime)
 
 		if (m_pWindow->hasFocus()) {
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-				sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(m_Camera.getOrientation())) / pixelsPerWorldUnit;
+
+				const Transform& cameraTransform = m_Camera.getTransform();
+
+				sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / pixelsPerWorldUnit;
 
 				m_Camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
 			}
@@ -177,12 +188,14 @@ void Scene::updateState(float deltaTime)
 }
 void Scene::render()
 {
+	const Transform& cameraTransform = m_Camera.getTransform();
+
 	// Update camera inverse transform for drawing
-	pixelsPerWorldUnit = (initialWindowHeight / 2.0f) / m_Camera.getScaleY();
+	pixelsPerWorldUnit = (initialWindowHeight / 2.0f) / cameraTransform.scale;
 	cameraFromWorld = sf::Transform()
-		.scale(sf::Vector2f(1 / m_Camera.getScaleY(), 1 / m_Camera.getScaleY())) // inverse camera scale
-		.rotate(-sf::degrees(m_Camera.getOrientation())) // inverse camera orientation
-		.translate(-sf::fromCore(m_Camera.getPosition())) // inverse camera position
+		.scale(sf::Vector2f(1 / cameraTransform.scale, 1 / cameraTransform.scale)) // inverse camera scale
+		.rotate(-sf::degrees(cameraTransform.orientation)) // inverse camera orientation
+		.translate(-sf::fromCore(cameraTransform.position)) // inverse camera position
 		;
 
 	// Draw

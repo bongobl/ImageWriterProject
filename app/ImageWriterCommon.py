@@ -2,7 +2,7 @@ import ctypes
 from ctypes import *
 from pydantic import BaseModel, Field
 
-MAX_REPLY_MESSAGE_LENGTH = 256
+MAX_REPLY_MESSAGE_LENGTH = 512
 
 ######## Status ########
 class StatusMCPPayload(BaseModel):

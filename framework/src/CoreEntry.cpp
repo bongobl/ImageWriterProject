@@ -122,6 +122,9 @@ extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData inst
 	Camera& camera = pCoreData->m_pScene->m_Camera;
 	camera.setTransform(transform);
 
+	// Validate camera transform
+	camera.validate(instanceData.pPublicStatusMessage);
+
 	return true;
 }
 
@@ -173,8 +176,10 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 	Camera& camera = scene.m_Camera;
 	sf::Vector2f deltaMouseScreenSpace = sf::fromCore(delta.position);
 
+	const Transform& cameraTransform = camera.getTransform();
+
 	// Move
-	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(camera.getOrientation())) / pCoreData->m_pScene->pixelsPerWorldUnit;
+	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / pCoreData->m_pScene->pixelsPerWorldUnit;
 	camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
 
 	// Rotate
@@ -182,6 +187,10 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 
 	// Scale
 	camera.incrementScale(delta.scale);
+
+	// Validate camera transform
+	camera.validate(instanceData.pPublicStatusMessage);
+	
 
 	return true;
 }

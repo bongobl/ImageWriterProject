@@ -7,34 +7,32 @@
 
 class Camera {
 
-	Vec2 m_Position;
-	float m_Orientation;
-	float m_ScaleY;
+	Transform m_Transform;
 	mutable std::shared_mutex mutex;
 
 public:
 
 	float m_widthFromHeight;
+	static constexpr float MaxScale = 100.0f;
+	static constexpr float MinScale = 1.0f;
+	static constexpr float StartingScale = 7.0f;
 
 	Camera();
 
 	// setters
 	void setPosition(Vec2 position);
 	void setOrientation(float orientation);
-	void setScaleY(float scale);
+	void setScale(float scale);
 
 	// delta setters
 	void move(Vec2 delta);
 	void rotate(float deltaDegrees);
 	void incrementScale(float deltaScale);
 
-	// getters
-	Vec2 getPosition() const;
-	float getOrientation() const;
-	float getScaleY() const;
-
 	void setTransform(const Transform& transform);
 	Transform getTransform() const;
+
+	void validate(char* pPublicStatusMessage);
 };
 
 class Scene {

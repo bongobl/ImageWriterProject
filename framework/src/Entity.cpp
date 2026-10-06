@@ -34,13 +34,10 @@ sf::Shape& EllipseEntity::getDrawable(Scene* pScene) const {
 	circleDrawing.setFillColor(sf::fromCore(m_Color));
 
 	sf::Transform screenFromWorld = pScene->screenFromCamera * pScene->cameraFromWorld;
-	circleDrawing.setOrigin(sf::Vector2f(1, 1));
-
-	circleDrawing.setRadius(1.0f);
 
 	circleDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
-	circleDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.orientation));
+	circleDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getTransform().orientation + m_Transform.orientation));
 	circleDrawing.setScale(pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scale * m_HalfExtents.x, m_Transform.scale * m_HalfExtents.y));
 
 	return circleDrawing;
@@ -52,14 +49,10 @@ sf::Shape& RectangleEntity::getDrawable(Scene* pScene) const {
 	rectDrawing.setFillColor(sf::fromCore(m_Color));
 
 	sf::Transform screenFromWorld = pScene->screenFromCamera * pScene->cameraFromWorld;
-
-	rectDrawing.setOrigin(sf::Vector2f(1, 1));
-
-	rectDrawing.setSize(sf::Vector2f(2,2));
 	
 	rectDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
-	rectDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getOrientation() + m_Transform.orientation));
+	rectDrawing.setRotation(-sf::degrees(-pScene->m_Camera.getTransform().orientation + m_Transform.orientation));
 	rectDrawing.setScale(pScene->pixelsPerWorldUnit * sf::Vector2f(m_Transform.scale * m_HalfExtents.x, m_Transform.scale * m_HalfExtents.y));
 
 	return rectDrawing;
@@ -92,6 +85,7 @@ EntityList::EntityList() :
 	m_TriangleDrawing(3) // <- num points
 {
 	m_CircleDrawing.setOrigin(sf::Vector2f(1, 1));
+	m_RectangleDrawing.setOrigin(sf::Vector2f(1, 1));
 }
 
 EntityList::~EntityList()

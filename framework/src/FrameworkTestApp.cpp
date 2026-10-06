@@ -20,7 +20,6 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	}
 	
 
-
 	float dimX = 8;
 	float dimY = 6;
 	float spacingX = 2.4f;
