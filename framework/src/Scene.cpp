@@ -210,38 +210,62 @@ void Scene::render()
 	m_pWindow->clear();
 
 	// Grid
+	float minX = 0, maxX = 0, minY = 0, maxY = 0;
+	Vec2 cameraCorners[4] = {
+		{ .x = m_Camera.m_widthFromHeight, .y = 1},
+		{ .x = m_Camera.m_widthFromHeight, .y = -1 },
+		{ .x = -m_Camera.m_widthFromHeight, .y = 1 },
+		{ .x = -m_Camera.m_widthFromHeight, .y = -1 },
+	};
 
-	// vertical lines
-	for (int i = 0; i < Scene::NumLinesPerAxis; ++i) {
+	for (int i = 0; i < 4; ++i) {
 
-		sf::Vertex& vertexA = m_GridVerts[2 * i];
-		sf::Vertex& vertexB = m_GridVerts[2 * i + 1];
+		Vec2 worldCorner = cameraTransform * cameraCorners[i];
 
-		vertexA.color = vertexB.color = sf::Color::Cyan;
-
-		const int lineX = i - Scene::GridSpan;
-		vertexA.color.a = vertexB.color.a = lineX ? (lineX % 10 ? 40 : 100) : 200;
-		vertexA.position = screenFromWorld * sf::Vector2f(lineX, -Scene::GridSpan);
-		vertexB.position = screenFromWorld * sf::Vector2f(lineX, Scene::GridSpan);
+		if (i == 0) {
+			minX = maxX = worldCorner.x;
+			minY = maxY = worldCorner.y;
+		}
+		else {
+			maxX = worldCorner.x > maxX ? worldCorner.x : maxX;
+			minX = worldCorner.x < minX ? worldCorner.x : minX;
+			maxY = worldCorner.y > maxY ? worldCorner.y : maxY;
+			minY = worldCorner.y < minY ? worldCorner.y : minY;
+		}
 	}
 
-	// horizontal lines
-	for (int i = 0; i < Scene::NumLinesPerAxis; ++i) {
+	int numXLines = (int)std::max(0, (int)floor(maxX) - (int)ceil(minX) + 1);
+	int numYLines = (int)std::max(0, (int)floor(maxY) - (int)ceil(minY) + 1);
 
-		int indexOffset = Scene::NumLinesPerAxis * 2;
-		sf::Vertex& vertexA = m_GridVerts[2 * i + indexOffset];
-		sf::Vertex& vertexB = m_GridVerts[2 * i + 1 + indexOffset];
+	int numTotalVerts = (numXLines + numYLines) * 2;
+	// std::cout << "numXLines = " << numXLines << ", numYLines = " << numYLines << ", numTotalVerts = " << numTotalVerts << std::endl;
 
-		vertexA.color = vertexB.color = sf::Color::Cyan;
+	for (int i = 0; i < numTotalVerts; ++i)
+	{
+		sf::Vertex& vertex = m_GridVerts[i];
 
-		const int lineY = i - Scene::GridSpan;
-		vertexA.color.a = vertexB.color.a = lineY ? (lineY % 10 ? 40 : 100) : 200;
-		vertexA.position = screenFromWorld * sf::Vector2f(-Scene::GridSpan, lineY);
-		vertexB.position = screenFromWorld * sf::Vector2f(Scene::GridSpan, lineY);
+		vertex.color = sf::Color::Cyan;
+		if (i < numXLines * 2)
+		{
+			int ind = i;
+			int x = (int)ceil(minX) + ind / 2;
+			int y = ind % 2 == 0 ? floor(minY) : ceil(maxY);
+			vertex.position = screenFromWorld * sf::Vector2f(x, y);
+			vertex.color.a = x ? (x % 10 ? 40 : 100) : 200;
+		}
+		else 
+		{
+			int ind = i - (numXLines * 2);
+			int y = (int)ceil(minY) + ind / 2;
+			int x = ind % 2 == 0 ? floor(minX) : ceil(maxX);
+			vertex.position = screenFromWorld * sf::Vector2f(x, y);
+			vertex.color.a = y ? (y % 10 ? 40 : 100) : 200;
+		}
 	}
 
-	m_pWindow->draw(m_GridVerts, Scene::NumTotalVertices, sf::PrimitiveType::Lines);
+	m_pWindow->draw(m_GridVerts, numTotalVerts, sf::PrimitiveType::Lines);
 
+	// draw rest of scene
 	m_Entities.drawShapes(*m_pWindow, this);
 	m_pWindow->display();
 }

@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <shared_mutex>
 #include <mutex>
+#include <cmath>
 
 // C++ constructs allowed here
 
@@ -17,7 +18,7 @@ struct CoreData
 
 using FrameworkColor = Color;
 namespace sf {
-	static inline sf::Color fromCore(FrameworkColor color) {
+	inline sf::Color fromCore(FrameworkColor color) {
 		return sf::Color(
 			std::clamp(color.red, 0.0f, 1.0f) * 255,
 			std::clamp(color.green, 0.0f, 1.0f) * 255,
@@ -25,7 +26,19 @@ namespace sf {
 			std::clamp(color.alpha, 0.0f, 1.0f) * 255);
 	}
 
-	static inline sf::Vector2f fromCore(Vec2 vector) {
+	inline sf::Vector2f fromCore(Vec2 vector) {
 		return sf::Vector2f(vector.x, vector.y);
 	}
+}
+
+inline const Vec2 operator*(const Transform& transform, const Vec2& orig)
+{
+	constexpr float deg_to_rad = 0.01745329251f;
+	float cosine = cos(transform.orientation * deg_to_rad);
+	float sine = sin(transform.orientation * deg_to_rad);
+
+	return {
+		.x = transform.position.x + (cosine * orig.x - sine * orig.y) * transform.scale,
+		.y = transform.position.y + (sine * orig.x + cosine * orig.y) * transform.scale
+	};
 }

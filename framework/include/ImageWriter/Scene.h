@@ -53,10 +53,7 @@ public:
 	sf::Vector2i mousePosition;
 	
 	// Grid
-	static constexpr int GridSpan = 100;
-	static constexpr int NumLinesPerAxis = GridSpan * 2 + 1;
-	static constexpr int NumTotalVertices = NumLinesPerAxis * 2 * 2;
-	sf::Vertex m_GridVerts[NumTotalVertices];
+	sf::Vertex m_GridVerts[1600];
 
 public:
 	Scene(int64_t windowHandle);
