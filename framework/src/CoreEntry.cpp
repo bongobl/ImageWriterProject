@@ -123,8 +123,14 @@ extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData inst
 	camera.setTransform(transform);
 
 	// Validate camera transform
-	camera.validate(instanceData.pPublicStatusMessage);
+	std::stringstream warningsStream;
+	camera.validate(&warningsStream);
 
+	// If there are any warnings, overwrite default success message
+	if (!warningsStream.str().empty()) {
+		strcpy(instanceData.pPublicStatusMessage, warningsStream.str().c_str());
+	}
+	
 	return true;
 }
 
@@ -189,8 +195,13 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 	camera.incrementScale(delta.scale);
 
 	// Validate camera transform
-	camera.validate(instanceData.pPublicStatusMessage);
-	
+	std::stringstream warningsStream;
+	camera.validate(&warningsStream);
+
+	// If there are any warnings, overwrite default success message
+	if (!warningsStream.str().empty()) {
+		strcpy(instanceData.pPublicStatusMessage, warningsStream.str().c_str());
+	}
 
 	return true;
 }

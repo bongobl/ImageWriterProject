@@ -55,27 +55,23 @@ Transform Camera::getTransform() const {
 	return m_Transform;
 }
 
-void Camera::validate(char* pPublicStatusMessage)
+void Camera::validate(std::stringstream* pStream)
 {
 	// TODO: need to take in streamstream and append to it rather than writing to raw C string, 
 	// this will allow additional validate functions to attach their message to the MCP string
 	std::unique_lock<std::shared_mutex> lock(mutex);
 	if (m_Transform.scale > Camera::MaxScale) {
 
-		if (pPublicStatusMessage) {
-			std::stringstream warningString;
-			warningString << "Warning: camera scale can not be greater than " << Camera::MaxScale << ", setting camera scale to " << Camera::MaxScale;
-			strcpy(pPublicStatusMessage, warningString.str().c_str());
+		if (pStream) {
+			*pStream << "Warning: camera scale can not be greater than " << Camera::MaxScale << ", setting camera scale to " << Camera::MaxScale;
 		}
 		
 		m_Transform.scale = Camera::MaxScale;
 	}
 	else if (m_Transform.scale < Camera::MinScale) {
 
-		if (pPublicStatusMessage) {
-			std::stringstream warningString;
-			warningString << "Warning: camera scale can not be less than " << Camera::MinScale << ", setting camera scale to " << Camera::MinScale;
-			strcpy(pPublicStatusMessage, warningString.str().c_str());
+		if (pStream) {
+			*pStream << "Warning: camera scale can not be less than " << Camera::MinScale << ", setting camera scale to " << Camera::MinScale;
 		}
 		
 		m_Transform.scale = Camera::MinScale;

@@ -32,7 +32,7 @@ public:
 	void setTransform(const Transform& transform);
 	Transform getTransform() const;
 
-	void validate(char* pPublicStatusMessage);
+	void validate(std::stringstream* pStream);
 };
 
 class Scene {
