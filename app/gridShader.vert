@@ -15,7 +15,7 @@ float getColorScaleFactor(float size);
 void main()
 {
 
-    vec4 gridPosition = vec4(gl_VertexID, gl_VertexID * gl_VertexID, 0, 1);
+    vec4 gridPosition = vec4(0,0,0,1);
 
     float opacity = 1;
 	if (gl_VertexID < numXLines * 2)

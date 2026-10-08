@@ -17,6 +17,7 @@ struct CoreData
 };
 
 using FrameworkColor = Color;
+using FrameworkTransform = Transform;
 namespace sf {
 	inline sf::Color fromCore(FrameworkColor color) {
 		return sf::Color(
@@ -28,6 +29,13 @@ namespace sf {
 
 	inline sf::Vector2f fromCore(Vec2 vector) {
 		return sf::Vector2f(vector.x, vector.y);
+	}
+
+	inline sf::Transform fromCore(FrameworkTransform transform) {
+		return sf::Transform()
+			.translate(sf::fromCore(transform.position))
+			.rotate(sf::degrees(transform.orientation))
+			.scale(sf::Vector2f(transform.scale, transform.scale));
 	}
 }
 

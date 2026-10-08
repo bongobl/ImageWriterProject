@@ -104,6 +104,7 @@ set(RUNTIME_FILES
     "${APP_DIR}/ImageWriterProtocol.py"
     "${APP_DIR}/ImageWriterApp.py"
     "${APP_DIR}/gridShader.vert"
+    "${APP_DIR}/entityShader.vert"
 )
 
 foreach(file ${RUNTIME_FILES})

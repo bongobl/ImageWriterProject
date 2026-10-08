@@ -19,26 +19,26 @@ struct Entity {
 	Type m_Type;
 	Transform m_Transform;
 	Color m_Color;
-	sf::Shape& m_Drawing;
+	sf::Drawable& m_Drawing;
 
-	Entity(Type type, const Transform& transform, Color& color, sf::Shape& drawable);
-	virtual sf::Shape& getDrawable(Scene* pScene) const = 0;
+	Entity(Type type, const Transform& transform, Color& color, sf::Drawable& drawable);
+	virtual sf::Drawable& getDrawable(Scene* pScene) const = 0;
 };
 
 struct EllipseEntity : Entity {
 
-	EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Shape& drawable);
+	EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Drawable& drawable);
 
 	Vec2 m_HalfExtents;
-	sf::Shape& getDrawable(Scene* pScene) const override;
+	sf::Drawable& getDrawable(Scene* pScene) const override;
 };
 
 struct RectangleEntity : Entity {
 
-	RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Shape& drawable);
+	RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Drawable& drawable);
 
 	Vec2 m_HalfExtents;
-	sf::Shape& getDrawable(Scene* pScene) const override;
+	sf::Drawable& getDrawable(Scene* pScene) const override;
 };
 
 struct TriangleEntity : Entity {
@@ -46,18 +46,19 @@ struct TriangleEntity : Entity {
 	Vec2 m_Point2;
 	Vec2 m_Point3;
 
-	TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3, sf::Shape& drawable);
+	TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3, sf::Drawable& drawable);
 
-	sf::Shape& getDrawable(Scene* pScene) const override;
+	sf::Drawable& getDrawable(Scene* pScene) const override;
 };
 
 struct EntityList {
 
-	sf::CircleShape m_CircleDrawing;
-	sf::RectangleShape m_RectangleDrawing;
-	sf::ConvexShape m_TriangleDrawing;
+	sf::VertexArray m_EllipseVerts;
+	sf::VertexArray m_RectangleVerts;
+	sf::VertexArray m_TriangleVerts;
 
 	std::vector<Entity*> m_Entities;
+	sf::Shader m_VertexShader;
 	mutable std::shared_mutex mutex;
 public:
 

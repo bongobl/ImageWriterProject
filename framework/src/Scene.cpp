@@ -198,8 +198,6 @@ void Scene::updateState(float deltaTime)
 	}
 	// Test just to make sure window updates every frame
 	//m_Entities.dummyUpdateShapes(deltaTime);
-
-	
 }
 void Scene::render()
 {
@@ -207,11 +205,7 @@ void Scene::render()
 
 	// Update camera inverse transform for drawing
 	pixelsPerWorldUnit = (initialWindowHeight / 2.0f) / cameraTransform.scale;
-	m_CameraFromWorld = sf::Transform()
-		.scale(sf::Vector2f(1 / cameraTransform.scale, 1 / cameraTransform.scale)) // inverse camera scale
-		.rotate(-sf::degrees(cameraTransform.orientation)) // inverse camera orientation
-		.translate(-sf::fromCore(cameraTransform.position)) // inverse camera position
-		;
+	m_CameraFromWorld = sf::fromCore(cameraTransform).getInverse();
 
 
 	sf::Transform screenFromWorld = m_ScreenFromCamera * m_CameraFromWorld;
