@@ -45,15 +45,18 @@ public:
 
 	// screen space from world space conversion
 	float pixelsPerWorldUnit = 1;
-	sf::Transform screenFromCamera = sf::Transform::Identity;
-	sf::Transform cameraFromWorld = sf::Transform::Identity;
+	sf::Transform m_ScreenFromCamera = sf::Transform::Identity;
+	sf::Transform m_CameraFromWorld = sf::Transform::Identity;
+
+	sf::Transform m_HomogFromCamera = sf::Transform::Identity;
 
 	Camera m_Camera;
 	EntityList m_Entities;
 	sf::Vector2i mousePosition;
 	
 	// Grid
-	sf::Vertex m_GridVerts[1600];
+	sf::Shader m_VertexShader;
+	sf::VertexBuffer m_GridVertexBuffer;
 
 public:
 	Scene(int64_t windowHandle);

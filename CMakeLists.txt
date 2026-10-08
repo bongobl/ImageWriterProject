@@ -95,17 +95,18 @@ target_include_directories(FrameworkTestApp PRIVATE ${ALL_INCLUDE_DIRS})
 target_link_libraries(FrameworkTestApp ImageWriterAPI)
 
 
-##############################   Copy Python Files to app build dir  ###########################
+##############################   Copy Runtime Files to app build dir  ###########################
 
-set(PYTHON_FILES
+set(RUNTIME_FILES
     "${APP_DIR}/FrameworkTestApp.py"
     "${APP_DIR}/ImageWriterCommon.py"
     "${APP_DIR}/ImageWriter.py"
     "${APP_DIR}/ImageWriterProtocol.py"
     "${APP_DIR}/ImageWriterApp.py"
+    "${APP_DIR}/gridShader.vert"
 )
 
-foreach(file ${PYTHON_FILES})
+foreach(file ${RUNTIME_FILES})
 
     get_filename_component(filename ${file} NAME)
 

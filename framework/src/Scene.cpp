@@ -91,7 +91,6 @@ Scene::Scene(int64_t windowHandle)
 		m_pWindow = new sf::RenderWindow(sf::VideoMode({ 1920, 1480 }), "Image Writer App", sf::State::Windowed, settings);
 
 		m_pWindow->setKeyRepeatEnabled(false);
-		
 	}
 
 	sf::RenderWindow& window = *m_pWindow;
@@ -109,14 +108,26 @@ Scene::Scene(int64_t windowHandle)
 
 	m_Camera.m_widthFromHeight = (float)size.x / size.y;
 
+	m_HomogFromCamera = m_HomogFromCamera.scale(sf::Vector2f((float)initialWindowHeight / initialWindowWidth, 1));
+
 	// Set screen from camera transform, it will never change
-	screenFromCamera = sf::Transform()
+	m_ScreenFromCamera = sf::Transform()
 		.translate(sf::Vector2f(initialWindowWidth / 2, initialWindowHeight / 2))
 		.scale(sf::Vector2f(initialWindowWidth / 2, -initialWindowHeight / 2))
-		.scale(sf::Vector2f((float)initialWindowHeight / initialWindowWidth, 1))
-		;
+		* m_HomogFromCamera;
 
 	mousePosition = sf::Mouse::getPosition(window);
+
+	if (!m_VertexShader.loadFromFile("gridShader.vert", sf::Shader::Type::Vertex)) {
+		std::cerr << "Vertex shader not found" << std::endl;
+		exit(1);
+	}
+
+	m_GridVertexBuffer.setPrimitiveType(sf::PrimitiveType::Lines);
+	if (!m_GridVertexBuffer.create(1600)) {
+		std::cerr << "Failed to create grid vertex buffer" << std::endl;
+		exit(1);
+	}
 
 	// The thread that initializes this window may not be the one that renders to it
 	// deactivate OpenGL context for this thread
@@ -196,14 +207,14 @@ void Scene::render()
 
 	// Update camera inverse transform for drawing
 	pixelsPerWorldUnit = (initialWindowHeight / 2.0f) / cameraTransform.scale;
-	cameraFromWorld = sf::Transform()
+	m_CameraFromWorld = sf::Transform()
 		.scale(sf::Vector2f(1 / cameraTransform.scale, 1 / cameraTransform.scale)) // inverse camera scale
 		.rotate(-sf::degrees(cameraTransform.orientation)) // inverse camera orientation
 		.translate(-sf::fromCore(cameraTransform.position)) // inverse camera position
 		;
 
 
-	sf::Transform screenFromWorld = screenFromCamera * cameraFromWorld;
+	sf::Transform screenFromWorld = m_ScreenFromCamera * m_CameraFromWorld;
 	
 
 	// Draw
@@ -239,31 +250,20 @@ void Scene::render()
 
 	int numTotalVerts = (numXLines + numYLines) * 2;
 	// std::cout << "numXLines = " << numXLines << ", numYLines = " << numYLines << ", numTotalVerts = " << numTotalVerts << std::endl;
+	
+	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(m_HomogFromCamera));
+	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(m_CameraFromWorld));
+	m_VertexShader.setUniform("cameraScale", cameraTransform.scale);
+	m_VertexShader.setUniform("minX", minX);
+	m_VertexShader.setUniform("maxX", maxX);
+	m_VertexShader.setUniform("minY", minY);
+	m_VertexShader.setUniform("maxY", maxY);
+	m_VertexShader.setUniform("numXLines", numXLines);
+	m_VertexShader.setUniform("numTotalVerts", numTotalVerts);
 
-	for (int i = 0; i < numTotalVerts; ++i)
-	{
-		sf::Vertex& vertex = m_GridVerts[i];
-
-		vertex.color = sf::Color::Cyan;
-		if (i < numXLines * 2)
-		{
-			int ind = i;
-			int x = (int)ceil(minX) + ind / 2;
-			int y = ind % 2 == 0 ? floor(minY) : ceil(maxY);
-			vertex.position = screenFromWorld * sf::Vector2f(x, y);
-			vertex.color.a = x ? (x % 10 ? 40 : 100) : 200;
-		}
-		else 
-		{
-			int ind = i - (numXLines * 2);
-			int y = (int)ceil(minY) + ind / 2;
-			int x = ind % 2 == 0 ? floor(minX) : ceil(maxX);
-			vertex.position = screenFromWorld * sf::Vector2f(x, y);
-			vertex.color.a = y ? (y % 10 ? 40 : 100) : 200;
-		}
-	}
-
-	m_pWindow->draw(m_GridVerts, numTotalVerts, sf::PrimitiveType::Lines);
+	sf::RenderStates states;
+	states.shader = &m_VertexShader;
+	m_pWindow->draw(m_GridVertexBuffer, 0, numTotalVerts, states);
 
 	// draw rest of scene
 	m_Entities.drawShapes(*m_pWindow, this);

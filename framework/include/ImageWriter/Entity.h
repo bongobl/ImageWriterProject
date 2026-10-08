@@ -59,7 +59,6 @@ struct EntityList {
 
 	std::vector<Entity*> m_Entities;
 	mutable std::shared_mutex mutex;
-
 public:
 
 	EntityList();

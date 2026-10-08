@@ -1,7 +1,7 @@
 #include <ImageWriter/Entity.h>
 #include <ImageWriter/Scene.h>
 #include <ImageWriter/CoreCommon.h>
-
+#include <iostream>
 
 Entity::Entity(Type type, const Transform& transform, Color& color, sf::Shape& drawable) :
 	m_Type(type),
@@ -33,7 +33,7 @@ sf::Shape& EllipseEntity::getDrawable(Scene* pScene) const {
 	sf::CircleShape& circleDrawing = static_cast<sf::CircleShape&>(m_Drawing);
 	circleDrawing.setFillColor(sf::fromCore(m_Color));
 
-	sf::Transform screenFromWorld = pScene->screenFromCamera * pScene->cameraFromWorld;
+	sf::Transform screenFromWorld = pScene->m_ScreenFromCamera * pScene->m_CameraFromWorld;
 
 	circleDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
@@ -48,7 +48,7 @@ sf::Shape& RectangleEntity::getDrawable(Scene* pScene) const {
 	sf::RectangleShape& rectDrawing = static_cast<sf::RectangleShape&>(m_Drawing);
 	rectDrawing.setFillColor(sf::fromCore(m_Color));
 
-	sf::Transform screenFromWorld = pScene->screenFromCamera * pScene->cameraFromWorld;
+	sf::Transform screenFromWorld = pScene->m_ScreenFromCamera * pScene->m_CameraFromWorld;
 	
 	rectDrawing.setPosition(screenFromWorld * sf::fromCore(m_Transform.position));
 	// Note on rotation: arithmetic looks ugly but cleanly shows screen <- view <- world <- model conversion
@@ -63,7 +63,7 @@ sf::Shape& TriangleEntity::getDrawable(Scene* pScene) const {
 
 	triangleDrawing.setFillColor(sf::fromCore(m_Color));
 
-	sf::Transform screenFromWorld = pScene->screenFromCamera * pScene->cameraFromWorld;
+	sf::Transform screenFromWorld = pScene->m_ScreenFromCamera * pScene->m_CameraFromWorld;
 
 	triangleDrawing.setOrigin(screenFromWorld * sf::Vector2f(0, 0));
 
