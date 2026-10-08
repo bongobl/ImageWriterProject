@@ -19,26 +19,27 @@ struct Entity {
 	Type m_Type;
 	Transform m_Transform;
 	Color m_Color;
-	sf::Drawable& m_Drawing;
 
-	Entity(Type type, const Transform& transform, Color& color, sf::Drawable& drawable);
-	virtual sf::Drawable& getDrawable(Scene* pScene) const = 0;
+	Entity(Type type, const Transform& transform, Color& color);
+	virtual void applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const {};
 };
 
 struct EllipseEntity : Entity {
 
-	EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Drawable& drawable);
+	EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents);
 
 	Vec2 m_HalfExtents;
-	sf::Drawable& getDrawable(Scene* pScene) const override;
+
+	void applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const override;
 };
 
 struct RectangleEntity : Entity {
 
-	RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Drawable& drawable);
+	RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents);
 
 	Vec2 m_HalfExtents;
-	sf::Drawable& getDrawable(Scene* pScene) const override;
+
+	void applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const override;
 };
 
 struct TriangleEntity : Entity {
@@ -46,9 +47,9 @@ struct TriangleEntity : Entity {
 	Vec2 m_Point2;
 	Vec2 m_Point3;
 
-	TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3, sf::Drawable& drawable);
+	TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
 
-	sf::Drawable& getDrawable(Scene* pScene) const override;
+	void applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const override;
 };
 
 struct EntityList {
@@ -71,4 +72,6 @@ public:
 	void dummyUpdateShapes(float deltaTime);
 	void drawShapes(sf::RenderWindow& window, Scene* pScene);
 	void destroyAllShapes();
+
+	sf::VertexArray* getVertexArray(EntityType type);
 };

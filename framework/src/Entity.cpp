@@ -3,49 +3,46 @@
 #include <ImageWriter/CoreCommon.h>
 #include <iostream>
 
-Entity::Entity(Type type, const Transform& transform, Color& color, sf::Drawable& drawable) :
+Entity::Entity(Type type, const Transform& transform, Color& color) :
 	m_Type(type),
 	m_Transform(transform),
-	m_Color(color),
-	m_Drawing(drawable)
+	m_Color(color)
 {
 }
 
-EllipseEntity::EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Drawable& drawable) :
-	Entity(EntityType::Ellipse, transform, color, drawable), m_HalfExtents(halfExtents)
+EllipseEntity::EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents) :
+	Entity(EntityType::Ellipse, transform, color), m_HalfExtents(halfExtents)
 {
 
 }
 
-RectangleEntity::RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents, sf::Drawable& drawable) :
-	Entity(EntityType::Rectangle, transform, color, drawable), m_HalfExtents(halfExtents)
+RectangleEntity::RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents) :
+	Entity(EntityType::Rectangle, transform, color), m_HalfExtents(halfExtents)
 {
 }
 
-TriangleEntity::TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3, sf::Drawable& drawable) :
-	Entity(EntityType::Triangle, transform, color, drawable), m_Point1(point1), m_Point2(point2), m_Point3(point3)
+TriangleEntity::TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3) :
+	Entity(EntityType::Triangle, transform, color), m_Point1(point1), m_Point2(point2), m_Point3(point3)
 {
 }
 
-sf::Drawable& EllipseEntity::getDrawable(Scene* pScene) const 
+void EllipseEntity::applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const
 {
-	return m_Drawing;
+	vertexShader.setUniform("scaleOffset", sf::fromCore(m_HalfExtents));
 }
 
-sf::Drawable& RectangleEntity::getDrawable(Scene* pScene) const 
+void RectangleEntity::applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const
 {
-	return m_Drawing;
+	vertexShader.setUniform("scaleOffset", sf::fromCore(m_HalfExtents));
 }
 
-sf::Drawable& TriangleEntity::getDrawable(Scene* pScene) const 
+void TriangleEntity::applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const
 {
-	sf::VertexArray& triangleDrawing = static_cast<sf::VertexArray&>(m_Drawing);
-	// Points
-	triangleDrawing[0].position = sf::fromCore(m_Point1);
-	triangleDrawing[1].position = sf::fromCore(m_Point2);
-	triangleDrawing[2].position = sf::fromCore(m_Point3);
+	vertexArray[0].position = sf::fromCore(m_Point1);
+	vertexArray[1].position = sf::fromCore(m_Point2);
+	vertexArray[2].position = sf::fromCore(m_Point3);
 
-	return m_Drawing;
+	vertexShader.setUniform("scaleOffset", sf::Glsl::Vec2(1, 1));
 }
 
 EntityList::EntityList() :
@@ -59,12 +56,13 @@ EntityList::EntityList() :
 	m_RectangleVerts[2].position = sf::Vector2f(1, -1);
 	m_RectangleVerts[3].position = sf::Vector2f(-1, -1);
 
-	m_EllipseVerts[0].position = sf::Vector2f(0, 0);
 
-	constexpr float TWO_PI = 3.14159265358979 * 2;
+	constexpr float TWO_PI = 3.14159265358979f * 2;
 
 	int numSlices = m_EllipseVerts.getVertexCount() - 2;
 	float sliceSize = (float)TWO_PI / numSlices;
+
+	m_EllipseVerts[0].position = sf::Vector2f(0, 0);
 	for (int i = 1; i < m_EllipseVerts.getVertexCount(); ++i) {
 		float angle = (i - 1) * sliceSize;
 		m_EllipseVerts[i].position = sf::Vector2f(cos(angle), sin(angle));
@@ -84,19 +82,19 @@ EntityList::~EntityList()
 void EntityList::addEllipse(const Transform& transform, Color& color, Vec2 halfExtents)
 {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Entities.push_back(new EllipseEntity(transform, color, halfExtents, m_EllipseVerts));
+	m_Entities.push_back(new EllipseEntity(transform, color, halfExtents));
 }
 
 void EntityList::addRectangle(const Transform& transform, Color& color, Vec2 halfExtents)
 {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Entities.push_back(new RectangleEntity(transform, color, halfExtents, m_RectangleVerts));
+	m_Entities.push_back(new RectangleEntity(transform, color, halfExtents));
 }
 
 void EntityList::addTriangle(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3)
 {
 	std::unique_lock<std::shared_mutex> lock(mutex);
-	m_Entities.push_back(new TriangleEntity(transform, color, point1, point2, point3, m_TriangleVerts));
+	m_Entities.push_back(new TriangleEntity(transform, color, point1, point2, point3));
 }
 void EntityList::dummyUpdateShapes(float deltaTime) {
 	std::unique_lock<std::shared_mutex> lock(mutex);
@@ -111,34 +109,16 @@ void EntityList::drawShapes(sf::RenderWindow& window, Scene* pScene) {
 
 	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(pScene->m_HomogFromCamera));
 	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(pScene->m_CameraFromWorld));
+
 	for (int i = 0; i < m_Entities.size(); ++i) {
 		const Entity* pCurrEntity = m_Entities.at(i);
 
 		m_VertexShader.setUniform("worldFromModel", sf::Glsl::Mat4(sf::fromCore(pCurrEntity->m_Transform)));
 		m_VertexShader.setUniform("color", sf::Glsl::Vec4(sf::fromCore(pCurrEntity->m_Color)));
 
-		switch (pCurrEntity->m_Type) {
-			case Entity::Type::Triangle:
-			
-				m_VertexShader.setUniform("scaleOffset", sf::Glsl::Vec2(1, 1));
-			
-				window.draw(pCurrEntity->getDrawable(pScene), &m_VertexShader);
-				break;
-			case Entity::Type::Rectangle:
-			{
-				const RectangleEntity* pRectEntity = static_cast<const RectangleEntity*>(pCurrEntity);
-				m_VertexShader.setUniform("scaleOffset", sf::fromCore(pRectEntity->m_HalfExtents));
-				window.draw(pCurrEntity->getDrawable(pScene), &m_VertexShader);
-				break;
-			}
-			case Entity::Type::Ellipse:
-			{
-				const EllipseEntity* pRectEntity = static_cast<const EllipseEntity*>(pCurrEntity);
-				m_VertexShader.setUniform("scaleOffset", sf::fromCore(pRectEntity->m_HalfExtents));
-				window.draw(pCurrEntity->getDrawable(pScene), &m_VertexShader);
-				break;
-			}
-		}
+		sf::VertexArray* pVertexArray = getVertexArray(pCurrEntity->m_Type);
+		pCurrEntity->applyCustomDrawingProperties(*pVertexArray, m_VertexShader);
+		window.draw(*pVertexArray, &m_VertexShader);
 	}
 }
 
@@ -150,4 +130,17 @@ void EntityList::destroyAllShapes() {
 		m_Entities.at(i) = nullptr;
 	}
 	m_Entities.clear();
+}
+
+sf::VertexArray* EntityList::getVertexArray(EntityType type)
+{
+	switch (type) {
+	case EntityType::Ellipse:
+		return &m_EllipseVerts;
+	case EntityType::Rectangle:
+		return &m_RectangleVerts;
+	case EntityType::Triangle:
+		return &m_TriangleVerts;
+	}
+	return nullptr;
 }

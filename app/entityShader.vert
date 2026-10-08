@@ -8,11 +8,12 @@ uniform vec4 color;
 
 void main()
 {
-    vec4 myVec = gl_Vertex;
-    myVec.x *= scaleOffset.x;
-    myVec.y *= scaleOffset.y;
+    vec4 offsetScaledVertex = gl_Vertex;
+    offsetScaledVertex.x *= scaleOffset.x;
+    offsetScaledVertex.y *= scaleOffset.y;
+
     // transform the vertex position
-    gl_Position =  homogFromCamera * cameraFromWorld * worldFromModel * myVec;
+    gl_Position =  homogFromCamera * cameraFromWorld * worldFromModel * offsetScaledVertex;
 
     // forward the vertex color
     gl_FrontColor = color;
