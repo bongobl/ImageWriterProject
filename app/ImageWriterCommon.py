@@ -55,7 +55,7 @@ class Vec2(ctypes.Structure):
 ######## Transform ########
 TRANSFORM_DOC = (
     "A Transform consists of: " 
-    "position (Vec2MCPPayload) = 2D (x and y) position" 
+    "position (Vec2MCPPayload) = 2D (x and y) position, " 
     "orientation (float) = counter clockwise angle orientation on world plane in degrees, "
     "scale (float) = scale"
 )

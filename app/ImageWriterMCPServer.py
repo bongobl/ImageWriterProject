@@ -61,9 +61,10 @@ def disconnectFromImageWriter():
 @mcp.tool()
 def setCameraTransform(
     transform: Annotated[TransformMCPPayload, Field(description = f"specifies the new transform of the camera. {TRANSFORM_DOC}")],
-) -> PlainReply.MCPPayload:
-    """sets the transform of the camera, note that only scaleY is read, scaleX is set based on scaleY and the """
-    """aspect ratio to prevent anyone from changing the aspect ratio """
+) -> PlainReplyMCPPayload:
+    """sets the transform of the camera, note the scale determines the camera view rectangle's half Y extent
+    where the halfX extent is then internally determined by the screen aspect ratio
+    """
 
     if not connectToImageWriterApp():
         raise ToolError("setCameraTransform(): Failed to connect to ImageWriter app")
@@ -110,7 +111,7 @@ def setCameraTransform(
     return reply.toMCPPayload()
 
 @mcp.tool()
-def getCameraTransform() -> TransformReply.CamerMCPPayload:
+def getCameraTransform() -> CameraTransformReplyMCPPayload:
     """returns the rectangle representing the camera's world transform. Note that the "scale" parameter denotes the
     half Y extent of the camera in world units where the half X extent can be obtained from multiplying that by the 
     returned widthFromHeight value
@@ -152,7 +153,7 @@ def getCameraTransform() -> TransformReply.CamerMCPPayload:
     return reply.toCameraMCPPayload()
 
 @mcp.tool()
-def removeAllEntities() -> PlainReply.MCPPayload:
+def removeAllEntities() -> PlainReplyMCPPayload:
     """clears the world of all spawned entities"""
 
     if not connectToImageWriterApp():
@@ -194,7 +195,7 @@ def addEllipse(
         transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new ellipse. {TRANSFORM_DOC}")],
         color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")],
         halfExtents: Annotated[Vec2MCPPayload, Field(description = f"half extents of the ellipse in its local space. {VEC2_DOC}")],
-) -> PlainReply.MCPPayload:
+) -> PlainReplyMCPPayload:
     """
     Places a new ellipse within the world at specified transform and color
     Note that the half extents define the shape's size in its own local space, where its global size is then obtained by multiplying
@@ -257,7 +258,7 @@ def addRectangle(
     transform: Annotated[TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {TRANSFORM_DOC}")],
     color: Annotated[ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {COLOR_DOC}")],
     halfExtents: Annotated[Vec2MCPPayload, Field(description = f"half extents of the rectangle in its local space. {VEC2_DOC}")],
-) -> PlainReply.MCPPayload:
+) -> PlainReplyMCPPayload:
     """
     Places a new rectangle within the world at specified transform and color
     Note that the half extents define the shape's size in its own local space, where its global size is then obtained by multiplying
@@ -321,7 +322,7 @@ def addTriangle(
     point1: Annotated[Vec2MCPPayload, Field(description = f"position of first point. {VEC2_DOC}")],
     point2: Annotated[Vec2MCPPayload, Field(description = f"position of second point. {VEC2_DOC}")],
     point3: Annotated[Vec2MCPPayload, Field(description = f"position of third point. {VEC2_DOC}")],
-) -> PlainReply.MCPPayload:
+) -> PlainReplyMCPPayload:
     """
     Places a new triangle within the world at specified transform and color
     Note that each point specifies a position in the shape's local space, whose world space is then computed

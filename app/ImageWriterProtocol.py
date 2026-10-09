@@ -25,7 +25,7 @@ class SetCameraTransformParams(ctypes.Structure):
     ]
 
     def __str__(self):
-        return f"(AddEllipseParams: transform = {self.transform})"
+        return f"(SetCameraTransformParams: transform = {self.transform})"
 
 
 class AddEllipseParams(ctypes.Structure):
@@ -88,7 +88,7 @@ class CameraTransformReplyMCPPayload(TransformReplyMCPPayload):
 
 class TransformReply(ctypes.Structure):
     type MCPPayload = TransformReplyMCPPayload
-    type CamerMCPPayload = CameraTransformReplyMCPPayload
+    type CameraMCPPayload = CameraTransformReplyMCPPayload
 
     _fields_ = [
         ("status", Status),
@@ -106,7 +106,7 @@ class TransformReply(ctypes.Structure):
             transform = self.transform.toMCPPayload()
         )
 
-    def toCameraMCPPayload(self) -> CamerMCPPayload:
+    def toCameraMCPPayload(self) -> CameraMCPPayload:
 
         return CameraTransformReplyMCPPayload(
             status = self.status.toMCPPayload(),
