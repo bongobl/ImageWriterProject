@@ -188,6 +188,5 @@ int main(void)
 	}
 	ImageWriter_Instance_Dispose(&instance);
 	
-	
 	return EXIT_SUCCESS;
 }

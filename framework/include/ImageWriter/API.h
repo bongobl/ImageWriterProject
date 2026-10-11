@@ -4,7 +4,7 @@
 
 
 
-struct ImageWriter
+struct Framework
 {
     void* pData;
 };
@@ -39,7 +39,7 @@ struct RenderConfig {
     int gridViewMode;
 };
 
-typedef ImageWriter HImageWriterInstance;
+typedef Framework HImageWriterInstance;
 
 // instance
 extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWriterInstance* pInstance);

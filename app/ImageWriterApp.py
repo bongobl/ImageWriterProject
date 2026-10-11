@@ -1,149 +1,17 @@
-import socket, threading, time, errno, tkinter as tk
-from ImageWriterProtocol import *
-from ImageWriter import *
+import socket, threading, time, errno, ImageWriter, tkinter as tk
 from ctypes import *
+from ImageWriterProtocol import *
+import ImageWriter as iw
 
 # Winsock Constant: Socket operation on non-socket
 WSAENOTSOCK = 10038
-
-class WindowUI(tk.Tk):
-    def __init__(self, name, windowSize):
-        super().__init__()
-
-        self.title(name)
-        self.geometry(windowSize)
-
-        self.protocol("WM_DELETE_WINDOW", self.on_window_close)
-
-        self.canvas = tk.Canvas(self, width=640, height=480, bg="black")
-        self.canvas.pack(padx=50, pady=50, expand=True, fill=tk.BOTH)
-
-        self.mousePosition = self.winfo_pointerxy()
-        self.mouseButtons = {1:False, 2: False, 3: False}
-        self.mouseScrollDelta = 0
-
-        # register mouse events
-        for i in range(1,4):
-            self.canvas.bind(f"<Button-{i}>", self.onMouseButtonPressed)
-            self.canvas.bind(f"<ButtonRelease-{i}>", self.onMouseButtonReleased)
-        
-        self.canvas.bind("<MouseWheel>", self.onMouseScroll)
-
-        self.bottomFrame = tk.Frame(self, width=150)
-        self.bottomFrame.pack(pady=20)
-
-        # Clear scene button
-        self.clearSceneButton = tk.Button(
-            self.bottomFrame, 
-            text="Clear Scene",
-            command=self.onClickedClearSceneButton,
-            font=("Helvetica", 16, "bold"),
-            padx=5,
-            pady=2
-        )
-        self.clearSceneButton.grid(row=0, column=0)
-
-        # Grid view mode label
-        self.gridViewLabel = tk.Label(self.bottomFrame, text="Grid view:", font=("Helvetica", 16, "bold"))
-        self.gridViewLabel.grid(row=0, column=1, padx = (100, 5))
-
-        # Grid view mode option menu
-        self.gridViewModeOptions = ["None", "Foreground", "Background"]
-        
-        self.gridViewModeSelection = tk.StringVar(self.bottomFrame)
-        self.gridViewModeSelection.set(self.gridViewModeOptions[imageWriter.renderConfig.gridViewMode])
-        self.gridViewModeSelection.trace_add("write", self.onUpdatedGridViewModeOptionMenu)
-
-        self.gridViewModeOptionMenu = tk.OptionMenu(
-            self.bottomFrame, 
-            self.gridViewModeSelection,
-            *self.gridViewModeOptions
-        )
-        self.gridViewModeOptionMenu.config(width=12, font=("Helvetica", 16))
-        self.gridViewModeOptionMenu["menu"].config(font=("Helvetica", 16))
-        self.gridViewModeOptionMenu.grid(row=0, column=2, padx=5)
-
-        # update to make canvas live and then obtain canvas id
-        self.update()
-        self.canvasId = self.canvas.winfo_id()
-
-        self.windowIsActive = True
-
-    def onMouseButtonPressed(self, event):
-        self.mouseButtons[event.num] = True
-
-        if event.num == 2:
-            statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-            imageWriter.SetCameraTransform(statusMessage,
-                Transform(
-                    position = Vec2(x = 0, y = 0), 
-                    orientation = 0,
-                    scale = 13
-                )
-        )
-
-    def onMouseButtonReleased(self, event):
-        self.mouseButtons[event.num] = False
-
-
-    def onMouseScroll(self, event):
-        self.mouseScrollDelta = -1 if event.delta > 0 else 1
-
-    def onFrameUpdate(self):
-
-        if not imageWriter.doesSceneExist:
-            self.destroy()
-            return
-
-        prevMousePosition = self.mousePosition
-        self.mousePosition = self.winfo_pointerxy()
-        
-        currX, currY = self.mousePosition 
-        prevX, prevY = prevMousePosition
-
-        deltaX, deltaY = (currX - prevX, currY - prevY)
-
-        statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-        imageWriter.TEMP_MoveCameraLocalSpace(statusMessage,
-            Transform(
-                position = Vec2(x = deltaX if self.mouseButtons[1] else 0, y = deltaY if self.mouseButtons[1] else 0), 
-                orientation = deltaX / 14 if self.mouseButtons[3] else 0,
-                scale = self.mouseScrollDelta
-            )
-        )
-        self.after(9, self.onFrameUpdate)
-
-        # reset for next frame  so we don't double use it
-        self.mouseScrollDelta = 0
-
-    def onClickedClearSceneButton(self):
-        statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-        imageWriter.RemoveAllEntities(statusMessage)
-
-    def onUpdatedGridViewModeOptionMenu(self, *args):
-
-        for i in range(len(self.gridViewModeOptions)):
-            if self.gridViewModeOptions[i] == self.gridViewModeSelection.get():
-                imageWriter.renderConfig.gridViewMode = i
-                imageWriter.UpdateRenderConfig()
-                break
-
-
-    def on_window_close(self):
-    
-        self.windowIsActive = False
-    
-        imageWriter.WaitForSceneToDispose()
-        self.destroy()
-
-def isWindowUIOpen():
-    return windowUI.windowIsActive
-
 
 def runNetworkService():
 
     global connToClient
     global serverSocket
+
+    framework = window.framework
 
     # set up listening socket (IPv4 + TCP)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
@@ -210,7 +78,7 @@ def runNetworkService():
                             params = SetCameraTransformParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {params}")
 
-                            frameworkFunctionSucceeded = imageWriter.SetCameraTransform(frameworkFunctionMessage, params.transform)
+                            frameworkFunctionSucceeded = framework.SetCameraTransform(frameworkFunctionMessage, params.transform)
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
@@ -218,9 +86,9 @@ def runNetworkService():
                         case Command.GetCameraTransform:
 
                             print("From client: Getting the camera transform")
-                            cameraTransform = Transform()
+                            cameraTransform = iw.Transform()
                             widthFromheight = ctypes.c_float(0.0)
-                            frameworkFunctionSucceeded = imageWriter.GetCameraTransform(frameworkFunctionMessage, cameraTransform, widthFromheight)
+                            frameworkFunctionSucceeded = framework.GetCameraTransform(frameworkFunctionMessage, cameraTransform, widthFromheight)
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = TransformReply(
@@ -232,7 +100,7 @@ def runNetworkService():
                         case Command.RemoveAllEntities:
 
                             print("From client: removing all entities from scene")
-                            frameworkFunctionSucceeded = imageWriter.RemoveAllEntities(frameworkFunctionMessage)
+                            frameworkFunctionSucceeded = framework.RemoveAllEntities(frameworkFunctionMessage)
 
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
@@ -249,7 +117,7 @@ def runNetworkService():
                             # deserialize addEllipse params
                             ellipseParams = AddEllipseParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {ellipseParams}")
-                            frameworkFunctionSucceeded = imageWriter.AddEllipse(
+                            frameworkFunctionSucceeded = framework.AddEllipse(
                                 frameworkFunctionMessage, 
                                 ellipseParams.transform, 
                                 ellipseParams.color,
@@ -270,7 +138,7 @@ def runNetworkService():
                             # deserialize addRectangle params
                             rectangleParams = AddRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams}")
-                            frameworkFunctionSucceeded = imageWriter.AddRectangle(
+                            frameworkFunctionSucceeded = framework.AddRectangle(
                                 frameworkFunctionMessage, 
                                 rectangleParams.transform, 
                                 rectangleParams.color,
@@ -291,7 +159,7 @@ def runNetworkService():
                             # deserialize addRectangle params
                             triangleParams = AddTriangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {triangleParams}")
-                            frameworkFunctionSucceeded = imageWriter.AddTriangle(
+                            frameworkFunctionSucceeded = framework.AddTriangle(
                                 frameworkFunctionMessage,
                                 triangleParams.transform, 
                                 triangleParams.color,
@@ -337,21 +205,15 @@ def runNetworkService():
 # main
 if __name__ == "__main__":
 
-    # init wrapper instance first to init render config
-    imageWriter = ImageWriter()
-
     # create UI
-    windowUI = WindowUI(name = "ImageWriter App", windowSize="1920x1480")   
+    window = iw.Window(name = "ImageWriter App", windowSize="1920x1480")   
 
-    # create ImageWriter instance
-    imageWriter.Init(windowUI.canvasId, fnIsWindowOpen = isWindowUIOpen)
-    
     serviceThread = threading.Thread(target = runNetworkService)
     serviceThread.start()
 
     # run UI
-    windowUI.onFrameUpdate()
-    windowUI.mainloop()
+    window.onFrameUpdate()
+    window.mainloop()
     
     # close sockets
     try:
@@ -364,5 +226,6 @@ if __name__ == "__main__":
     serverSocket.close()
 
     serviceThread.join()
+
     # dispose
-    imageWriter.Dispose()
+    window.cleanUp()

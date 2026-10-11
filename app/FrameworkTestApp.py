@@ -1,149 +1,15 @@
-import pygame, threading, time, tkinter as tk
+import pygame, threading, time, ctypes, tkinter as tk
 from ctypes import *
-from ImageWriter import *
-
-class WindowUI(tk.Tk):
-    def __init__(self, name, windowSize):
-        super().__init__()
-
-        self.title(name)
-        self.geometry(windowSize)
-
-        self.protocol("WM_DELETE_WINDOW", self.on_window_close)
-
-        self.canvas = tk.Canvas(self, width=640, height=480, bg="black")
-        self.canvas.pack(padx=50, pady=50, expand=True, fill=tk.BOTH)
-
-        self.mousePosition = self.winfo_pointerxy()
-        self.mouseButtons = {1:False, 2: False, 3: False}
-        self.mouseScrollDelta = 0
-
-        # register mouse events
-        for i in range(1,4):
-            self.canvas.bind(f"<Button-{i}>", self.onMouseButtonPressed)
-            self.canvas.bind(f"<ButtonRelease-{i}>", self.onMouseButtonReleased)
-        
-        self.canvas.bind("<MouseWheel>", self.onMouseScroll)
-
-        self.bottomFrame = tk.Frame(self, width=150)
-        self.bottomFrame.pack(pady=20)
-
-        # Clear scene button
-        self.clearSceneButton = tk.Button(
-            self.bottomFrame, 
-            text="Clear Scene",
-            command=self.onClickedClearSceneButton,
-            font=("Helvetica", 16, "bold"),
-            padx=5,
-            pady=2
-        )
-        self.clearSceneButton.grid(row=0, column=0)
-
-        # Grid view mode label
-        self.gridViewLabel = tk.Label(self.bottomFrame, text="Grid view:", font=("Helvetica", 16, "bold"))
-        self.gridViewLabel.grid(row=0, column=1, padx = (100, 5))
-
-        # Grid view mode option menu
-        self.gridViewModeOptions = ["None", "Foreground", "Background"]
-        
-        self.gridViewModeSelection = tk.StringVar(self.bottomFrame)
-        self.gridViewModeSelection.set(self.gridViewModeOptions[imageWriter.renderConfig.gridViewMode])
-        self.gridViewModeSelection.trace_add("write", self.onUpdatedGridViewModeOptionMenu)
-
-        self.gridViewModeOptionMenu = tk.OptionMenu(
-            self.bottomFrame, 
-            self.gridViewModeSelection,
-            *self.gridViewModeOptions
-        )
-        self.gridViewModeOptionMenu.config(width=12, font=("Helvetica", 16))
-        self.gridViewModeOptionMenu["menu"].config(font=("Helvetica", 16))
-        self.gridViewModeOptionMenu.grid(row=0, column=2, padx=5)
-
-        # update to make canvas live and then obtain canvas id
-        self.update()
-        self.canvasId = self.canvas.winfo_id()
-
-        self.windowIsActive = True
-
-    def onMouseButtonPressed(self, event):
-        self.mouseButtons[event.num] = True
-
-        if event.num == 2:
-            statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-            imageWriter.SetCameraTransform(statusMessage,
-                Transform(
-                    position = Vec2(x = 0, y = 0), 
-                    orientation = 0,
-                    scale = 13
-                )
-        )
-
-    def onMouseButtonReleased(self, event):
-        self.mouseButtons[event.num] = False
-
-
-    def onMouseScroll(self, event):
-        self.mouseScrollDelta = -1 if event.delta > 0 else 1
-
-    def onFrameUpdate(self):
-
-        if not imageWriter.doesSceneExist:
-            self.destroy()
-            return
-
-        prevMousePosition = self.mousePosition
-        self.mousePosition = self.winfo_pointerxy()
-        
-        currX, currY = self.mousePosition 
-        prevX, prevY = prevMousePosition
-
-        deltaX, deltaY = (currX - prevX, currY - prevY)
-
-        statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-        imageWriter.TEMP_MoveCameraLocalSpace(statusMessage,
-            Transform(
-                position = Vec2(x = deltaX if self.mouseButtons[1] else 0, y = deltaY if self.mouseButtons[1] else 0), 
-                orientation = deltaX / 14 if self.mouseButtons[3] else 0,
-                scale = self.mouseScrollDelta
-            )
-        )
-        self.after(9, self.onFrameUpdate)
-
-        # reset for next frame  so we don't double use it
-        self.mouseScrollDelta = 0
-
-    def onClickedClearSceneButton(self):
-        statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-        imageWriter.RemoveAllEntities(statusMessage)
-
-    def onUpdatedGridViewModeOptionMenu(self, *args):
-
-        for i in range(len(self.gridViewModeOptions)):
-            if self.gridViewModeOptions[i] == self.gridViewModeSelection.get():
-                imageWriter.renderConfig.gridViewMode = i
-                imageWriter.UpdateRenderConfig()
-                break
-
-
-    def on_window_close(self):
-    
-        self.windowIsActive = False
-    
-        imageWriter.WaitForSceneToDispose()
-        self.destroy()
-
-def isWindowUIOpen():
-    return windowUI.windowIsActive
-
-
+import ImageWriter as iw
 
 def createSomeSampleShapes():
 
+    imageWriter = window.framework;
     statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
     input("Wait for a bit here for Window to initialize... Press Enter")
 
-    cameraTransform = Transform()
+    cameraTransform = iw.Transform()
     widthFromheight = ctypes.c_float(0.0)
     if not imageWriter.GetCameraTransform(statusMessage, cameraTransform, widthFromheight):
         print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
@@ -161,9 +27,9 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddEllipse(statusMessage,
-                Transform(position = Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
-                Color(red = 1, green = 0, blue = 0, alpha = 1),
-                Vec2(0.5, 0.35)
+                iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
+                iw.Color(red = 1, green = 0, blue = 0, alpha = 1),
+                iw.Vec2(0.5, 0.35)
             ):
                 print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
@@ -175,9 +41,9 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddRectangle(statusMessage,
-                Transform(position = Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
-                Color(red = 0, green = 1, blue = 1, alpha = 1),
-                Vec2(0.5, 0.35)
+                iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
+                iw.Color(red = 0, green = 1, blue = 1, alpha = 1),
+                iw.Vec2(0.5, 0.35)
             ):
                 print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
@@ -189,9 +55,9 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddTriangle(statusMessage,
-                Transform(position = Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
-                Color(red = 1, green = 1, blue = 0, alpha = 1),
-                Vec2(-0.5, 0.35), Vec2(-0.5, -0.35), Vec2(0.5, 0)
+                iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
+                iw.Color(red = 1, green = 1, blue = 0, alpha = 1),
+                iw.Vec2(-0.5, 0.35), iw.Vec2(-0.5, -0.35), iw.Vec2(0.5, 0)
             ):
                 print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
@@ -253,29 +119,18 @@ def createSomeSampleShapes():
     # )
 
 
-
 if __name__ == "__main__":
 
-    # init wrapper instance first to init render config
-    imageWriter = ImageWriter()
-
     # create UI
-    windowUI = WindowUI(name = "My Test App", windowSize="1920x1480")   
-
-    # init ImageWriter instance
-    imageWriter.Init(windowUI.canvasId, fnIsWindowOpen = isWindowUIOpen)
+    window = iw.Window(name = "My Test App", windowSize="1920x1480")    
     
     apiThread = threading.Thread(target = createSomeSampleShapes)
     apiThread.start()
 
     # run UI
-    windowUI.onFrameUpdate()
-    windowUI.mainloop()
-    
-    print("Disposing scene")
-    
+    window.onFrameUpdate()
+    window.mainloop()
+ 
     apiThread.join()
-    # dispose
-    imageWriter.Dispose()
 
-    print("Disposing instance")
+    window.cleanUp()
