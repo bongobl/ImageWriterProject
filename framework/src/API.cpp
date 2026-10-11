@@ -66,6 +66,14 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         return false;
     }
 
+    PfnCore_Scene_updateRenderConfig pfnCore_Scene_updateRenderConfig = (PfnCore_Scene_updateRenderConfig)GetProcAddress(hDll, "scene_updateRenderConfig");
+
+    if (pfnCore_Scene_updateRenderConfig == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function pfnCore_Scene_updateRenderConfig could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
+
     PfnCore_Scene_SetCameraTransform pfnCore_Scene_SetCameraTransform = (PfnCore_Scene_SetCameraTransform)GetProcAddress(hDll, "scene_setCameraTransform");
 
     if (pfnCore_Scene_SetCameraTransform == NULL) {
@@ -135,6 +143,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         .pfnCore_Scene_Dispose = pfnCore_Scene_Dispose,
         .pfnCore_Scene_UpdateFrame = pfnCore_Scene_UpdateFrame,
         .pfnCore_Scene_isSelfManagedRenderWindowOpen = pfnCore_Scene_isSelfManagedRenderWindowOpen,
+        .pfnCore_Scene_updateRenderConfig = pfnCore_Scene_updateRenderConfig,
 
         .pfnCore_Scene_SetCameraTransform = pfnCore_Scene_SetCameraTransform,
         .pfnCore_Scene_GetCameraTransform = pfnCore_Scene_GetCameraTransform,
@@ -213,6 +222,18 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_IsSelfManagedRenderWindo
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
 
     return pInstanceData->pfnCore_Scene_isSelfManagedRenderWindowOpen(*pInstanceData);
+}
+
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateRenderConfig(HImageWriterInstance instance, RenderConfig renderConfig)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "ImageWriter_Scene_UpdateRenderConfig: instance.pData was null\n");
+        return false;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+
+    return pInstanceData->pfnCore_Scene_updateRenderConfig(*pInstanceData, renderConfig);
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_SetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform transform)

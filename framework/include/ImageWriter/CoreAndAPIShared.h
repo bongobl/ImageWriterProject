@@ -17,6 +17,7 @@ typedef bool (*PfnCore_Scene_Initialize)(InstanceData, int64_t);
 typedef bool (*PfnCore_Scene_Dispose)(InstanceData);
 typedef bool (*PfnCore_Scene_UpdateFrame)(InstanceData, float);
 typedef bool (*PfnCore_Scene_isSelfManagedRenderWindowOpen)(InstanceData);
+typedef bool (*PfnCore_Scene_updateRenderConfig)(InstanceData, RenderConfig);
 
 
 // scene API
@@ -41,7 +42,7 @@ struct InstanceData
     PfnCore_Scene_Dispose pfnCore_Scene_Dispose;
     PfnCore_Scene_UpdateFrame pfnCore_Scene_UpdateFrame;
     PfnCore_Scene_isSelfManagedRenderWindowOpen pfnCore_Scene_isSelfManagedRenderWindowOpen;
-
+    PfnCore_Scene_updateRenderConfig pfnCore_Scene_updateRenderConfig;
 
     PfnCore_Scene_SetCameraTransform pfnCore_Scene_SetCameraTransform;
     PfnCore_Scene_GetCameraTransform pfnCore_Scene_GetCameraTransform;

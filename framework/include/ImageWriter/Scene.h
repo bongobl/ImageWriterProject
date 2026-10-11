@@ -35,8 +35,22 @@ public:
 	void validate(std::stringstream* pStream);
 };
 
+class GridView
+{
+	// Grid
+	sf::Shader m_VertexShader;
+	sf::VertexBuffer m_VertexBuffer;
+
+public:
+	GridView();
+
+	void draw(sf::RenderWindow& window, const Camera& camera, sf::Transform cameraFromWorld, sf::Transform homogFromCamera);
+};
+
 class Scene {
 public:
+
+	RenderConfig m_RenderConfig;
 	bool m_isWindowSelfManaged = true;
 
 	sf::RenderWindow* m_pWindow = nullptr;
@@ -44,19 +58,15 @@ public:
 	float initialWindowHeight = 0;
 
 	// screen space from world space conversion
-	float pixelsPerWorldUnit = 1;
-	sf::Transform m_ScreenFromCamera = sf::Transform::Identity;
+	float m_PixelsPerWorldUnit = 1;
 	sf::Transform m_CameraFromWorld = sf::Transform::Identity;
-
 	sf::Transform m_HomogFromCamera = sf::Transform::Identity;
 
 	Camera m_Camera;
 	EntityList m_Entities;
 	sf::Vector2i mousePosition;
 	
-	// Grid
-	sf::Shader m_VertexShader;
-	sf::VertexBuffer m_GridVertexBuffer;
+	GridView m_GridView;
 
 public:
 	Scene(int64_t windowHandle);
@@ -65,5 +75,6 @@ public:
 	void updateState(float deltaTime);
 	void render();
 
+	void updateRenderConfig(RenderConfig renderConfig);
 	bool isSelfManagedRenderWindowOpen() const;
 };

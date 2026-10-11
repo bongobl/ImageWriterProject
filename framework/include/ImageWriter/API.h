@@ -29,6 +29,16 @@ struct Color {
     float alpha = 0;
 };
 
+enum GridViewMode {
+    GRID_VIEW_MODE_NONE = 0,
+    GRID_VIEW_MODE_FOREGROUND = 1,
+    GRID_VIEW_MODE_BACKGROUND = 2,
+};
+
+struct RenderConfig {
+    int gridViewMode;
+};
+
 typedef ImageWriter HImageWriterInstance;
 
 // instance
@@ -40,6 +50,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_Init(HImageWriterInstanc
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_Dispose(HImageWriterInstance instance);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateFrame(HImageWriterInstance instance, float deltaTime);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_IsSelfManagedRenderWindowOpen(HImageWriterInstance instance);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateRenderConfig(HImageWriterInstance instance, RenderConfig renderConfig);
 
 // scene API
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_SetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform transform);

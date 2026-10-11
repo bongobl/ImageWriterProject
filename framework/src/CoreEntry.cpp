@@ -101,6 +101,26 @@ extern "C" __declspec(dllexport) bool scene_isSelfManagedRenderWindowOpen(Instan
 
 }
 
+extern "C" __declspec(dllexport) bool scene_updateRenderConfig(InstanceData instanceData, RenderConfig renderConfig)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_isSelfManagedRenderWindowOpen(): instanceData.pCoreData was null" << std::endl;
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
+
+	if (!pCoreData->m_pScene) {
+		std::cerr << "Core entry scene_isSelfManagedRenderWindowOpen(): pCoreData->m_pScene was null" << std::endl;
+		return false;
+	}
+
+	pCoreData->m_pScene->updateRenderConfig(renderConfig);
+	return true;
+}
+
 extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, Transform transform)
 {
 	if (!instanceData.pCoreData) {
@@ -160,6 +180,9 @@ extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData inst
 	return true;
 }
 
+// NOTE: for the mouse control rig in python, we are currently using the delta Transform to store screen space
+// translations (num pixels rather than world units), Maybe instead of fixing this we can just keep it as is
+// and have it as a scene lifecycle function rather than an MCP one
 extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, Transform delta)
 {
 	if (!instanceData.pCoreData) {
@@ -185,7 +208,7 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 	const Transform& cameraTransform = camera.getTransform();
 
 	// Move
-	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / pCoreData->m_pScene->pixelsPerWorldUnit;
+	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / pCoreData->m_pScene->m_PixelsPerWorldUnit;
 	camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
 
 	// Rotate

@@ -13,6 +13,7 @@ extern "C" __declspec(dllexport) bool scene_initialize(InstanceData instanceData
 extern "C" __declspec(dllexport) bool scene_dispose(InstanceData instanceData);
 extern "C" __declspec(dllexport) bool scene_updateFrame(InstanceData instanceData, float deltaTime);
 extern "C" __declspec(dllexport) bool scene_isSelfManagedRenderWindowOpen(InstanceData instanceData);
+extern "C" __declspec(dllexport) bool scene_updateRenderConfig(InstanceData instanceData, RenderConfig renderConfig);
 
 // scene API
 extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, Transform transform);

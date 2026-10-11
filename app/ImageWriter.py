@@ -1,7 +1,20 @@
 import pygame, threading, time, tkinter as tk
 from ctypes import *
 from ImageWriterCommon import *
+from enum import IntEnum
 
+class GridViewMode(IntEnum):
+    NONE = 0
+    FOREGROUND = 1
+    BACKGROUND = 2
+
+class RenderConfig(ctypes.Structure):
+    _fields_ = [
+        ("gridViewMode", ctypes.c_int),
+    ]
+
+    def __init__(self):
+        self.gridViewMode = GridViewMode.NONE
 
 class ImageWriter(ctypes.Structure):
     _fields_ = [
@@ -11,6 +24,7 @@ class ImageWriter(ctypes.Structure):
     doesSceneExist = False
     sceneInitializedCondition = threading.Condition()
     sceneDisposedCondition = threading.Condition()
+    renderConfig = RenderConfig()
 
     def __init__(self):
         
@@ -33,6 +47,9 @@ class ImageWriter(ctypes.Structure):
 
         self.framework.ImageWriter_Scene_IsSelfManagedRenderWindowOpen.argtypes = [ImageWriter]
         self.framework.ImageWriter_Scene_IsSelfManagedRenderWindowOpen.restype = ctypes.c_bool
+
+        self.framework.ImageWriter_Scene_UpdateRenderConfig.argtypes = [ImageWriter, RenderConfig]
+        self.framework.ImageWriter_Scene_UpdateRenderConfig.restype = ctypes.c_bool
 
         self.framework.ImageWriter_Scene_SetCameraTransform.argtypes = [ImageWriter, ctypes.c_char_p, Transform]
         self.framework.ImageWriter_Scene_SetCameraTransform.restype = ctypes.c_bool
@@ -104,6 +121,9 @@ class ImageWriter(ctypes.Structure):
         
         with self.sceneDisposedCondition:
              self.sceneDisposedCondition.wait_for(lambda: self.doesSceneExist is False)
+
+    def UpdateRenderConfig(self):
+        return self.framework.ImageWriter_Scene_UpdateRenderConfig(self, self.renderConfig)
 
     def SetCameraTransform(self, statusMessage, transform):
         return self.framework.ImageWriter_Scene_SetCameraTransform(self, statusMessage, transform)

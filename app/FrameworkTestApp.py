@@ -25,17 +25,39 @@ class WindowUI(tk.Tk):
         
         self.canvas.bind("<MouseWheel>", self.onMouseScroll)
 
-        button = tk.Button(
-            self, 
+        self.bottomFrame = tk.Frame(self, width=150)
+        self.bottomFrame.pack(pady=20)
+
+        # Clear scene button
+        self.clearSceneButton = tk.Button(
+            self.bottomFrame, 
             text="Clear Scene",
-            command=self.onClickedClearButton,
+            command=self.onClickedClearSceneButton,
             font=("Helvetica", 16, "bold"),
             padx=5,
             pady=2
         )
+        self.clearSceneButton.grid(row=0, column=0)
 
-        # 3. Position the button in the window
-        button.pack(pady=20)
+        # Grid view mode label
+        self.gridViewLabel = tk.Label(self.bottomFrame, text="Grid view:", font=("Helvetica", 16, "bold"))
+        self.gridViewLabel.grid(row=0, column=1, padx = (100, 5))
+
+        # Grid view mode option menu
+        self.gridViewModeOptions = ["None", "Foreground", "Background"]
+        
+        self.gridViewModeSelection = tk.StringVar(self.bottomFrame)
+        self.gridViewModeSelection.set(self.gridViewModeOptions[imageWriter.renderConfig.gridViewMode])
+        self.gridViewModeSelection.trace_add("write", self.onUpdatedGridViewModeOptionMenu)
+
+        self.gridViewModeOptionMenu = tk.OptionMenu(
+            self.bottomFrame, 
+            self.gridViewModeSelection,
+            *self.gridViewModeOptions
+        )
+        self.gridViewModeOptionMenu.config(width=12, font=("Helvetica", 16))
+        self.gridViewModeOptionMenu["menu"].config(font=("Helvetica", 16))
+        self.gridViewModeOptionMenu.grid(row=0, column=2, padx=5)
 
         # update to make canvas live and then obtain canvas id
         self.update()
@@ -90,9 +112,18 @@ class WindowUI(tk.Tk):
         # reset for next frame  so we don't double use it
         self.mouseScrollDelta = 0
 
-    def onClickedClearButton(self):
+    def onClickedClearSceneButton(self):
         statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
         imageWriter.RemoveAllEntities(statusMessage)
+
+    def onUpdatedGridViewModeOptionMenu(self, *args):
+
+        for i in range(len(self.gridViewModeOptions)):
+            if self.gridViewModeOptions[i] == self.gridViewModeSelection.get():
+                imageWriter.renderConfig.gridViewMode = i
+                imageWriter.UpdateRenderConfig()
+                break
+
 
     def on_window_close(self):
     
@@ -225,11 +256,13 @@ def createSomeSampleShapes():
 
 if __name__ == "__main__":
 
+    # init wrapper instance first to init render config
+    imageWriter = ImageWriter()
+
     # create UI
     windowUI = WindowUI(name = "My Test App", windowSize="1920x1480")   
 
-    # create ImageWriter
-    imageWriter = ImageWriter()
+    # init ImageWriter instance
     imageWriter.Init(windowUI.canvasId, fnIsWindowOpen = isWindowUIOpen)
     
     apiThread = threading.Thread(target = createSomeSampleShapes)

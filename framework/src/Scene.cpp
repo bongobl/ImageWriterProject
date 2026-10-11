@@ -77,7 +77,76 @@ void Camera::validate(std::stringstream* pStream)
 		m_Transform.scale = Camera::MinScale;
 	}
 }
-Scene::Scene(int64_t windowHandle)
+
+///////////////////////////////////////////////////////////////////
+
+GridView::GridView()
+{
+	if (!m_VertexShader.loadFromFile("gridShader.vert", sf::Shader::Type::Vertex)) {
+		std::cerr << "Vertex shader not found" << std::endl;
+		exit(1);
+	}
+
+	m_VertexBuffer.setPrimitiveType(sf::PrimitiveType::Lines);
+	if (!m_VertexBuffer.create(1600)) {
+		std::cerr << "Failed to create grid vertex buffer" << std::endl;
+		exit(1);
+	}
+}
+
+void GridView::draw(sf::RenderWindow& window, const Camera& camera, sf::Transform cameraFromWorld, sf::Transform homogFromCamera)
+{
+
+	const Transform& cameraTransform = camera.getTransform();
+
+	float minX = 0, maxX = 0, minY = 0, maxY = 0;
+	Vec2 cameraCorners[4] = {
+		{ .x = camera.m_widthFromHeight, .y = 1 },
+		{ .x = camera.m_widthFromHeight, .y = -1 },
+		{ .x = -camera.m_widthFromHeight, .y = 1 },
+		{ .x = -camera.m_widthFromHeight, .y = -1 },
+	};
+
+	for (int i = 0; i < 4; ++i) {
+
+		Vec2 worldCorner = cameraTransform * cameraCorners[i];
+
+		if (i == 0) {
+			minX = maxX = worldCorner.x;
+			minY = maxY = worldCorner.y;
+		}
+		else {
+			maxX = worldCorner.x > maxX ? worldCorner.x : maxX;
+			minX = worldCorner.x < minX ? worldCorner.x : minX;
+			maxY = worldCorner.y > maxY ? worldCorner.y : maxY;
+			minY = worldCorner.y < minY ? worldCorner.y : minY;
+		}
+	}
+
+	int numXLines = (int)std::max(0, (int)floor(maxX) - (int)ceil(minX) + 1);
+	int numYLines = (int)std::max(0, (int)floor(maxY) - (int)ceil(minY) + 1);
+
+	int numTotalVerts = (numXLines + numYLines) * 2;
+	// std::cout << "numXLines = " << numXLines << ", numYLines = " << numYLines << ", numTotalVerts = " << numTotalVerts << std::endl;
+
+	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(homogFromCamera));
+	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(cameraFromWorld));
+	m_VertexShader.setUniform("cameraScale", cameraTransform.scale);
+	m_VertexShader.setUniform("minX", minX);
+	m_VertexShader.setUniform("maxX", maxX);
+	m_VertexShader.setUniform("minY", minY);
+	m_VertexShader.setUniform("maxY", maxY);
+	m_VertexShader.setUniform("numXLines", numXLines);
+	m_VertexShader.setUniform("numTotalVerts", numTotalVerts);
+
+	sf::RenderStates states;
+	states.shader = &m_VertexShader;
+	window.draw(m_VertexBuffer, 0, numTotalVerts, states);
+}
+
+///////////////////////////////////////////////////////////////////
+Scene::Scene(int64_t windowHandle) :
+	m_RenderConfig()	// TODO: Take in as parameter
 {
 	sf::ContextSettings settings;
 	settings.antiAliasingLevel = 8;
@@ -110,24 +179,7 @@ Scene::Scene(int64_t windowHandle)
 
 	m_HomogFromCamera = m_HomogFromCamera.scale(sf::Vector2f((float)initialWindowHeight / initialWindowWidth, 1));
 
-	// Set screen from camera transform, it will never change
-	m_ScreenFromCamera = sf::Transform()
-		.translate(sf::Vector2f(initialWindowWidth / 2, initialWindowHeight / 2))
-		.scale(sf::Vector2f(initialWindowWidth / 2, -initialWindowHeight / 2))
-		* m_HomogFromCamera;
-
 	mousePosition = sf::Mouse::getPosition(window);
-
-	if (!m_VertexShader.loadFromFile("gridShader.vert", sf::Shader::Type::Vertex)) {
-		std::cerr << "Vertex shader not found" << std::endl;
-		exit(1);
-	}
-
-	m_GridVertexBuffer.setPrimitiveType(sf::PrimitiveType::Lines);
-	if (!m_GridVertexBuffer.create(1600)) {
-		std::cerr << "Failed to create grid vertex buffer" << std::endl;
-		exit(1);
-	}
 
 	// The thread that initializes this window may not be the one that renders to it
 	// deactivate OpenGL context for this thread
@@ -185,7 +237,7 @@ void Scene::updateState(float deltaTime)
 
 				const Transform& cameraTransform = m_Camera.getTransform();
 
-				sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / pixelsPerWorldUnit;
+				sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / m_PixelsPerWorldUnit;
 
 				m_Camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
 			}
@@ -204,64 +256,32 @@ void Scene::render()
 	const Transform& cameraTransform = m_Camera.getTransform();
 
 	// Update camera inverse transform for drawing
-	pixelsPerWorldUnit = (initialWindowHeight / 2.0f) / cameraTransform.scale;
+	m_PixelsPerWorldUnit = (initialWindowHeight / 2.0f) / cameraTransform.scale;
 	m_CameraFromWorld = sf::fromCore(cameraTransform).getInverse();
-
-
-	sf::Transform screenFromWorld = m_ScreenFromCamera * m_CameraFromWorld;
-	
 
 	// Draw
 	m_pWindow->clear();
 
-	// Grid
-	float minX = 0, maxX = 0, minY = 0, maxY = 0;
-	Vec2 cameraCorners[4] = {
-		{ .x = m_Camera.m_widthFromHeight, .y = 1},
-		{ .x = m_Camera.m_widthFromHeight, .y = -1 },
-		{ .x = -m_Camera.m_widthFromHeight, .y = 1 },
-		{ .x = -m_Camera.m_widthFromHeight, .y = -1 },
-	};
-
-	for (int i = 0; i < 4; ++i) {
-
-		Vec2 worldCorner = cameraTransform * cameraCorners[i];
-
-		if (i == 0) {
-			minX = maxX = worldCorner.x;
-			minY = maxY = worldCorner.y;
-		}
-		else {
-			maxX = worldCorner.x > maxX ? worldCorner.x : maxX;
-			minX = worldCorner.x < minX ? worldCorner.x : minX;
-			maxY = worldCorner.y > maxY ? worldCorner.y : maxY;
-			minY = worldCorner.y < minY ? worldCorner.y : minY;
-		}
+	// Grid background mode
+	if (m_RenderConfig.gridViewMode == GRID_VIEW_MODE_BACKGROUND)
+	{
+		m_GridView.draw(*m_pWindow, m_Camera, m_CameraFromWorld, m_HomogFromCamera);
 	}
-
-	int numXLines = (int)std::max(0, (int)floor(maxX) - (int)ceil(minX) + 1);
-	int numYLines = (int)std::max(0, (int)floor(maxY) - (int)ceil(minY) + 1);
-
-	int numTotalVerts = (numXLines + numYLines) * 2;
-	// std::cout << "numXLines = " << numXLines << ", numYLines = " << numYLines << ", numTotalVerts = " << numTotalVerts << std::endl;
-	
-	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(m_HomogFromCamera));
-	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(m_CameraFromWorld));
-	m_VertexShader.setUniform("cameraScale", cameraTransform.scale);
-	m_VertexShader.setUniform("minX", minX);
-	m_VertexShader.setUniform("maxX", maxX);
-	m_VertexShader.setUniform("minY", minY);
-	m_VertexShader.setUniform("maxY", maxY);
-	m_VertexShader.setUniform("numXLines", numXLines);
-	m_VertexShader.setUniform("numTotalVerts", numTotalVerts);
-
-	sf::RenderStates states;
-	states.shader = &m_VertexShader;
-	m_pWindow->draw(m_GridVertexBuffer, 0, numTotalVerts, states);
 
 	// draw rest of scene
 	m_Entities.drawShapes(*m_pWindow, this);
+
+	// Grid foreground mode
+	if (m_RenderConfig.gridViewMode == GRID_VIEW_MODE_FOREGROUND)
+	{
+		m_GridView.draw(*m_pWindow, m_Camera, m_CameraFromWorld, m_HomogFromCamera);
+	}
 	m_pWindow->display();
+}
+
+void Scene::updateRenderConfig(RenderConfig renderConfig)
+{
+	m_RenderConfig = renderConfig;
 }
 
 bool Scene::isSelfManagedRenderWindowOpen() const
