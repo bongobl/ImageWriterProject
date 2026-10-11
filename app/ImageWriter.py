@@ -14,7 +14,7 @@ class RenderConfig(ctypes.Structure):
     ]
 
     def __init__(self):
-        self.gridViewMode = GridViewMode.NONE
+        self.gridViewMode = GridViewMode.BACKGROUND
 
 class ImageWriter(ctypes.Structure):
     _fields_ = [
@@ -36,7 +36,7 @@ class ImageWriter(ctypes.Structure):
         self.framework.ImageWriter_Instance_Dispose.argtypes = [ctypes.POINTER(ImageWriter)]
         self.framework.ImageWriter_Instance_Dispose.restype = ctypes.c_bool
 
-        self.framework.ImageWriter_Scene_Init.argtypes = [ImageWriter, ctypes.c_int64]
+        self.framework.ImageWriter_Scene_Init.argtypes = [ImageWriter, ctypes.c_int64, RenderConfig]
         self.framework.ImageWriter_Scene_Init.restype = ctypes.c_bool
 
         self.framework.ImageWriter_Scene_Dispose.argtypes = [ImageWriter]
@@ -96,7 +96,7 @@ class ImageWriter(ctypes.Structure):
 
     def initAndRunScene(self, windowHandle):
 
-        self.framework.ImageWriter_Scene_Init(self, windowHandle)
+        self.framework.ImageWriter_Scene_Init(self, windowHandle, self.renderConfig)
 
         with self.sceneInitializedCondition:
             self.doesSceneExist = True

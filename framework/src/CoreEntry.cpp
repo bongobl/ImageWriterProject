@@ -31,7 +31,7 @@ extern "C" __declspec(dllexport) bool instance_dispose(InstanceData* pInstanceDa
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool scene_initialize(InstanceData instanceData, int64_t windowHandle)
+extern "C" __declspec(dllexport) bool scene_initialize(InstanceData instanceData, int64_t windowHandle, RenderConfig renderConfig)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_initialize(): instanceData.pCoreData was null" << std::endl;
@@ -41,7 +41,7 @@ extern "C" __declspec(dllexport) bool scene_initialize(InstanceData instanceData
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
 	std::unique_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
-	pCoreData->m_pScene = new Scene(windowHandle);
+	pCoreData->m_pScene = new Scene(windowHandle, renderConfig);
 
 	return true;
 }
@@ -208,7 +208,7 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 	const Transform& cameraTransform = camera.getTransform();
 
 	// Move
-	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / pCoreData->m_pScene->m_PixelsPerWorldUnit;
+	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / camera.getComputedState().pixelsPerWorldUnit;
 	camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
 
 	// Rotate

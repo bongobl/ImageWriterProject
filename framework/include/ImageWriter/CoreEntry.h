@@ -9,7 +9,7 @@ extern "C" __declspec(dllexport) bool instance_initialize(InstanceData* pInstanc
 extern "C" __declspec(dllexport) bool instance_dispose(InstanceData* pInstanceData);
 
 // scene lifecycle
-extern "C" __declspec(dllexport) bool scene_initialize(InstanceData instanceData, int64_t windowHandle);
+extern "C" __declspec(dllexport) bool scene_initialize(InstanceData instanceData, int64_t windowHandle, RenderConfig renderConfig);
 extern "C" __declspec(dllexport) bool scene_dispose(InstanceData instanceData);
 extern "C" __declspec(dllexport) bool scene_updateFrame(InstanceData instanceData, float deltaTime);
 extern "C" __declspec(dllexport) bool scene_isSelfManagedRenderWindowOpen(InstanceData instanceData);

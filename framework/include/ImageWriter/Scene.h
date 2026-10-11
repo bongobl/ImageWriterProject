@@ -6,19 +6,33 @@
 #include <mutex>
 
 class Camera {
+public:
+	struct ComputedState {
+		// computed states
+		float pixelsPerWorldUnit = 1;
+		sf::Transform cameraFromWorld = sf::Transform::Identity;
+	};
 
+private:
 	Transform m_Transform;
-	mutable std::shared_mutex mutex;
+	mutable std::shared_mutex m_TransformMutex;
 
+	ComputedState m_ComputedState;
+	mutable std::shared_mutex computedStatesMutex;
+	
 public:
 
+	// constant over lifetime (no mutex needed)
 	float m_widthFromHeight;
+	sf::Transform m_HomogFromCamera = sf::Transform::Identity;
+
+	
 	static constexpr float MaxScale = 100.0f;
 	static constexpr float MinScale = 1.0f;
 	static constexpr float StartingScale = 13.0f;
 
 	Camera();
-
+	
 	// setters
 	void setPosition(Vec2 position);
 	void setOrientation(float orientation);
@@ -33,6 +47,10 @@ public:
 	Transform getTransform() const;
 
 	void validate(std::stringstream* pStream);
+
+	// Computed state
+	void updateComputedState(int initialWindowHeight);
+	ComputedState getComputedState() const;
 };
 
 class GridView
@@ -44,7 +62,7 @@ class GridView
 public:
 	GridView();
 
-	void draw(sf::RenderWindow& window, const Camera& camera, sf::Transform cameraFromWorld, sf::Transform homogFromCamera);
+	void draw(sf::RenderWindow& window, const Camera& camera);
 };
 
 class Scene {
@@ -54,13 +72,8 @@ public:
 	bool m_isWindowSelfManaged = true;
 
 	sf::RenderWindow* m_pWindow = nullptr;
-	float initialWindowWidth = 0;
-	float initialWindowHeight = 0;
+	sf::Vector2f windowInitialExtents = sf::Vector2f(0, 0);
 
-	// screen space from world space conversion
-	float m_PixelsPerWorldUnit = 1;
-	sf::Transform m_CameraFromWorld = sf::Transform::Identity;
-	sf::Transform m_HomogFromCamera = sf::Transform::Identity;
 
 	Camera m_Camera;
 	EntityList m_Entities;
@@ -69,7 +82,7 @@ public:
 	GridView m_GridView;
 
 public:
-	Scene(int64_t windowHandle);
+	Scene(int64_t windowHandle, RenderConfig renderConfig);
 	~Scene();
 	
 	void updateState(float deltaTime);

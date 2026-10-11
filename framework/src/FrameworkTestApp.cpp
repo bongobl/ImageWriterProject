@@ -161,8 +161,7 @@ int main(void)
 
 	// Create an isolated window with a handle value of 0
 	int windowHwnd = 0;
-	ImageWriter_Scene_Init(instance, windowHwnd);
-
+	ImageWriter_Scene_Init(instance, windowHwnd, { .gridViewMode = GRID_VIEW_MODE_BACKGROUND });
 	std::thread imageWriterThread(runImageWriterFlow, instance);
 
 

@@ -176,7 +176,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Dispose(HImageWriterI
     return coreDisposeResult;
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_Init(HImageWriterInstance instance, int64_t windowHandle)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_Init(HImageWriterInstance instance, int64_t windowHandle, RenderConfig renderConfig)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_Init: instance.pData was null\n");
@@ -185,7 +185,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_Init(HImageWriterInstanc
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
 
-    return pInstanceData->pfnCore_Scene_Initialize(*pInstanceData, windowHandle);
+    return pInstanceData->pfnCore_Scene_Initialize(*pInstanceData, windowHandle, renderConfig);
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_Dispose(HImageWriterInstance instance)

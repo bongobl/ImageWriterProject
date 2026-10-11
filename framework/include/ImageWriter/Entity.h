@@ -5,7 +5,8 @@
 #include <shared_mutex>
 #include <mutex>
 
-class Scene;
+class Camera;
+class EntityGeometry;
 enum class EntityType
 {
 	None = 0,
@@ -21,7 +22,7 @@ struct Entity {
 	Color m_Color;
 
 	Entity(Type type, const Transform& transform, Color& color);
-	virtual void applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const {};
+	virtual void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const {};
 };
 
 struct EllipseEntity : Entity {
@@ -30,7 +31,7 @@ struct EllipseEntity : Entity {
 
 	Vec2 m_HalfExtents;
 
-	void applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const override;
+	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
 };
 
 struct RectangleEntity : Entity {
@@ -39,7 +40,7 @@ struct RectangleEntity : Entity {
 
 	Vec2 m_HalfExtents;
 
-	void applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const override;
+	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
 };
 
 struct TriangleEntity : Entity {
@@ -49,18 +50,29 @@ struct TriangleEntity : Entity {
 
 	TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
 
-	void applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const override;
+	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
 };
 
+struct EntityGeometry : public sf::VertexArray {
+	mutable std::shared_mutex m_Mutex;
+
+	template<typename... Params>
+	EntityGeometry(Params... params) : sf::VertexArray(std::forward<Params>(params)...) {};
+
+	void draw(sf::RenderWindow& renderWindow, sf::Shader& vertexShader) const {
+		std::shared_lock<std::shared_mutex> lock(m_Mutex);
+		renderWindow.draw(*this, &vertexShader);
+	};
+};
 struct EntityList {
 
-	sf::VertexArray m_EllipseVerts;
-	sf::VertexArray m_RectangleVerts;
-	sf::VertexArray m_TriangleVerts;
+	EntityGeometry m_EllipseVerts;
+	EntityGeometry m_RectangleVerts;
+	EntityGeometry m_TriangleVerts;
 
 	std::vector<Entity*> m_Entities;
 	sf::Shader m_VertexShader;
-	mutable std::shared_mutex mutex;
+	mutable std::shared_mutex m_EntitiesMutex;
 public:
 
 	EntityList();
@@ -70,8 +82,8 @@ public:
 	void addRectangle(const Transform& transform, Color& color, Vec2 halfExtents);
 	void addTriangle(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
 	void dummyUpdateShapes(float deltaTime);
-	void drawShapes(sf::RenderWindow& window, Scene* pScene);
+	void drawShapes(sf::RenderWindow& window, const Camera& camera);
 	void destroyAllShapes();
 
-	sf::VertexArray* getVertexArray(EntityType type);
+	EntityGeometry* getGeometryForEntity(EntityType type);
 };

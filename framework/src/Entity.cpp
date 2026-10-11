@@ -26,21 +26,22 @@ TriangleEntity::TriangleEntity(const Transform& transform, Color& color, Vec2 po
 {
 }
 
-void EllipseEntity::applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const
+void EllipseEntity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const
 {
 	vertexShader.setUniform("scaleOffset", sf::fromCore(m_HalfExtents));
 }
 
-void RectangleEntity::applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const
+void RectangleEntity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const
 {
 	vertexShader.setUniform("scaleOffset", sf::fromCore(m_HalfExtents));
 }
 
-void TriangleEntity::applyCustomDrawingProperties(sf::VertexArray& vertexArray, sf::Shader& vertexShader) const
+void TriangleEntity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const
 {
-	vertexArray[0].position = sf::fromCore(m_Point1);
-	vertexArray[1].position = sf::fromCore(m_Point2);
-	vertexArray[2].position = sf::fromCore(m_Point3);
+	std::unique_lock<std::shared_mutex> lock(geometry.m_Mutex);
+	geometry[0].position = sf::fromCore(m_Point1);
+	geometry[1].position = sf::fromCore(m_Point2);
+	geometry[2].position = sf::fromCore(m_Point3);
 
 	vertexShader.setUniform("scaleOffset", sf::Glsl::Vec2(1, 1));
 }
@@ -81,34 +82,34 @@ EntityList::~EntityList()
 
 void EntityList::addEllipse(const Transform& transform, Color& color, Vec2 halfExtents)
 {
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 	m_Entities.push_back(new EllipseEntity(transform, color, halfExtents));
 }
 
 void EntityList::addRectangle(const Transform& transform, Color& color, Vec2 halfExtents)
 {
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 	m_Entities.push_back(new RectangleEntity(transform, color, halfExtents));
 }
 
 void EntityList::addTriangle(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3)
 {
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 	m_Entities.push_back(new TriangleEntity(transform, color, point1, point2, point3));
 }
 void EntityList::dummyUpdateShapes(float deltaTime) {
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
 	for (int i = 0; i < m_Entities.size(); ++i) {
 		m_Entities.at(i)->m_Transform.orientation += sf::radians(deltaTime).asDegrees();
 	}
 }
-void EntityList::drawShapes(sf::RenderWindow& window, Scene* pScene) {
+void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
 
-	std::shared_lock<std::shared_mutex> lock(mutex);
+	std::shared_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
-	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(pScene->m_HomogFromCamera));
-	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(pScene->m_CameraFromWorld));
+	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(camera.m_HomogFromCamera));
+	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(camera.getComputedState().cameraFromWorld));
 
 	for (int i = 0; i < m_Entities.size(); ++i) {
 		const Entity* pCurrEntity = m_Entities.at(i);
@@ -116,15 +117,15 @@ void EntityList::drawShapes(sf::RenderWindow& window, Scene* pScene) {
 		m_VertexShader.setUniform("worldFromModel", sf::Glsl::Mat4(sf::fromCore(pCurrEntity->m_Transform)));
 		m_VertexShader.setUniform("color", sf::Glsl::Vec4(sf::fromCore(pCurrEntity->m_Color)));
 
-		sf::VertexArray* pVertexArray = getVertexArray(pCurrEntity->m_Type);
-		pCurrEntity->applyCustomDrawingProperties(*pVertexArray, m_VertexShader);
-		window.draw(*pVertexArray, &m_VertexShader);
+		EntityGeometry* pEntityGeometry = getGeometryForEntity(pCurrEntity->m_Type);
+		pCurrEntity->applyCustomDrawingProperties(*pEntityGeometry, m_VertexShader);
+		pEntityGeometry->draw(window, m_VertexShader);
 	}
 }
 
 void EntityList::destroyAllShapes() {
 
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 	for (int i = 0; i < m_Entities.size(); ++i) {
 		delete m_Entities.at(i);
 		m_Entities.at(i) = nullptr;
@@ -132,7 +133,7 @@ void EntityList::destroyAllShapes() {
 	m_Entities.clear();
 }
 
-sf::VertexArray* EntityList::getVertexArray(EntityType type)
+EntityGeometry* EntityList::getGeometryForEntity(EntityType type)
 {
 	switch (type) {
 	case EntityType::Ellipse:

@@ -13,7 +13,7 @@ typedef bool (*PfnCore_Instance_Initialize)(InstanceData*);
 typedef bool (*PfnCore_Instance_Dispose)(InstanceData*);
 
 // scene lifecycle
-typedef bool (*PfnCore_Scene_Initialize)(InstanceData, int64_t);
+typedef bool (*PfnCore_Scene_Initialize)(InstanceData, int64_t, RenderConfig);
 typedef bool (*PfnCore_Scene_Dispose)(InstanceData);
 typedef bool (*PfnCore_Scene_UpdateFrame)(InstanceData, float);
 typedef bool (*PfnCore_Scene_isSelfManagedRenderWindowOpen)(InstanceData);

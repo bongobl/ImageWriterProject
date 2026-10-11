@@ -10,48 +10,63 @@ Camera::Camera() :
 
 }
 
-void Camera::setPosition(Vec2 position) {
-
-	std::unique_lock<std::shared_mutex> lock(mutex);
+void Camera::setPosition(Vec2 position) 
+{
+	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_Transform.position = position;
 }
 
+void Camera::updateComputedState(int initialWindowHeight)
+{
+	std::unique_lock<std::shared_mutex> lock(computedStatesMutex);
+
+	const Transform& cameraTransform = getTransform();
+
+	m_ComputedState.pixelsPerWorldUnit = (initialWindowHeight / 2.0f) / cameraTransform.scale;
+	m_ComputedState.cameraFromWorld = sf::fromCore(cameraTransform).getInverse();
+}
+
+Camera::ComputedState Camera::getComputedState() const
+{
+	std::shared_lock<std::shared_mutex> lock(computedStatesMutex);
+	return m_ComputedState;
+}
 void Camera::setOrientation(float orientation) {
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_Transform.orientation = orientation;
 }
 
 void Camera::setScale(float scale) {
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_Transform.scale = scale;
 }
 
 void Camera::move(Vec2 delta) {
 
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_Transform.position.x += delta.x;
 	m_Transform.position.y += delta.y;
 }
 
 void Camera::rotate(float deltaDegrees) {
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_Transform.orientation += deltaDegrees;
 }
 
 void Camera::incrementScale(float deltaScale) {
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_Transform.scale += deltaScale;
 }
 
 void Camera::setTransform(const Transform& transform) {
 
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_Transform = transform;
 
 }
 
 Transform Camera::getTransform() const {
-	std::shared_lock<std::shared_mutex> lock(mutex);
+	std::shared_lock<std::shared_mutex> lock(m_TransformMutex);
 	return m_Transform;
 }
 
@@ -59,7 +74,7 @@ void Camera::validate(std::stringstream* pStream)
 {
 	// TODO: need to take in streamstream and append to it rather than writing to raw C string, 
 	// this will allow additional validate functions to attach their message to the MCP string
-	std::unique_lock<std::shared_mutex> lock(mutex);
+	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	if (m_Transform.scale > Camera::MaxScale) {
 
 		if (pStream) {
@@ -94,7 +109,7 @@ GridView::GridView()
 	}
 }
 
-void GridView::draw(sf::RenderWindow& window, const Camera& camera, sf::Transform cameraFromWorld, sf::Transform homogFromCamera)
+void GridView::draw(sf::RenderWindow& window, const Camera& camera)
 {
 
 	const Transform& cameraTransform = camera.getTransform();
@@ -129,8 +144,8 @@ void GridView::draw(sf::RenderWindow& window, const Camera& camera, sf::Transfor
 	int numTotalVerts = (numXLines + numYLines) * 2;
 	// std::cout << "numXLines = " << numXLines << ", numYLines = " << numYLines << ", numTotalVerts = " << numTotalVerts << std::endl;
 
-	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(homogFromCamera));
-	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(cameraFromWorld));
+	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(camera.m_HomogFromCamera));
+	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(camera.getComputedState().cameraFromWorld));
 	m_VertexShader.setUniform("cameraScale", cameraTransform.scale);
 	m_VertexShader.setUniform("minX", minX);
 	m_VertexShader.setUniform("maxX", maxX);
@@ -145,8 +160,8 @@ void GridView::draw(sf::RenderWindow& window, const Camera& camera, sf::Transfor
 }
 
 ///////////////////////////////////////////////////////////////////
-Scene::Scene(int64_t windowHandle) :
-	m_RenderConfig()	// TODO: Take in as parameter
+Scene::Scene(int64_t windowHandle, RenderConfig renderConfig) :
+	m_RenderConfig(renderConfig)
 {
 	sf::ContextSettings settings;
 	settings.antiAliasingLevel = 8;
@@ -171,13 +186,11 @@ Scene::Scene(int64_t windowHandle) :
 	window.setFramerateLimit(120);
 
 	// read window initial size
-	sf::Vector2u size = window.getSize();
-	initialWindowWidth = size.x;
-	initialWindowHeight = size.y;
+	windowInitialExtents = (sf::Vector2f)window.getSize();
 
-	m_Camera.m_widthFromHeight = (float)size.x / size.y;
-
-	m_HomogFromCamera = m_HomogFromCamera.scale(sf::Vector2f((float)initialWindowHeight / initialWindowWidth, 1));
+	// camera constants
+	m_Camera.m_widthFromHeight = (float)windowInitialExtents.x / windowInitialExtents.y;
+	m_Camera.m_HomogFromCamera = m_Camera.m_HomogFromCamera.scale(sf::Vector2f((float)windowInitialExtents.y / windowInitialExtents.x, 1));
 
 	mousePosition = sf::Mouse::getPosition(window);
 
@@ -237,7 +250,7 @@ void Scene::updateState(float deltaTime)
 
 				const Transform& cameraTransform = m_Camera.getTransform();
 
-				sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / m_PixelsPerWorldUnit;
+				sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / m_Camera.getComputedState().pixelsPerWorldUnit;
 
 				m_Camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
 			}
@@ -246,35 +259,30 @@ void Scene::updateState(float deltaTime)
 				m_Camera.rotate(deltaMouseScreenSpace.x / 14);
 			}
 		}
-		
 	}
+
+	m_Camera.updateComputedState(windowInitialExtents.y);
 	// Test just to make sure window updates every frame
 	//m_Entities.dummyUpdateShapes(deltaTime);
 }
 void Scene::render()
 {
-	const Transform& cameraTransform = m_Camera.getTransform();
-
-	// Update camera inverse transform for drawing
-	m_PixelsPerWorldUnit = (initialWindowHeight / 2.0f) / cameraTransform.scale;
-	m_CameraFromWorld = sf::fromCore(cameraTransform).getInverse();
-
 	// Draw
 	m_pWindow->clear();
 
 	// Grid background mode
 	if (m_RenderConfig.gridViewMode == GRID_VIEW_MODE_BACKGROUND)
 	{
-		m_GridView.draw(*m_pWindow, m_Camera, m_CameraFromWorld, m_HomogFromCamera);
+		m_GridView.draw(*m_pWindow, m_Camera);
 	}
 
 	// draw rest of scene
-	m_Entities.drawShapes(*m_pWindow, this);
+	m_Entities.drawShapes(*m_pWindow, m_Camera);
 
 	// Grid foreground mode
 	if (m_RenderConfig.gridViewMode == GRID_VIEW_MODE_FOREGROUND)
 	{
-		m_GridView.draw(*m_pWindow, m_Camera, m_CameraFromWorld, m_HomogFromCamera);
+		m_GridView.draw(*m_pWindow, m_Camera);
 	}
 	m_pWindow->display();
 }
