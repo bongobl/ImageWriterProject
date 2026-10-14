@@ -32,14 +32,26 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	system("pause");
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
-			if (!ImageWriter_Scene_AddEllipse(instance, statusMessage,
-				{ .position = { 
-					.x = j * spacingX - startX, 
-					.y = i * spacingY - startY },
-				  .orientation = 0,
-				  .scale = 1},
-				{ .red = 1, .green = 0, .blue = 0, .alpha = 1 },
-				{ 0.5f, 0.35f }))
+			if (!ImageWriter_Scene_AddEntity(
+				instance, 
+				statusMessage,
+				{
+					.entityType = ENTITY_TYPE_ELLIPSE,
+					.transform = {
+						.position = {
+							.x = j * spacingX - startX,
+							.y = i * spacingY - startY
+						},
+						.orientation = 0,
+						.scale = 1
+					},
+					.color = { .red = 1, .green = 0, .blue = 0, .alpha = 1 },
+					.ellipse = {
+						.halfExtents = { 0.5f, 0.35f }
+					}
+				})
+			)
+				
 			{
 				std::cerr << "ImageWriter error: " << statusMessage << std::endl;
 			}
@@ -56,14 +68,26 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	system("pause");
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
-			if (!ImageWriter_Scene_AddRectangle(instance, statusMessage,
-				{ .position = {
-					.x = j * spacingX - startX,
-					.y = i * spacingY - startY },
-				  .orientation = 0,
-				  .scale = 1 },
-				{ .red = 0, .green = 1, .blue = 1, .alpha = 1 },
-				{ 0.5f, 0.35f }))
+			if (!ImageWriter_Scene_AddEntity(
+				instance,
+				statusMessage,
+				{
+					.entityType = ENTITY_TYPE_RECTANGLE,
+					.transform = {
+						.position = {
+							.x = j * spacingX - startX,
+							.y = i * spacingY - startY
+						},
+						.orientation = 0,
+						.scale = 1
+					},
+					.color = { .red = 0, .green = 1, .blue = 1, .alpha = 1 },
+					.rectangle = {
+						.halfExtents = { 0.5f, 0.35f }
+					}
+				})
+			)
+
 			{
 				std::cerr << "ImageWriter error: " << statusMessage << std::endl;
 			}
@@ -80,15 +104,28 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	system("pause");
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
+			if (!ImageWriter_Scene_AddEntity(
+				instance,
+				statusMessage,
+				{
+					.entityType = ENTITY_TYPE_TRIANGLE,
+					.transform = {
+						.position = {
+							.x = j * spacingX - startX,
+							.y = i * spacingY - startY
+						},
+						.orientation = 0,
+						.scale = 1
+					},
+					.color = { .red = 1, .green = 1, .blue = 0, .alpha = 1 },
+					.triangle = {
+						.point1 = { -0.5f, 0.35f },
+						.point2 = { -0.5f, -0.35f },
+						.point3 = { 0.5f, 0 }
+					}
+				})
+			)
 
-			if (!ImageWriter_Scene_AddTriangle(instance, statusMessage,
-				{ .position = {
-					.x = j * spacingX - startX,
-					.y = i * spacingY - startY },
-				  .orientation = 0,
-				  .scale = 1 },
-				{ .red = 1, .green = 1, .blue = 0, .alpha = 1 },
-				{ -0.5f, 0.35f }, { -0.5f, -0.35f }, { 0.5f, 0 }))
 			{
 				std::cerr << "ImageWriter error: " << statusMessage << std::endl;
 			}

@@ -29,6 +29,38 @@ struct Color {
     float alpha = 0;
 };
 
+enum EntityType {
+    ENTITY_TYPE_NONE = 0,
+    ENTITY_TYPE_ELLIPSE = 1,
+    ENTITY_TYPE_RECTANGLE = 2,
+    ENTITY_TYPE_TRIANGLE = 3,
+};
+
+
+struct AddEllipseParams {
+    Vec2 halfExtents;
+};
+
+typedef AddEllipseParams AddRectangleParams;
+
+struct AddTriangleParams {
+    Vec2 point1;
+    Vec2 point2;
+    Vec2 point3;
+};
+
+struct AddEntityParams {
+    int entityType = 0;
+    Transform transform;
+    Color color;
+
+    union {
+        AddEllipseParams ellipse;
+        AddRectangleParams rectangle;
+        AddTriangleParams triangle;
+    };
+};
+
 enum GridViewMode {
     GRID_VIEW_MODE_NONE = 0,
     GRID_VIEW_MODE_FOREGROUND = 1,
@@ -56,6 +88,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateRenderConfig(HImag
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_SetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform transform);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform, float* pWidthFromheight);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_TEMP_MoveCameraLocalSpace(HImageWriterInstance instance, char* pStatusMessage, Transform delta);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterInstance instance, char* pStatusMessage, AddEntityParams params);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 halfExtents);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 halfExtents);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3);

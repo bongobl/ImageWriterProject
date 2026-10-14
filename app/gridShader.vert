@@ -24,7 +24,7 @@ void main()
 		int x = int(ceil(minX) + ind / 2);
 		int y = int(ind % 2 == 0 ? floor(minY) : ceil(maxY));
 		gridPosition = vec4(x, y, 0, 1);
-		opacity = x != 0 ? (x % 10 != 0 ? 0.2 * getColorScaleFactor(cameraScale) : 0.4) : 0.8;
+		opacity = abs(x) != 0 ? (abs(x) % 10 != 0 ? 0.2 * getColorScaleFactor(cameraScale) : 0.4) : 0.8;
 	}
 	else 
 	{
@@ -32,7 +32,7 @@ void main()
 		int y = int(ceil(minY) + ind / 2);
 		int x = int(ind % 2 == 0 ? floor(minX) : ceil(maxX));
 		gridPosition = vec4(x, y, 0, 1);
-		opacity = y != 0 ? (y % 10 != 0 ? 0.2 * getColorScaleFactor(cameraScale) : 0.4) : 0.8;
+		opacity = abs(y) != 0 ? (abs(y) % 10 != 0 ? 0.2 * getColorScaleFactor(cameraScale) : 0.4) : 0.8;
 	}
 
     // transform the vertex position

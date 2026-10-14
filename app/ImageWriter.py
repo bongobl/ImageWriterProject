@@ -60,14 +60,8 @@ class Framework(ctypes.Structure):
         self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.argtypes = [Framework, ctypes.c_char_p, Transform]
         self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_AddEllipse.argtypes = [Framework, ctypes.c_char_p, Transform, Color, Vec2]
-        self.runtimeLib.ImageWriter_Scene_AddEllipse.restype = ctypes.c_bool
-
-        self.runtimeLib.ImageWriter_Scene_AddRectangle.argtypes = [Framework, ctypes.c_char_p, Transform, Color, Vec2]
-        self.runtimeLib.ImageWriter_Scene_AddRectangle.restype = ctypes.c_bool
-
-        self.runtimeLib.ImageWriter_Scene_AddTriangle.argtypes = [Framework, ctypes.c_char_p, Transform, Color, Vec2, Vec2, Vec2]
-        self.runtimeLib.ImageWriter_Scene_AddTriangle.restype = ctypes.c_bool
+        self.runtimeLib.ImageWriter_Scene_AddEntity.argtypes = [Framework, ctypes.c_char_p, AddEntityParams]
+        self.runtimeLib.ImageWriter_Scene_AddEntity.restype = ctypes.c_bool
 
         self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.argtypes = [Framework, ctypes.c_char_p]
         self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.restype = ctypes.c_bool
@@ -135,14 +129,8 @@ class Framework(ctypes.Structure):
     def TEMP_MoveCameraLocalSpace(self, statusMessage, transform):
         return self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace(self, statusMessage, transform)
 
-    def AddEllipse(self, statusMessage, transform, color, halfExtents):
-        return self.runtimeLib.ImageWriter_Scene_AddEllipse(self, statusMessage, transform, color, halfExtents)
-
-    def AddRectangle(self, statusMessage, transform, color, halfExtents):
-        return self.runtimeLib.ImageWriter_Scene_AddRectangle(self, statusMessage, transform, color, halfExtents)
-
-    def AddTriangle(self, statusMessage, transform, color, point1, point2, point3):
-        return self.runtimeLib.ImageWriter_Scene_AddTriangle(self, statusMessage, transform, color, point1, point2, point3)
+    def AddEntity(self, statusMessage, params):
+        return self.runtimeLib.ImageWriter_Scene_AddEntity(self, statusMessage, params)
 
     def RemoveAllEntities(self, statusMessage):
         return self.runtimeLib.ImageWriter_Scene_RemoveAllEntities(self, statusMessage)

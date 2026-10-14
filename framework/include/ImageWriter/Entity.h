@@ -7,7 +7,9 @@
 
 class Camera;
 class EntityGeometry;
-enum class EntityType
+
+// Note: Should mirror API level EntityType
+enum class Core_Internal_EntityType
 {
 	None = 0,
 	Ellipse = 1,
@@ -16,7 +18,7 @@ enum class EntityType
 };
 struct Entity {
 
-	using Type = EntityType;
+	using Type = Core_Internal_EntityType;
 	Type m_Type;
 	Transform m_Transform;
 	Color m_Color;
@@ -78,6 +80,7 @@ public:
 	EntityList();
 	~EntityList();
 
+	void addEntity(AddEntityParams params);
 	void addEllipse(const Transform& transform, Color& color, Vec2 halfExtents);
 	void addRectangle(const Transform& transform, Color& color, Vec2 halfExtents);
 	void addTriangle(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
@@ -85,5 +88,5 @@ public:
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
 	void destroyAllShapes();
 
-	EntityGeometry* getGeometryForEntity(EntityType type);
+	EntityGeometry* getGeometryForEntity(Entity::Type type);
 };

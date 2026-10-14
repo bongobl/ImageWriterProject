@@ -228,11 +228,12 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 
 	return true;
 }
-extern "C" __declspec(dllexport) bool scene_addEllipse(InstanceData instanceData, Transform transform, Color color, Vec2 halfExtents)
+
+extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, AddEntityParams params)
 {
 	if (!instanceData.pCoreData) {
-		std::cerr << "Core entry scene_addEllipse(): instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_addEllipse()");
+		std::cerr << "Core entry scene_addEntity(): instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_addEntity()");
 		return false;
 	}
 
@@ -241,58 +242,17 @@ extern "C" __declspec(dllexport) bool scene_addEllipse(InstanceData instanceData
 	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
 
 	if (!pCoreData->m_pScene) {
-		std::cerr << "Core entry scene_addEllipse(): pCoreData->m_pScene was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_addEllipse() on non-existent scene");
+		std::cerr << "Core entry scene_addEntity(): pCoreData->m_pScene was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_addEntity() on non-existent scene");
 		return false;
 	}
 
-	pCoreData->m_pScene->m_Entities.addEllipse(transform, color, halfExtents);
+	pCoreData->m_pScene->addEntity(params);
+
+
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool scene_addRectangle(InstanceData instanceData, Transform transform, Color color, Vec2 halfExtents)
-{
-	if (!instanceData.pCoreData) {
-		std::cerr << "Core entry scene_addRectangle(): instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_addRectangle()");
-		return false;
-	}
-
-	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-
-	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
-
-	if (!pCoreData->m_pScene) {
-		std::cerr << "Core entry scene_addRectangle(): pCoreData->m_pScene was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_addRectangle() on non-existent scene");
-		return false;
-	}
-
-	pCoreData->m_pScene->m_Entities.addRectangle(transform, color, halfExtents);
-	return true;
-}
-
-extern "C" __declspec(dllexport) bool scene_addTriangle(InstanceData instanceData, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3)
-{
-	if (!instanceData.pCoreData) {
-		std::cerr << "Core entry scene_addTriangle(): instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_addTriangle()");
-		return false;
-	}
-
-	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-
-	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
-
-	if (!pCoreData->m_pScene) {
-		std::cerr << "Core entry scene_addTriangle(): pCoreData->m_pScene was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_addTriangle() on non-existent scene");
-		return false;
-	}
-
-	pCoreData->m_pScene->m_Entities.addTriangle(transform, color, point1, point2, point3);
-	return true;
-}
 extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData)
 {
 	if (!instanceData.pCoreData) {

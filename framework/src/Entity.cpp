@@ -11,18 +11,18 @@ Entity::Entity(Type type, const Transform& transform, Color& color) :
 }
 
 EllipseEntity::EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents) :
-	Entity(EntityType::Ellipse, transform, color), m_HalfExtents(halfExtents)
+	Entity(Entity::Type::Ellipse, transform, color), m_HalfExtents(halfExtents)
 {
 
 }
 
 RectangleEntity::RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents) :
-	Entity(EntityType::Rectangle, transform, color), m_HalfExtents(halfExtents)
+	Entity(Entity::Type::Rectangle, transform, color), m_HalfExtents(halfExtents)
 {
 }
 
 TriangleEntity::TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3) :
-	Entity(EntityType::Triangle, transform, color), m_Point1(point1), m_Point2(point2), m_Point3(point3)
+	Entity(Entity::Type::Triangle, transform, color), m_Point1(point1), m_Point2(point2), m_Point3(point3)
 {
 }
 
@@ -80,6 +80,20 @@ EntityList::~EntityList()
 	destroyAllShapes();
 }
 
+void EntityList::addEntity(AddEntityParams params)
+{
+	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
+
+	if (params.entityType == ENTITY_TYPE_ELLIPSE) {
+		m_Entities.push_back(new EllipseEntity(params.transform, params.color, params.ellipse.halfExtents));
+	}
+	if (params.entityType == ENTITY_TYPE_RECTANGLE) {
+		m_Entities.push_back(new RectangleEntity(params.transform, params.color, params.rectangle.halfExtents));
+	}
+	if (params.entityType == ENTITY_TYPE_TRIANGLE) {
+		m_Entities.push_back(new TriangleEntity(params.transform, params.color, params.triangle.point1, params.triangle.point2, params.triangle.point3));
+	}
+}
 void EntityList::addEllipse(const Transform& transform, Color& color, Vec2 halfExtents)
 {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
@@ -133,14 +147,14 @@ void EntityList::destroyAllShapes() {
 	m_Entities.clear();
 }
 
-EntityGeometry* EntityList::getGeometryForEntity(EntityType type)
+EntityGeometry* EntityList::getGeometryForEntity(Entity::Type type)
 {
 	switch (type) {
-	case EntityType::Ellipse:
+	case Entity::Type::Ellipse:
 		return &m_EllipseVerts;
-	case EntityType::Rectangle:
+	case Entity::Type::Rectangle:
 		return &m_RectangleVerts;
-	case EntityType::Triangle:
+	case Entity::Type::Triangle:
 		return &m_TriangleVerts;
 	}
 	return nullptr;

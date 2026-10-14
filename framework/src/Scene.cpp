@@ -287,6 +287,10 @@ void Scene::render()
 	m_pWindow->display();
 }
 
+void Scene::addEntity(AddEntityParams params)
+{
+	m_Entities.addEntity(params);
+}
 void Scene::updateRenderConfig(RenderConfig renderConfig)
 {
 	m_RenderConfig = renderConfig;

@@ -117,11 +117,15 @@ def runNetworkService():
                             # deserialize addEllipse params
                             ellipseParams = AddEllipseParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {ellipseParams}")
-                            frameworkFunctionSucceeded = framework.AddEllipse(
-                                frameworkFunctionMessage, 
-                                ellipseParams.transform, 
-                                ellipseParams.color,
-                                ellipseParams.halfExtents
+
+                            frameworkFunctionSucceeded = framework.AddEntity(
+                                frameworkFunctionMessage,
+                                iw.AddEntityParams(
+                                    entityType = iw.EntityType.ELLIPSE, 
+                                    transform = ellipseParams.transform,
+                                    color = ellipseParams.color,
+                                    ellipse = iw.AddEllipseParams(halfExtents = ellipseParams.halfExtents)
+                                )
                             )
 
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
@@ -138,11 +142,15 @@ def runNetworkService():
                             # deserialize addRectangle params
                             rectangleParams = AddRectangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {rectangleParams}")
-                            frameworkFunctionSucceeded = framework.AddRectangle(
-                                frameworkFunctionMessage, 
-                                rectangleParams.transform, 
-                                rectangleParams.color,
-                                rectangleParams.halfExtents
+
+                            frameworkFunctionSucceeded = framework.AddEntity(
+                                frameworkFunctionMessage,
+                                iw.AddEntityParams(
+                                    entityType = iw.EntityType.RECTANGLE, 
+                                    transform = rectangleParams.transform,
+                                    color = rectangleParams.color,
+                                    rectangle = iw.AddRectangleParams(halfExtents = rectangleParams.halfExtents)
+                                )
                             )
                             
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
@@ -159,13 +167,19 @@ def runNetworkService():
                             # deserialize addRectangle params
                             triangleParams = AddTriangleParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {triangleParams}")
-                            frameworkFunctionSucceeded = framework.AddTriangle(
+ 
+                            frameworkFunctionSucceeded = framework.AddEntity(
                                 frameworkFunctionMessage,
-                                triangleParams.transform, 
-                                triangleParams.color,
-                                triangleParams.point1, 
-                                triangleParams.point2, 
-                                triangleParams.point3
+                                iw.AddEntityParams(
+                                    entityType = iw.EntityType.TRIANGLE, 
+                                    transform = triangleParams.transform,
+                                    color = triangleParams.color,
+                                    triangle = iw.AddTriangleParams(
+                                        point1 = triangleParams.point1,
+                                        point2 = triangleParams.point2,
+                                        point3 = triangleParams.point3,
+                                    )
+                                )
                             )
                             
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)

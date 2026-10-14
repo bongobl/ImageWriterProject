@@ -88,6 +88,7 @@ public:
 	void updateState(float deltaTime);
 	void render();
 
+	void addEntity(AddEntityParams params);
 	void updateRenderConfig(RenderConfig renderConfig);
 	bool isSelfManagedRenderWindowOpen() const;
 };

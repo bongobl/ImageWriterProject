@@ -7,7 +7,7 @@ def createSomeSampleShapes():
     imageWriter = window.framework;
     statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
-    input("Wait for a bit here for Window to initialize... Press Enter")
+    input("Press Enter")
 
     cameraTransform = iw.Transform()
     widthFromheight = ctypes.c_float(0.0)
@@ -26,10 +26,15 @@ def createSomeSampleShapes():
 
     for i in range(dimY):
         for j in range(dimX):
-            if not imageWriter.AddEllipse(statusMessage,
-                iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
-                iw.Color(red = 1, green = 0, blue = 0, alpha = 1),
-                iw.Vec2(0.5, 0.35)
+
+            if not imageWriter.AddEntity(
+                statusMessage,
+                iw.AddEntityParams(
+                    entityType = iw.EntityType.ELLIPSE, 
+                    transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
+                    color = iw.Color(red = 1, green = 0, blue = 0, alpha = 1),
+                    ellipse = iw.AddEllipseParams(halfExtents = iw.Vec2(0.5, 0.35))
+                )
             ):
                 print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
@@ -40,10 +45,14 @@ def createSomeSampleShapes():
     input("Press Enter")
     for i in range(dimY):
         for j in range(dimX):
-            if not imageWriter.AddRectangle(statusMessage,
-                iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
-                iw.Color(red = 0, green = 1, blue = 1, alpha = 1),
-                iw.Vec2(0.5, 0.35)
+            if not imageWriter.AddEntity(
+                statusMessage,
+                iw.AddEntityParams(
+                    entityType = iw.EntityType.RECTANGLE, 
+                    transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
+                    color = iw.Color(red = 0, green = 1, blue = 1, alpha = 1),
+                    rectangle = iw.AddRectangleParams(halfExtents = iw.Vec2(0.5, 0.35))
+                )
             ):
                 print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
@@ -54,10 +63,18 @@ def createSomeSampleShapes():
     input("Press Enter")
     for i in range(dimY):
         for j in range(dimX):
-            if not imageWriter.AddTriangle(statusMessage,
-                iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
-                iw.Color(red = 1, green = 1, blue = 0, alpha = 1),
-                iw.Vec2(-0.5, 0.35), iw.Vec2(-0.5, -0.35), iw.Vec2(0.5, 0)
+            if not imageWriter.AddEntity(
+                statusMessage,
+                iw.AddEntityParams(
+                    entityType = iw.EntityType.TRIANGLE, 
+                    transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
+                    color = iw.Color(red = 1, green = 1, blue = 0, alpha = 1),
+                    triangle = iw.AddTriangleParams(
+                        point1 = iw.Vec2(-0.5, 0.35), 
+                        point2 = iw.Vec2(-0.5, -0.35), 
+                        point3 = iw.Vec2(0.5, 0)
+                    )
+                )
             ):
                 print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     

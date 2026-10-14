@@ -98,27 +98,10 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         return false;
     }
 
+    PfnCore_Scene_AddEntity pfnCore_Scene_AddEntity = (PfnCore_Scene_AddEntity)GetProcAddress(hDll, "scene_addEntity");
 
-    PfnCore_Scene_AddEllipse pfnCore_Scene_AddEllipse = (PfnCore_Scene_AddEllipse)GetProcAddress(hDll, "scene_addEllipse");
-
-    if (pfnCore_Scene_AddEllipse == NULL) {
-        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_addEllipse could not load\n");
-        FreeLibrary(hDll);
-        return false;
-    }
-
-    PfnCore_Scene_AddRectangle pfnCore_Scene_AddRectangle = (PfnCore_Scene_AddRectangle)GetProcAddress(hDll, "scene_addRectangle");
-
-    if (pfnCore_Scene_AddRectangle == NULL) {
-        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_addRectangle could not load\n");
-        FreeLibrary(hDll);
-        return false;
-    }
-
-    PfnCore_Scene_AddTriangle pfnCore_Scene_AddTriangle = (PfnCore_Scene_AddTriangle)GetProcAddress(hDll, "scene_addTriangle");
-
-    if (pfnCore_Scene_AddTriangle == NULL) {
-        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_addTriangle could not load\n");
+    if (pfnCore_Scene_AddEntity == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_addEntity could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -148,9 +131,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         .pfnCore_Scene_SetCameraTransform = pfnCore_Scene_SetCameraTransform,
         .pfnCore_Scene_GetCameraTransform = pfnCore_Scene_GetCameraTransform,
         .pfnCore_Scene_TEMP_MoveCameraLocalSpace = pfnCore_Scene_TEMP_MoveCameraLocalSpace,
-        .pfnCore_Scene_AddEllipse = pfnCore_Scene_AddEllipse,
-        .pfnCore_Scene_AddRectangle = pfnCore_Scene_AddRectangle,
-        .pfnCore_Scene_AddTriangle = pfnCore_Scene_AddTriangle,
+        .pfnCore_Scene_AddEntity = pfnCore_Scene_AddEntity,
         .pfnCore_Scene_removeAllEntities = pfnCore_Scene_removeAllEntities,
     };
 
@@ -275,43 +256,20 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_TEMP_MoveCameraLocalSpac
     return pInstanceData->pfnCore_Scene_TEMP_MoveCameraLocalSpace(*pInstanceData, delta);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEllipse(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 halfExtents)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterInstance instance, char* pStatusMessage, AddEntityParams params)
 {
-    if (!instance.pData) {
-        fprintf(stderr, "ImageWriter_Scene_AddEllipse: instance.pData was null\n");
-        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_AddEllipse() from its underlying framework correctly");
+    if(!instance.pData) {
+        fprintf(stderr, "ImageWriter_Scene_AddEntity: instance.pData was null\n");
+        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_AddEntity() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_AddEllipse(*pInstanceData, transform, color, halfExtents);
-}
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddRectangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 halfExtents)
-{
-    if (!instance.pData) {
-        fprintf(stderr, "ImageWriter_Scene_AddRectangle: instance.pData was null\n");
-        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_AddRectangle() from its underlying framework correctly");
-        return false;
-    }
+    return pInstanceData->pfnCore_Scene_AddEntity(*pInstanceData, params);
 
-    InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_AddRectangle(*pInstanceData, transform, color, halfExtents);
-}
-
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddTriangle(HImageWriterInstance instance, char* pStatusMessage, Transform transform, Color color, Vec2 point1, Vec2 point2, Vec2 point3)
-{
-    if (!instance.pData) {
-        fprintf(stderr, "ImageWriter_Scene_AddTriangle: instance.pData was null\n");
-        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_AddTriangle() from its underlying framework correctly");
-        return false;
-    }
-
-    InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_AddTriangle(*pInstanceData, transform, color, point1, point2, point3);
+    return true;
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveAllEntities(HImageWriterInstance instance, char* pStatusMessage)

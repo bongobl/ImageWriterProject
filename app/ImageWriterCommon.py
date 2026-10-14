@@ -1,6 +1,7 @@
 import ctypes
 from ctypes import *
 from pydantic import BaseModel, Field
+from enum import IntEnum
 
 MAX_REPLY_MESSAGE_LENGTH = 512
 
@@ -129,3 +130,43 @@ class Color(ctypes.Structure):
         self.green = payload.green
         self.blue = payload.blue 
         self.alpha = payload.alpha 
+
+
+class EntityType(IntEnum):
+    NONE = 0
+    ELLIPSE = 1
+    RECTANGLE = 2
+    TRIANGLE = 3
+
+class AddEllipseParams(ctypes.Structure):
+    _fields_ = [
+        ("halfExtents", Vec2),
+    ]
+
+class AddRectangleParams(ctypes.Structure):
+    _fields_ = [
+        ("halfExtents", Vec2),
+    ]
+
+class AddTriangleParams(ctypes.Structure):
+    _fields_ = [
+        ("point1", Vec2),
+        ("point2", Vec2),
+        ("point3", Vec2),
+    ]
+
+class EntityParamsUnion(ctypes.Union):
+    _fields_ = [
+        ("ellipse", AddEllipseParams),
+        ("rectangle", AddRectangleParams),
+        ("triangle", AddTriangleParams),
+    ]
+
+class AddEntityParams(ctypes.Structure):
+    _fields_ = [
+        ("entityType", ctypes.c_int),
+        ("transform", Transform),
+        ("color", Color),
+        ("entityParamsUnion", EntityParamsUnion),
+    ]
+    _anonymous_ = ("entityParamsUnion",)
