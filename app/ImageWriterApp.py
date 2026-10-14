@@ -106,82 +106,20 @@ def runNetworkService():
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
 
-                        case Command.AddEllipse:
+                        case Command.AddEntity:
 
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(AddEllipseParams))
+                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(AddEntityParams))
                             if not status:
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
 
                             # deserialize addEllipse params
-                            ellipseParams = AddEllipseParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {ellipseParams}")
+                            entityParams = AddEntityParams.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {entityParams}")
 
-                            frameworkFunctionSucceeded = framework.AddEntity(
-                                frameworkFunctionMessage,
-                                iw.AddEntityParams(
-                                    entityType = iw.EntityType.ELLIPSE, 
-                                    transform = ellipseParams.transform,
-                                    color = ellipseParams.color,
-                                    ellipse = iw.AddEllipseParams(halfExtents = ellipseParams.halfExtents)
-                                )
-                            )
+                            frameworkFunctionSucceeded = framework.AddEntity(frameworkFunctionMessage, entityParams)
 
-                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = PlainReply(status = commandStatus)
-
-                        case Command.AddRectangle:
-
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(AddRectangleParams))
-                            if not status:
-                                # print error message and return to listening state
-                                print(errorMessage)
-                                break
-
-                            # deserialize addRectangle params
-                            rectangleParams = AddRectangleParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {rectangleParams}")
-
-                            frameworkFunctionSucceeded = framework.AddEntity(
-                                frameworkFunctionMessage,
-                                iw.AddEntityParams(
-                                    entityType = iw.EntityType.RECTANGLE, 
-                                    transform = rectangleParams.transform,
-                                    color = rectangleParams.color,
-                                    rectangle = iw.AddRectangleParams(halfExtents = rectangleParams.halfExtents)
-                                )
-                            )
-                            
-                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = PlainReply(status = commandStatus)
-                        
-                        case Command.AddTriangle:
-
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(AddTriangleParams))
-                            if not status:
-                                # print error message and return to listening state
-                                print(errorMessage)
-                                break
-
-                            # deserialize addRectangle params
-                            triangleParams = AddTriangleParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {triangleParams}")
- 
-                            frameworkFunctionSucceeded = framework.AddEntity(
-                                frameworkFunctionMessage,
-                                iw.AddEntityParams(
-                                    entityType = iw.EntityType.TRIANGLE, 
-                                    transform = triangleParams.transform,
-                                    color = triangleParams.color,
-                                    triangle = iw.AddTriangleParams(
-                                        point1 = triangleParams.point1,
-                                        point2 = triangleParams.point2,
-                                        point3 = triangleParams.point3,
-                                    )
-                                )
-                            )
-                            
                             commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = PlainReply(status = commandStatus)
 

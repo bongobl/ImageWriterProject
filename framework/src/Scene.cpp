@@ -23,7 +23,7 @@ void Camera::updateComputedState(int initialWindowHeight)
 	const Transform& cameraTransform = getTransform();
 
 	m_ComputedState.pixelsPerWorldUnit = (initialWindowHeight / 2.0f) / cameraTransform.scale;
-	m_ComputedState.cameraFromWorld = sf::fromCore(cameraTransform).getInverse();
+	m_ComputedState.cameraFromWorld = sf::fromCore(inverse(cameraTransform));
 }
 
 Camera::ComputedState Camera::getComputedState() const

@@ -143,10 +143,16 @@ class AddEllipseParams(ctypes.Structure):
         ("halfExtents", Vec2),
     ]
 
+    def __str__(self):
+        return f"(AddEllipseParams: halfExtents = {self.halfExtents})"
+
 class AddRectangleParams(ctypes.Structure):
     _fields_ = [
         ("halfExtents", Vec2),
     ]
+
+    def __str__(self):
+        return f"(AddRectangleParams: halfExtents = {self.halfExtents})"
 
 class AddTriangleParams(ctypes.Structure):
     _fields_ = [
@@ -154,6 +160,9 @@ class AddTriangleParams(ctypes.Structure):
         ("point2", Vec2),
         ("point3", Vec2),
     ]
+
+    def __str__(self):
+        return f"(AddTriangleParams: point1 = {self.point1}, point2 = {self.point2}, point3 = {self.point3})"
 
 class EntityParamsUnion(ctypes.Union):
     _fields_ = [
@@ -170,3 +179,21 @@ class AddEntityParams(ctypes.Structure):
         ("entityParamsUnion", EntityParamsUnion),
     ]
     _anonymous_ = ("entityParamsUnion",)
+
+    def __str__(self):
+
+        typeStr = ""
+        match self.entityType:
+            case EntityType.NONE:
+                typeStr = "NONE"
+            case EntityType.ELLIPSE:
+                typeStr = f"{self.ellipse}";
+            case EntityType.RECTANGLE:
+                typeStr = f"{self.rectangle}";
+            case EntityType.TRIANGLE:
+                typeStr = f"{self.triangle}";
+            case _:
+                typeStr = "Unrecognized type value"
+
+        return f"(AddEntityParams: transform = {self.transform}, color = {self.color}, entity type = " + typeStr
+        
