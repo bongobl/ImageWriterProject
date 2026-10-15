@@ -122,8 +122,7 @@ void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
 
 	std::shared_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
-	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(camera.m_HomogFromCamera));
-	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(camera.getComputedState().cameraFromWorld));
+	m_VertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
 
 	for (int i = 0; i < m_Entities.size(); ++i) {
 		const Entity* pCurrEntity = m_Entities.at(i);

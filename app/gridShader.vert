@@ -1,7 +1,6 @@
 #version 460
 
-uniform mat4 homogFromCamera;
-uniform mat4 cameraFromWorld;
+uniform mat4 homogFromWorld;
 uniform float cameraScale;
 
 uniform float minX;
@@ -36,7 +35,7 @@ void main()
 	}
 
     // transform the vertex position
-    gl_Position =  homogFromCamera * cameraFromWorld * gridPosition;
+    gl_Position =  homogFromWorld * gridPosition;
 
 
     // forward the vertex color

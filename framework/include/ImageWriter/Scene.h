@@ -10,11 +10,12 @@ public:
 	struct ComputedState {
 		// computed states
 		float pixelsPerWorldUnit = 1;
-		sf::Transform cameraFromWorld = sf::Transform::Identity;
+		Transform cameraFromWorld;
+		sf::Glsl::Mat4 glsl_homogFromWorld = sf::Glsl::Mat4(sf::Transform::Identity);
 	};
 
 private:
-	Transform m_Transform;
+	Transform m_WorldFromCamera;
 	mutable std::shared_mutex m_TransformMutex;
 
 	ComputedState m_ComputedState;
@@ -24,7 +25,7 @@ public:
 
 	// constant over lifetime (no mutex needed)
 	float m_widthFromHeight;
-	sf::Transform m_HomogFromCamera = sf::Transform::Identity;
+	sf::Transform m_sfHomogFromCamera = sf::Transform::Identity;
 
 	
 	static constexpr float MaxScale = 100.0f;
@@ -66,20 +67,24 @@ public:
 };
 
 class Scene {
-public:
 
 	RenderConfig m_RenderConfig;
+	mutable std::shared_mutex m_RenderConfigMutex;
+
 	bool m_isWindowSelfManaged = true;
 
 	sf::RenderWindow* m_pWindow = nullptr;
 	sf::Vector2f windowInitialExtents = sf::Vector2f(0, 0);
 
+	sf::Vector2i mousePosition;
+
+	GridView m_GridView;
+public:
+
 
 	Camera m_Camera;
+
 	EntityList m_Entities;
-	sf::Vector2i mousePosition;
-	
-	GridView m_GridView;
 
 public:
 	Scene(int64_t windowHandle, RenderConfig renderConfig);

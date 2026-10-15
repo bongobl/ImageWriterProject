@@ -4,16 +4,15 @@
 #include <iostream>
 
 Camera::Camera() : 
-	m_Transform({ .position = { .x = 0, .y = 0 }, .orientation = 0, .scale = Camera::StartingScale }),
+	m_WorldFromCamera({ .position = { .x = 0, .y = 0 }, .orientation = 0, .scale = Camera::StartingScale }),
 	m_widthFromHeight(0)
 {
-
 }
 
 void Camera::setPosition(Vec2 position) 
 {
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
-	m_Transform.position = position;
+	m_WorldFromCamera.position = position;
 }
 
 void Camera::updateComputedState(int initialWindowHeight)
@@ -23,7 +22,8 @@ void Camera::updateComputedState(int initialWindowHeight)
 	const Transform& cameraTransform = getTransform();
 
 	m_ComputedState.pixelsPerWorldUnit = (initialWindowHeight / 2.0f) / cameraTransform.scale;
-	m_ComputedState.cameraFromWorld = sf::fromCore(inverse(cameraTransform));
+	m_ComputedState.cameraFromWorld = inverse(cameraTransform);
+	m_ComputedState.glsl_homogFromWorld = sf::Glsl::Mat4(m_sfHomogFromCamera * sf::fromCore(m_ComputedState.cameraFromWorld));
 }
 
 Camera::ComputedState Camera::getComputedState() const
@@ -33,41 +33,41 @@ Camera::ComputedState Camera::getComputedState() const
 }
 void Camera::setOrientation(float orientation) {
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
-	m_Transform.orientation = orientation;
+	m_WorldFromCamera.orientation = orientation;
 }
 
 void Camera::setScale(float scale) {
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
-	m_Transform.scale = scale;
+	m_WorldFromCamera.scale = scale;
 }
 
 void Camera::move(Vec2 delta) {
 
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
-	m_Transform.position.x += delta.x;
-	m_Transform.position.y += delta.y;
+	m_WorldFromCamera.position.x += delta.x;
+	m_WorldFromCamera.position.y += delta.y;
 }
 
 void Camera::rotate(float deltaDegrees) {
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
-	m_Transform.orientation += deltaDegrees;
+	m_WorldFromCamera.orientation += deltaDegrees;
 }
 
 void Camera::incrementScale(float deltaScale) {
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
-	m_Transform.scale += deltaScale;
+	m_WorldFromCamera.scale += deltaScale;
 }
 
 void Camera::setTransform(const Transform& transform) {
 
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
-	m_Transform = transform;
+	m_WorldFromCamera = transform;
 
 }
 
 Transform Camera::getTransform() const {
 	std::shared_lock<std::shared_mutex> lock(m_TransformMutex);
-	return m_Transform;
+	return m_WorldFromCamera;
 }
 
 void Camera::validate(std::stringstream* pStream)
@@ -75,21 +75,21 @@ void Camera::validate(std::stringstream* pStream)
 	// TODO: need to take in streamstream and append to it rather than writing to raw C string, 
 	// this will allow additional validate functions to attach their message to the MCP string
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
-	if (m_Transform.scale > Camera::MaxScale) {
+	if (m_WorldFromCamera.scale > Camera::MaxScale) {
 
 		if (pStream) {
 			*pStream << "Warning: camera scale can not be greater than " << Camera::MaxScale << ", setting camera scale to " << Camera::MaxScale;
 		}
 		
-		m_Transform.scale = Camera::MaxScale;
+		m_WorldFromCamera.scale = Camera::MaxScale;
 	}
-	else if (m_Transform.scale < Camera::MinScale) {
+	else if (m_WorldFromCamera.scale < Camera::MinScale) {
 
 		if (pStream) {
 			*pStream << "Warning: camera scale can not be less than " << Camera::MinScale << ", setting camera scale to " << Camera::MinScale;
 		}
 		
-		m_Transform.scale = Camera::MinScale;
+		m_WorldFromCamera.scale = Camera::MinScale;
 	}
 }
 
@@ -144,8 +144,7 @@ void GridView::draw(sf::RenderWindow& window, const Camera& camera)
 	int numTotalVerts = (numXLines + numYLines) * 2;
 	// std::cout << "numXLines = " << numXLines << ", numYLines = " << numYLines << ", numTotalVerts = " << numTotalVerts << std::endl;
 
-	m_VertexShader.setUniform("homogFromCamera", sf::Glsl::Mat4(camera.m_HomogFromCamera));
-	m_VertexShader.setUniform("cameraFromWorld", sf::Glsl::Mat4(camera.getComputedState().cameraFromWorld));
+	m_VertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
 	m_VertexShader.setUniform("cameraScale", cameraTransform.scale);
 	m_VertexShader.setUniform("minX", minX);
 	m_VertexShader.setUniform("maxX", maxX);
@@ -190,7 +189,7 @@ Scene::Scene(int64_t windowHandle, RenderConfig renderConfig) :
 
 	// camera constants
 	m_Camera.m_widthFromHeight = (float)windowInitialExtents.x / windowInitialExtents.y;
-	m_Camera.m_HomogFromCamera = m_Camera.m_HomogFromCamera.scale(sf::Vector2f((float)windowInitialExtents.y / windowInitialExtents.x, 1));
+	m_Camera.m_sfHomogFromCamera = m_Camera.m_sfHomogFromCamera.scale(sf::Vector2f((float)windowInitialExtents.y / windowInitialExtents.x, 1));
 
 	mousePosition = sf::Mouse::getPosition(window);
 
@@ -267,6 +266,7 @@ void Scene::updateState(float deltaTime)
 }
 void Scene::render()
 {
+	std::shared_lock<std::shared_mutex> renderConfigLock(m_RenderConfigMutex);
 	// Draw
 	m_pWindow->clear();
 
@@ -293,6 +293,7 @@ void Scene::addEntity(AddEntityParams params)
 }
 void Scene::updateRenderConfig(RenderConfig renderConfig)
 {
+	std::unique_lock<std::shared_mutex> renderConfigLock(m_RenderConfigMutex);
 	m_RenderConfig = renderConfig;
 }
 
