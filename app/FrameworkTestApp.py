@@ -1,6 +1,6 @@
 import pygame, threading, time, ctypes, tkinter as tk
 from ctypes import *
-import ImageWriter as iw
+import ImageWriterPackage as iw
 
 def createSomeSampleShapes():
 
@@ -138,6 +138,7 @@ def createSomeSampleShapes():
 
 if __name__ == "__main__":
 
+    ttt = iw.Transform()
     # create UI
     window = iw.Window(name = "My Test App", windowSize="1920x1480")    
     

@@ -1,7 +1,6 @@
-import socket, threading, time, errno, ImageWriter, tkinter as tk
+import socket, threading, time, errno, ctypes, tkinter as tk
 from ctypes import *
-from ImageWriterProtocol import *
-import ImageWriter as iw
+import ImageWriterPackage as iw
 
 # Winsock Constant: Socket operation on non-socket
 WSAENOTSOCK = 10038
@@ -19,13 +18,13 @@ def runNetworkService():
         # Prevent "Address already in use" errors upon restart
         serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        serverSocket.bind((HOST_IP, PORT))
+        serverSocket.bind((iw.HOST_IP, iw.PORT))
         serverSocket.listen()
 
         # continually come back here to listen for new clients after previous ones disconnect
         while True:
 
-            print(f"Server: listening on {HOST_IP}:{PORT}...")
+            print(f"Server: listening on {iw.HOST_IP}:{iw.PORT}...")
 
             # listening state: wait here until a client connects
             if 'connToClient' in globals():
@@ -52,78 +51,78 @@ def runNetworkService():
 
                     # wait here and receive command from client
                     commandBuffer = bytearray()
-                    status, errorMessage = receiveMessage(buffer = commandBuffer, connection = connToClient, size = COMMAND_SIZE)
+                    status, errorMessage = iw.receiveMessage(buffer = commandBuffer, connection = connToClient, size = iw.COMMAND_SIZE)
                     if not status:
                         # print error message and return to listening state
                         print(errorMessage)
                         break
 
-                    command = Command(int.from_bytes(commandBuffer))
+                    command = iw.Command(int.from_bytes(commandBuffer))
 
                     # wait here and receive message from client
                     paramsBuffer = bytearray()
                     
-                    frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", MAX_REPLY_MESSAGE_LENGTH)
+                    frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", iw.MAX_REPLY_MESSAGE_LENGTH)
                     match command:
                         
-                        case Command.SetCameraTransform:
+                        case iw.Command.SetCameraTransform:
                             
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(SetCameraTransformParams))
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(iw.SetCameraTransformParams))
                             if not status:
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
 
                             # deserialize addEllipse params
-                            params = SetCameraTransformParams.from_buffer_copy(paramsBuffer)
+                            params = iw.SetCameraTransformParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {params}")
 
                             frameworkFunctionSucceeded = framework.SetCameraTransform(frameworkFunctionMessage, params.transform)
 
-                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = PlainReply(status = commandStatus)
+                            commandStatus = iw.Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = iw.PlainReply(status = commandStatus)
 
-                        case Command.GetCameraTransform:
+                        case iw.Command.GetCameraTransform:
 
                             print("From client: Getting the camera transform")
                             cameraTransform = iw.Transform()
                             widthFromheight = ctypes.c_float(0.0)
                             frameworkFunctionSucceeded = framework.GetCameraTransform(frameworkFunctionMessage, cameraTransform, widthFromheight)
 
-                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = TransformReply(
+                            commandStatus = iw.Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = iw.TransformReply(
                                 status = commandStatus, 
                                 transform = cameraTransform, 
                                 cameraWidthFromHeight = widthFromheight
                             )
 
-                        case Command.RemoveAllEntities:
+                        case iw.Command.RemoveAllEntities:
 
                             print("From client: removing all entities from scene")
                             frameworkFunctionSucceeded = framework.RemoveAllEntities(frameworkFunctionMessage)
 
 
-                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = PlainReply(status = commandStatus)
+                            commandStatus = iw.Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = iw.PlainReply(status = commandStatus)
 
-                        case Command.AddEntity:
+                        case iw.Command.AddEntity:
 
-                            status, errorMessage = receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(AddEntityParams))
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(iw.AddEntityParams))
                             if not status:
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
 
                             # deserialize addEllipse params
-                            entityParams = AddEntityParams.from_buffer_copy(paramsBuffer)
+                            entityParams = iw.AddEntityParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {entityParams}")
 
                             frameworkFunctionSucceeded = framework.AddEntity(frameworkFunctionMessage, entityParams)
 
-                            commandStatus = Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = PlainReply(status = commandStatus)
+                            commandStatus = iw.Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = iw.PlainReply(status = commandStatus)
 
-                        case Command.Disconnecting:
+                        case iw.Command.Disconnecting:
                             
                             print(f"Client at {clientAddr} gracefully disconnected\n\n")
 
@@ -134,7 +133,7 @@ def runNetworkService():
                             
                         case _:
                             print("Unrecognized command")
-                            reply = PlainReply(
+                            reply = iw.PlainReply(
                                 success = False,
                                 message = ("Unrecognized command sent to ImageWriterApp over socket").encode('utf-8')
                             )

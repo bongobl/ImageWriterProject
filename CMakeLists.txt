@@ -99,9 +99,6 @@ target_link_libraries(FrameworkTestApp ImageWriterAPI)
 
 set(RUNTIME_FILES
     "${APP_DIR}/FrameworkTestApp.py"
-    "${APP_DIR}/ImageWriterCommon.py"
-    "${APP_DIR}/ImageWriter.py"
-    "${APP_DIR}/ImageWriterProtocol.py"
     "${APP_DIR}/ImageWriterApp.py"
     "${APP_DIR}/gridShader.vert"
     "${APP_DIR}/entityShader.vert"
@@ -119,6 +116,12 @@ foreach(file ${RUNTIME_FILES})
             COMMENT "Copying ${filename} to ${CMAKE_CURRENT_BINARY_DIR}"
     )
 endforeach()
+
+add_custom_command(TARGET ImageWriterAPI POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/pythonPackage"
+        "$<TARGET_FILE_DIR:ImageWriterAPI>/ImageWriterPackage"
+)
 
 ##############################   Copy DLLs to app build dir  ###############################
 if(WIN32) # This command is specific to Windows

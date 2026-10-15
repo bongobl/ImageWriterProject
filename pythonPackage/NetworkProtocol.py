@@ -1,7 +1,7 @@
 import ctypes, socket
 from pydantic import BaseModel
 from enum import IntEnum
-from ImageWriterCommon import *
+from .Common import *
 
 HOST_IP = '127.0.0.1'
 PORT = 65432
