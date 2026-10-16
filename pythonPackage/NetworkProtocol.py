@@ -25,8 +25,25 @@ class SetCameraTransformParams(ctypes.Structure):
     def __str__(self):
         return f"(SetCameraTransformParams: transform = {self.transform})"
 
-# Replies
+######## Status ########
+class StatusMCPPayload(BaseModel):
+    success: bool = False
+    message: str = ""
 
+class Status(ctypes.Structure):
+    type MCPPayload = StatusMCPPayload
+    _fields_ = [
+        ("success", ctypes.c_bool),
+        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
+    ]
+
+    def __str__(self):
+        return f"(Status: success = {self.success}, message = {self.message.decode('utf-8')})"
+
+    def toMCPPayload(self) -> MCPPayload:
+        return StatusMCPPayload(success = self.success, message = self.message.decode('utf-8'))
+
+# Replies
 class PlainReplyMCPPayload(BaseModel):
     status: StatusMCPPayload
 
@@ -44,19 +61,17 @@ class PlainReply(ctypes.Structure):
         return PlainReplyMCPPayload(status = self.status.toMCPPayload())
 
 
-class TransformReplyMCPPayload(BaseModel):
-    status: StatusMCPPayload
+class TransformReplyMCPPayload(PlainReplyMCPPayload):
     transform: TransformMCPPayload
 
 class CameraTransformReplyMCPPayload(TransformReplyMCPPayload):
     widthFromHeight: float = Field(..., description="(float), aspect ratio of the camera view, ie the width / height")
 
-class TransformReply(ctypes.Structure):
+class TransformReply(PlainReply):
     type MCPPayload = TransformReplyMCPPayload
     type CameraMCPPayload = CameraTransformReplyMCPPayload
 
     _fields_ = [
-        ("status", Status),
         ("transform", Transform),
         ("cameraWidthFromHeight", ctypes.c_float), # only used when getting camera transform
     ]

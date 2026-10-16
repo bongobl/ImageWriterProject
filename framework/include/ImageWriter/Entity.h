@@ -1,5 +1,5 @@
 #pragma once
-#include <ImageWriter/API.h>
+#include <ImageWriter/Common.h>
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <shared_mutex>

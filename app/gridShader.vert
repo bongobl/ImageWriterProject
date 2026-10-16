@@ -16,14 +16,16 @@ void main()
 
     vec4 gridPosition = vec4(0,0,0,1);
 
-    float opacity = 1;
+    float colorStrength = 1;
+	float opacity = 1;
 	if (gl_VertexID < numXLines * 2)
 	{
 		int ind = gl_VertexID;
 		int x = int(ceil(minX) + ind / 2);
 		int y = int(ind % 2 == 0 ? floor(minY) : ceil(maxY));
 		gridPosition = vec4(x, y, 0, 1);
-		opacity = abs(x) != 0 ? (abs(x) % 10 != 0 ? 0.2 * getColorScaleFactor(cameraScale) : 0.4) : 0.8;
+		colorStrength = abs(x) != 0 ? (abs(x) % 10 != 0 ? 0.2 : 0.4) : 0.8;
+		opacity = (abs(x) != 0 && abs(x) % 10 != 0) ? getColorScaleFactor(cameraScale) : 1;
 	}
 	else 
 	{
@@ -31,7 +33,8 @@ void main()
 		int y = int(ceil(minY) + ind / 2);
 		int x = int(ind % 2 == 0 ? floor(minX) : ceil(maxX));
 		gridPosition = vec4(x, y, 0, 1);
-		opacity = abs(y) != 0 ? (abs(y) % 10 != 0 ? 0.2 * getColorScaleFactor(cameraScale) : 0.4) : 0.8;
+		colorStrength = abs(y) != 0 ? (abs(y) % 10 != 0 ? 0.2 : 0.4) : 0.8;
+		opacity = (abs(y) != 0 && abs(y) % 10 != 0) ? getColorScaleFactor(cameraScale) : 1;
 	}
 
     // transform the vertex position
@@ -39,7 +42,7 @@ void main()
 
 
     // forward the vertex color
-    gl_FrontColor = vec4(0,opacity,opacity,1);
+    gl_FrontColor = vec4(0,colorStrength,colorStrength, opacity);
 }
 
 float getColorScaleFactor(float size){

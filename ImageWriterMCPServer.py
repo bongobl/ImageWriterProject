@@ -58,6 +58,49 @@ def disconnectFromImageWriter():
     finally:
         connToServer.close()
 
+def sendCommandToApp(command: iw.Command, params, ReplyType: type):
+
+    logger.info(f"To server: {params}")
+
+    commandBuffer = bytes(command.value.to_bytes(iw.COMMAND_SIZE))
+
+    
+    if not connectToImageWriterApp():
+        raise ToolError("sendCommandToApp(): Failed to connect to ImageWriter app")
+
+    # send message to server
+    try:
+        connToServer.sendall(commandBuffer)
+
+        # if command has params, serialize and send
+        if params is not None:
+            paramsBuffer = bytes(params)
+            connToServer.sendall(paramsBuffer)
+
+    # will fail if server had disconnected at time of sending message
+    except ConnectionResetError as e:
+        logger.error(f"ConnectionResetError: {e}\n\n")
+        disconnectFromImageWriter()
+        raise ToolError("sendCommandToApp(): Failed to send command to ImageWriter app")
+
+    replyBuffer = bytearray()
+    
+    # wait here and receive message from client
+    success, errorMessage = iw.receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(ReplyType))
+    if not success:
+        # log error message and return to connecting state
+        logger.error(errorMessage)
+        disconnectFromImageWriter()
+        raise ToolError("sendCommandToApp(): Failed to receive reply from ImageWriter app")
+    
+    # deserialize client message and log
+    reply = ReplyType.from_buffer_copy(replyBuffer)
+    logger.info(f"From server: {reply}")
+
+    disconnectFromImageWriter()
+
+    return reply
+
 @mcp.tool()
 def setCameraTransform(
     transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies the new transform of the camera. {iw.TRANSFORM_DOC}")],
@@ -66,49 +109,13 @@ def setCameraTransform(
     where the halfX extent is then internally determined by the screen aspect ratio
     """
 
-    if not connectToImageWriterApp():
-        raise ToolError("setCameraTransform(): Failed to connect to ImageWriter app")
-
-    commIn = iw.Command.SetCameraTransform
-    commandBuffer = bytes(commIn.value.to_bytes(iw.COMMAND_SIZE))
-
     transformRaw = iw.Transform()
     transformRaw.fromMCPPayload(transform)
 
     params = iw.SetCameraTransformParams(transform = transformRaw)
     logger.info(f"To server: {params}")
 
-    # serialize params
-    paramsBuffer = bytes(params)
-
-    # send message to server
-    try:
-        connToServer.sendall(commandBuffer)
-        connToServer.sendall(paramsBuffer)
-
-    # will fail if server had disconnected at time of sending message
-    except ConnectionResetError as e:
-        logger.error(f"ConnectionResetError: {e}\n\n")
-        disconnectFromImageWriter()
-        raise ToolError("setCameraTransform(): Failed to send command to ImageWriter app")
-
-    replyBuffer = bytearray()
-    
-    # wait here and receive message from client
-    success, errorMessage = iw.receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(iw.PlainReply))
-    if not success:
-        # log error message and return to connecting state
-        logger.error(errorMessage)
-        disconnectFromImageWriter()
-        raise ToolError("setCameraTransform(): Failed to receive reply from ImageWriter app")
-    
-    # deserialize client message and log
-    reply = iw.PlainReply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply}")
-
-    disconnectFromImageWriter()
-
-    return reply.toMCPPayload()
+    return sendCommandToApp(iw.Command.SetCameraTransform, params, iw.PlainReply).toMCPPayload()
 
 @mcp.tool()
 def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
@@ -118,119 +125,13 @@ def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
   
     """
 
-    if not connectToImageWriterApp():
-        raise ToolError("getCameraTransform(): Failed to connect to ImageWriter app")
-
-    commIn = iw.Command.GetCameraTransform
-    commandBuffer = bytes(commIn.value.to_bytes(iw.COMMAND_SIZE))
-
-    # send command to server
-    try:
-        connToServer.sendall(commandBuffer)
-
-    # will fail if server had disconnected at time of sending message
-    except ConnectionResetError as e:
-        logger.error(f"ConnectionResetError: {e}\n\n")
-        disconnectFromImageWriter()
-        raise ToolError("getCameraTransform(): Failed to send command to ImageWriter app")
-
-    replyBuffer = bytearray()
-    
-    # wait here and receive message from client
-    success, errorMessage = iw.receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(iw.TransformReply))
-    if not success:
-        # log error message and return to connecting state
-        logger.error(errorMessage)
-        disconnectFromImageWriter()
-        raise ToolError("getCameraTransform(): Failed to receive reply from ImageWriter app")
-    
-    # deserialize client message and log
-    reply = iw.TransformReply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply}")
-
-    disconnectFromImageWriter()
-
-    return reply.toCameraMCPPayload()
+    return sendCommandToApp(iw.Command.GetCameraTransform, None, iw.TransformReply).toCameraMCPPayload()
 
 @mcp.tool()
 def removeAllEntities() -> iw.PlainReplyMCPPayload:
     """clears the world of all spawned entities"""
 
-    if not connectToImageWriterApp():
-        raise ToolError("removeAllEntities(): Failed to connect to ImageWriter app")
-
-    commIn = iw.Command.RemoveAllEntities
-    commandBuffer = bytes(commIn.value.to_bytes(iw.COMMAND_SIZE))
-
-    # send message to server
-    try:
-        connToServer.sendall(commandBuffer)
-
-    # will fail if server had disconnected at time of sending message
-    except ConnectionResetError as e:
-        logger.error(f"ConnectionResetError: {e}\n\n")
-        disconnectFromImageWriter()
-        raise ToolError("removeAllEntities(): Failed to send command to ImageWriter app")
-
-    replyBuffer = bytearray()
-    
-    # wait here and receive message from client
-    success, errorMessage = iw.receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(iw.PlainReply))
-    if not success:
-        # log error message and return to connecting state
-        logger.error(errorMessage)
-        disconnectFromImageWriter()
-        raise ToolError("removeAllEntities(): Failed to receive reply from ImageWriter app")
-    
-    # deserialize client message and log
-    reply = iw.PlainReply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply}")
-
-    disconnectFromImageWriter()
-
-    return reply.toMCPPayload()
-
-def addEntityCommon(params: iw.AddEntityParams) -> iw.PlainReplyMCPPayload:
-
-    logger.info(f"To server: {params}")
-
-    if not connectToImageWriterApp():
-        raise ToolError("addEntityCommon(): Failed to connect to ImageWriter app")
-
-    commIn = iw.Command.AddEntity
-    commandBuffer = bytes(commIn.value.to_bytes(iw.COMMAND_SIZE))
-
-    # serialize params
-    paramsBuffer = bytes(params)
-
-    # send message to server
-    try:
-        connToServer.sendall(commandBuffer)
-        connToServer.sendall(paramsBuffer)
-
-    # will fail if server had disconnected at time of sending message
-    except ConnectionResetError as e:
-        logger.error(f"ConnectionResetError: {e}\n\n")
-        disconnectFromImageWriter()
-        raise ToolError("addEntityCommon(): Failed to send command to ImageWriter app")
-
-    replyBuffer = bytearray()
-    
-    # wait here and receive message from client
-    success, errorMessage = iw.receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(iw.PlainReply))
-    if not success:
-        # log error message and return to connecting state
-        logger.error(errorMessage)
-        disconnectFromImageWriter()
-        raise ToolError("addEntityCommon(): Failed to receive reply from ImageWriter app")
-    
-    # deserialize client message and log
-    reply = iw.PlainReply.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply}")
-
-    disconnectFromImageWriter()
-
-    return reply.toMCPPayload()
+    return sendCommandToApp(iw.Command.RemoveAllEntities, None, iw.PlainReply).toMCPPayload()
 
 @mcp.tool()
 def addEllipseEntity(
@@ -261,7 +162,7 @@ def addEllipseEntity(
         ellipse = iw.AddEllipseParams(halfExtents = halfExtentsRaw)
     )
 
-    return addEntityCommon(ellipseParams)
+    return sendCommandToApp(iw.Command.AddEntity, ellipseParams, iw.PlainReply).toMCPPayload()
     
 @mcp.tool()
 def addRectangleEntity(
@@ -293,7 +194,7 @@ def addRectangleEntity(
         rectangle = iw.AddRectangleParams(halfExtents = halfExtentsRaw)
     )
     
-    return addEntityCommon(rectangleParams)
+    return sendCommandToApp(iw.Command.AddEntity, rectangleParams, iw.PlainReply).toMCPPayload()
 
 @mcp.tool()
 def addTriangleEntity(
@@ -336,7 +237,8 @@ def addTriangleEntity(
         )
     )
 
-    return addEntityCommon(triangleParams)
+    return sendCommandToApp(iw.Command.AddEntity, triangleParams, iw.PlainReply).toMCPPayload()
+
 if __name__ == "__main__":
 
     mcp.run()

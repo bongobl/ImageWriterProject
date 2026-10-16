@@ -5,24 +5,6 @@ from enum import IntEnum
 
 MAX_REPLY_MESSAGE_LENGTH = 512
 
-######## Status ########
-class StatusMCPPayload(BaseModel):
-    success: bool = False
-    message: str = ""
-
-class Status(ctypes.Structure):
-    type MCPPayload = StatusMCPPayload
-    _fields_ = [
-        ("success", ctypes.c_bool),
-        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
-    ]
-
-    def __str__(self):
-        return f"(Status: success = {self.success}, message = {self.message.decode('utf-8')})"
-
-    def toMCPPayload(self) -> MCPPayload:
-        return StatusMCPPayload(success = self.success, message = self.message.decode('utf-8'))
-
 ######## Vec2 ########
 VEC2_DOC = (
     "A Vec2 consists of: " 

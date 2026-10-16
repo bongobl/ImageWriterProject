@@ -38,6 +38,7 @@ set(FRAMEWORK_SRC_DIR "${FRAMEWORK_DIR}/src")
 set(CORE_HEADER_FILES
 	"${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreEntry.h"
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreCommon.h"
+    "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/Common.h"
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/Entity.h"
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/Scene.h"
@@ -62,6 +63,7 @@ target_link_libraries(ImageWriterCore sfml-graphics)
 project(ImageWriterAPI)
 
 set(API_HEADER_FILES
+    "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/Common.h"
 	"${FRAMEWORK_INCLUDE_DIR}/ImageWriter/API.h"
     "${FRAMEWORK_INCLUDE_DIR}/ImageWriter/CoreAndAPIShared.h"
 )
