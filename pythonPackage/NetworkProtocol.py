@@ -16,7 +16,7 @@ class Command(IntEnum):
     AddEntity = 4
     Disconnecting = 5
 
-# Parameters
+# Parameters =================================================================================
 class SetCameraTransformParams(ctypes.Structure):
     _fields_ = [
         ("transform", Transform)
@@ -25,42 +25,27 @@ class SetCameraTransformParams(ctypes.Structure):
     def __str__(self):
         return f"(SetCameraTransformParams: transform = {self.transform})"
 
-######## Status ########
-class StatusMCPPayload(BaseModel):
+# Replies ====================================================================================
+
+# Plain
+class PlainReplyMCPPayload(BaseModel):
     success: bool = False
     message: str = ""
 
-class Status(ctypes.Structure):
-    type MCPPayload = StatusMCPPayload
+class PlainReply(ctypes.Structure):
+
     _fields_ = [
         ("success", ctypes.c_bool),
         ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
     ]
 
     def __str__(self):
-        return f"(Status: success = {self.success}, message = {self.message.decode('utf-8')})"
+        return f"(PlainReply: success = {self.success}, message = {self.message.decode('utf-8')})"
 
-    def toMCPPayload(self) -> MCPPayload:
-        return StatusMCPPayload(success = self.success, message = self.message.decode('utf-8'))
+    def toMCPPayload(self) -> PlainReplyMCPPayload:
+        return PlainReplyMCPPayload(success = self.success, message = self.message.decode('utf-8'))
 
-# Replies
-class PlainReplyMCPPayload(BaseModel):
-    status: StatusMCPPayload
-
-# Server reply to client after each command
-class PlainReply(ctypes.Structure):
-    type MCPPayload = PlainReplyMCPPayload
-    _fields_ = [
-        ("status", Status)
-    ]
-
-    def __str__(self):
-        return f"(PlainReply: status = {self.status})"
-
-    def toMCPPayload(self) -> MCPPayload:
-        return PlainReplyMCPPayload(status = self.status.toMCPPayload())
-
-
+# Transform (additional MCPPayload type for Camera transform)
 class TransformReplyMCPPayload(PlainReplyMCPPayload):
     transform: TransformMCPPayload
 
@@ -68,8 +53,6 @@ class CameraTransformReplyMCPPayload(TransformReplyMCPPayload):
     widthFromHeight: float = Field(..., description="(float), aspect ratio of the camera view, ie the width / height")
 
 class TransformReply(PlainReply):
-    type MCPPayload = TransformReplyMCPPayload
-    type CameraMCPPayload = CameraTransformReplyMCPPayload
 
     _fields_ = [
         ("transform", Transform),
@@ -77,23 +60,26 @@ class TransformReply(PlainReply):
     ]
 
     def __str__(self):
-        return f"(TransformReply: status = {self.status}, transform = {self.transform}, cameraWidthFromHeight = {self.cameraWidthFromHeight})"
+        return f"(TransformReply: success = {self.success}, message = {self.message.decode('utf-8')}, transform = {self.transform}, cameraWidthFromHeight = {self.cameraWidthFromHeight})"
 
-    def toMCPPayload(self) -> MCPPayload:
+    def toMCPPayload(self) -> TransformReplyMCPPayload:
 
         return TransformReplyMCPPayload(
-            status = self.status.toMCPPayload(),
+            success = self.success, 
+            message = self.message.decode('utf-8'),
             transform = self.transform.toMCPPayload()
         )
 
-    def toCameraMCPPayload(self) -> CameraMCPPayload:
+    def toCameraMCPPayload(self) -> CameraTransformReplyMCPPayload:
 
         return CameraTransformReplyMCPPayload(
-            status = self.status.toMCPPayload(),
+            success = self.success, 
+            message = self.message.decode('utf-8'),
             transform = self.transform.toMCPPayload(),
             widthFromHeight = self.cameraWidthFromHeight
         )
 
+# ============================================================================================
 
 def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:
 

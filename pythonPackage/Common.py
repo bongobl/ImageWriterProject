@@ -16,7 +16,6 @@ class Vec2MCPPayload(BaseModel):
     y: float = Field(..., description="(float), y spatial component")
 
 class Vec2(ctypes.Structure):
-    type MCPPayload = Vec2MCPPayload
     _fields_ = [
         ("x", ctypes.c_float),
         ("y", ctypes.c_float),
@@ -25,7 +24,7 @@ class Vec2(ctypes.Structure):
     def __str__(self):
         return f"(Vec2: x = {self.x}, y = {self.y})"
 
-    def toMCPPayload(self):
+    def toMCPPayload(self) -> Vec2MCPPayload:
         return Vec2MCPPayload(
             x = self.x, 
             y = self.y
@@ -49,18 +48,17 @@ class TransformMCPPayload(BaseModel):
     scale: float = Field(..., description="(float), scale")
 
 class Transform(ctypes.Structure):
-    type MCPPayload = TransformMCPPayload
+
     _fields_ = [
         ("position", Vec2),
         ("orientation", ctypes.c_float),
         ("scale", ctypes.c_float)
-        
     ]
 
     def __str__(self):
         return f"(Transform: position = {self.position}, orientation = {self.orientation}, scale = {self.scale})"
 
-    def toMCPPayload(self):
+    def toMCPPayload(self) -> TransformMCPPayload:
         return TransformMCPPayload(
             position = self.position.toMCPPayload(),
             orientation = self.orientation,
@@ -88,7 +86,7 @@ class ColorMCPPayload(BaseModel):
     alpha: float = Field(..., description="(float), alpha channel value")
 
 class Color(ctypes.Structure):
-    type MCPPayload = ColorMCPPayload
+
     _fields_ = [
         ("red", ctypes.c_float),
         ("green", ctypes.c_float),
@@ -99,7 +97,7 @@ class Color(ctypes.Structure):
     def __str__(self):
         return f"(Color: red = {self.red}, green = {self.green}, blue = {self.blue}, alpha = {self.alpha})"
 
-    def toMCPPayload(self):
+    def toMCPPayload(self) -> ColorMCPPayload:
         return ColorMCPPayload(
             red = self.red, 
             green = self.green,

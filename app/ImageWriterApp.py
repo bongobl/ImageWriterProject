@@ -79,8 +79,7 @@ def runNetworkService():
 
                             frameworkFunctionSucceeded = framework.SetCameraTransform(frameworkFunctionMessage, params.transform)
 
-                            commandStatus = iw.Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = iw.PlainReply(status = commandStatus)
+                            reply = iw.PlainReply(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
 
                         case iw.Command.GetCameraTransform:
 
@@ -89,9 +88,9 @@ def runNetworkService():
                             widthFromheight = ctypes.c_float(0.0)
                             frameworkFunctionSucceeded = framework.GetCameraTransform(frameworkFunctionMessage, cameraTransform, widthFromheight)
 
-                            commandStatus = iw.Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
                             reply = iw.TransformReply(
-                                status = commandStatus, 
+                                success = frameworkFunctionSucceeded, 
+                                message = frameworkFunctionMessage.value,
                                 transform = cameraTransform, 
                                 cameraWidthFromHeight = widthFromheight
                             )
@@ -102,8 +101,7 @@ def runNetworkService():
                             frameworkFunctionSucceeded = framework.RemoveAllEntities(frameworkFunctionMessage)
 
 
-                            commandStatus = iw.Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = iw.PlainReply(status = commandStatus)
+                            reply = iw.PlainReply(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
 
                         case iw.Command.AddEntity:
 
@@ -119,8 +117,7 @@ def runNetworkService():
 
                             frameworkFunctionSucceeded = framework.AddEntity(frameworkFunctionMessage, entityParams)
 
-                            commandStatus = iw.Status(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
-                            reply = iw.PlainReply(status = commandStatus)
+                            reply = iw.PlainReply(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
 
                         case iw.Command.Disconnecting:
                             
