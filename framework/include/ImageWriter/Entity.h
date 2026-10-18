@@ -1,10 +1,11 @@
 #pragma once
 #include <ImageWriter/Common.h>
 #include <SFML/Graphics.hpp>
-#include <vector>
+#include <list>
+#include <unordered_map>
 #include <shared_mutex>
 #include <mutex>
-
+#include <cstdint>
 class Camera;
 class EntityGeometry;
 
@@ -22,14 +23,15 @@ struct Entity {
 	Type m_Type;
 	Transform m_Transform;
 	Color m_Color;
+	uint64_t m_Id;
 
-	Entity(Type type, const Transform& transform, Color& color);
+	Entity(Type type, uint64_t id, const Transform& transform, Color& color);
 	virtual void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const {};
 };
 
 struct EllipseEntity : Entity {
 
-	EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents);
+	EllipseEntity(uint64_t id, const Transform& transform, Color& color, Vec2 halfExtents);
 
 	Vec2 m_HalfExtents;
 
@@ -38,7 +40,7 @@ struct EllipseEntity : Entity {
 
 struct RectangleEntity : Entity {
 
-	RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents);
+	RectangleEntity(uint64_t id, const Transform& transform, Color& color, Vec2 halfExtents);
 
 	Vec2 m_HalfExtents;
 
@@ -50,7 +52,7 @@ struct TriangleEntity : Entity {
 	Vec2 m_Point2;
 	Vec2 m_Point3;
 
-	TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
+	TriangleEntity(uint64_t id, const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
 
 	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
 };
@@ -68,12 +70,19 @@ struct EntityGeometry : public sf::VertexArray {
 };
 struct EntityList {
 
+	// Managing
+	using ListT = std::list<Entity*>;
+	using IterT = ListT::iterator;
+	uint64_t m_NextEntityId;
+	std::unordered_map<uint64_t, IterT> m_EntityIterFromId;
+	std::list<Entity*> m_Entities;
+
+	// Rendering
 	EntityGeometry m_EllipseVerts;
 	EntityGeometry m_RectangleVerts;
 	EntityGeometry m_TriangleVerts;
-
-	std::vector<Entity*> m_Entities;
 	sf::Shader m_VertexShader;
+	
 	mutable std::shared_mutex m_EntitiesMutex;
 public:
 
@@ -81,9 +90,7 @@ public:
 	~EntityList();
 
 	void addEntity(AddEntityParams params);
-	void addEllipse(const Transform& transform, Color& color, Vec2 halfExtents);
-	void addRectangle(const Transform& transform, Color& color, Vec2 halfExtents);
-	void addTriangle(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
+	bool removeEntity(uint64_t id);
 	void dummyUpdateShapes(float deltaTime);
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
 	void destroyAllShapes();

@@ -97,11 +97,37 @@ target_include_directories(FrameworkTestApp PRIVATE ${ALL_INCLUDE_DIRS})
 target_link_libraries(FrameworkTestApp ImageWriterAPI)
 
 
-##############################   Copy Runtime Files to app build dir  ###########################
+##############################   Copy python files specifically to target directory  ###########################
 
-set(RUNTIME_FILES
+set(PYTHON_APP_FILES
     "${APP_DIR}/FrameworkTestApp.py"
     "${APP_DIR}/ImageWriterApp.py"
+)
+
+foreach(file ${PYTHON_APP_FILES})
+
+    get_filename_component(filename ${file} NAME)
+
+    add_custom_command(
+        TARGET ImageWriterAPI POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${file}"
+            "$<TARGET_FILE_DIR:ImageWriterAPI>/${filename}"
+            COMMENT "Copying ${filename} to $<TARGET_FILE_DIR:ImageWriterAPI>"
+    )
+endforeach()
+
+add_custom_command(TARGET ImageWriterAPI POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/pythonPackage"
+        "$<TARGET_FILE_DIR:ImageWriterAPI>/ImageWriterPackage"
+        COMMENT "Copying files from pythonPackage to $<TARGET_FILE_DIR:ImageWriterAPI> under name ImageWriterPackage"
+)
+
+##############################   Runtime Files  ###############################
+
+# these get copied to the IDE's running directory and the target directory
+set(RUNTIME_FILES
     "${APP_DIR}/gridShader.vert"
     "${APP_DIR}/entityShader.vert"
 )
@@ -110,6 +136,7 @@ foreach(file ${RUNTIME_FILES})
 
     get_filename_component(filename ${file} NAME)
 
+    # IDE running directory
     add_custom_command(
         TARGET ImageWriterAPI POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -117,15 +144,18 @@ foreach(file ${RUNTIME_FILES})
             "${CMAKE_CURRENT_BINARY_DIR}/${filename}"
             COMMENT "Copying ${filename} to ${CMAKE_CURRENT_BINARY_DIR}"
     )
+
+    # target directory
+    add_custom_command(
+        TARGET ImageWriterAPI POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${file}"
+            "$<TARGET_FILE_DIR:ImageWriterAPI>/${filename}"
+            COMMENT "Copying ${filename} to $<TARGET_FILE_DIR:ImageWriterAPI>"
+    )
 endforeach()
 
-add_custom_command(TARGET ImageWriterAPI POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/pythonPackage"
-        "$<TARGET_FILE_DIR:ImageWriterAPI>/ImageWriterPackage"
-)
-
-##############################   Copy DLLs to app build dir  ###############################
+# these go straight to the target directory
 if(WIN32) # This command is specific to Windows
     add_custom_command(
         TARGET ImageWriterCore POST_BUILD
@@ -133,7 +163,7 @@ if(WIN32) # This command is specific to Windows
             $<TARGET_RUNTIME_DLLS:ImageWriterCore> # Generator expression to get all runtime DLLs linked by ImageWriterCore
             $<TARGET_FILE_DIR:ImageWriterCore>     # Generator expression for the output directory of ImageWriterCore
         COMMAND_EXPAND_LISTS # Expands the list of DLLs
-        COMMENT "Copying runtime DLLs to app directory"
+        COMMENT "Copying runtime DLLs to $<TARGET_FILE_DIR:ImageWriterAPI>"
     )
 endif()
 

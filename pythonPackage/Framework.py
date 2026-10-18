@@ -63,6 +63,9 @@ class Framework(ctypes.Structure):
         self.runtimeLib.ImageWriter_Scene_AddEntity.argtypes = [Framework, ctypes.c_char_p, AddEntityParams]
         self.runtimeLib.ImageWriter_Scene_AddEntity.restype = ctypes.c_bool
 
+        self.runtimeLib.ImageWriter_Scene_RemoveEntity.argtypes = [Framework, ctypes.c_char_p, c_uint64]
+        self.runtimeLib.ImageWriter_Scene_RemoveEntity.restype = ctypes.c_bool
+
         self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.argtypes = [Framework, ctypes.c_char_p]
         self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.restype = ctypes.c_bool
 
@@ -131,6 +134,9 @@ class Framework(ctypes.Structure):
 
     def AddEntity(self, statusMessage, params):
         return self.runtimeLib.ImageWriter_Scene_AddEntity(self, statusMessage, params)
+
+    def RemoveEntity(self, statusMessage, entityId):
+        return self.runtimeLib.ImageWriter_Scene_RemoveEntity(self, statusMessage, entityId)
 
     def RemoveAllEntities(self, statusMessage):
         return self.runtimeLib.ImageWriter_Scene_RemoveAllEntities(self, statusMessage)

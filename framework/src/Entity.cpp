@@ -3,26 +3,27 @@
 #include <ImageWriter/CoreCommon.h>
 #include <iostream>
 
-Entity::Entity(Type type, const Transform& transform, Color& color) :
+Entity::Entity(Type type, uint64_t id, const Transform& transform, Color& color) :
 	m_Type(type),
+	m_Id(id),
 	m_Transform(transform),
 	m_Color(color)
 {
 }
 
-EllipseEntity::EllipseEntity(const Transform& transform, Color& color, Vec2 halfExtents) :
-	Entity(Entity::Type::Ellipse, transform, color), m_HalfExtents(halfExtents)
+EllipseEntity::EllipseEntity(uint64_t id, const Transform& transform, Color& color, Vec2 halfExtents) :
+	Entity(Entity::Type::Ellipse, id, transform, color), m_HalfExtents(halfExtents)
 {
 
 }
 
-RectangleEntity::RectangleEntity(const Transform& transform, Color& color, Vec2 halfExtents) :
-	Entity(Entity::Type::Rectangle, transform, color), m_HalfExtents(halfExtents)
+RectangleEntity::RectangleEntity(uint64_t id, const Transform& transform, Color& color, Vec2 halfExtents) :
+	Entity(Entity::Type::Rectangle, id, transform, color), m_HalfExtents(halfExtents)
 {
 }
 
-TriangleEntity::TriangleEntity(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3) :
-	Entity(Entity::Type::Triangle, transform, color), m_Point1(point1), m_Point2(point2), m_Point3(point3)
+TriangleEntity::TriangleEntity(uint64_t id, const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3) :
+	Entity(Entity::Type::Triangle, id, transform, color), m_Point1(point1), m_Point2(point2), m_Point3(point3)
 {
 }
 
@@ -49,9 +50,9 @@ void TriangleEntity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::
 EntityList::EntityList() :
 	m_EllipseVerts(sf::PrimitiveType::TriangleFan, 100),
 	m_RectangleVerts(sf::PrimitiveType::TriangleStrip, 4),
-	m_TriangleVerts(sf::PrimitiveType::Triangles, 3)
+	m_TriangleVerts(sf::PrimitiveType::Triangles, 3),
+	m_NextEntityId(0x0)
 {
-
 	m_RectangleVerts[0].position = sf::Vector2f(1, 1);
 	m_RectangleVerts[1].position = sf::Vector2f(-1, 1);
 	m_RectangleVerts[2].position = sf::Vector2f(1, -1);
@@ -85,37 +86,49 @@ void EntityList::addEntity(AddEntityParams params)
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
 	if (params.entityType == ENTITY_TYPE_ELLIPSE) {
-		m_Entities.push_back(new EllipseEntity(params.transform, params.color, params.ellipse.halfExtents));
+		m_Entities.push_back(new EllipseEntity(m_NextEntityId, params.transform, params.color, params.ellipse.halfExtents));
 	}
 	if (params.entityType == ENTITY_TYPE_RECTANGLE) {
-		m_Entities.push_back(new RectangleEntity(params.transform, params.color, params.rectangle.halfExtents));
+		m_Entities.push_back(new RectangleEntity(m_NextEntityId, params.transform, params.color, params.rectangle.halfExtents));
 	}
 	if (params.entityType == ENTITY_TYPE_TRIANGLE) {
-		m_Entities.push_back(new TriangleEntity(params.transform, params.color, params.triangle.point1, params.triangle.point2, params.triangle.point3));
+		m_Entities.push_back(new TriangleEntity(m_NextEntityId, params.transform, params.color, params.triangle.point1, params.triangle.point2, params.triangle.point3));
 	}
-}
-void EntityList::addEllipse(const Transform& transform, Color& color, Vec2 halfExtents)
-{
-	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
-	m_Entities.push_back(new EllipseEntity(transform, color, halfExtents));
+
+	m_EntityIterFromId[m_NextEntityId] = --m_Entities.end();
+	++m_NextEntityId;
 }
 
-void EntityList::addRectangle(const Transform& transform, Color& color, Vec2 halfExtents)
+bool EntityList::removeEntity(uint64_t id)
 {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
-	m_Entities.push_back(new RectangleEntity(transform, color, halfExtents));
-}
 
-void EntityList::addTriangle(const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3)
-{
-	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
-	m_Entities.push_back(new TriangleEntity(transform, color, point1, point2, point3));
+	auto mapIter = m_EntityIterFromId.find(id);
+
+	// If not found in map
+	if (mapIter == m_EntityIterFromId.end()) {
+		std::cerr << "Entity id not found in m_EntityIterFromId map" << std::endl;
+		return false;
+	}
+
+	IterT entityIter = mapIter->second;
+
+	// delete entity
+	delete *entityIter;
+	*entityIter = nullptr;
+
+	// remove from list and id map
+	m_Entities.erase(entityIter);
+	m_EntityIterFromId.erase(id);
+
+	return true;
 }
 void EntityList::dummyUpdateShapes(float deltaTime) {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
-	for (int i = 0; i < m_Entities.size(); ++i) {
-		m_Entities.at(i)->m_Transform.orientation += sf::radians(deltaTime).asDegrees();
+	for (auto iter = m_Entities.begin(); iter != m_Entities.end(); ++iter) {
+		Entity* pCurrEntity = *iter;
+		pCurrEntity->m_Transform.orientation += sf::radians(deltaTime).asDegrees();
 	}
 }
 void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
@@ -124,8 +137,8 @@ void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
 
 	m_VertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
 
-	for (int i = 0; i < m_Entities.size(); ++i) {
-		const Entity* pCurrEntity = m_Entities.at(i);
+	for (auto iter = m_Entities.begin(); iter != m_Entities.end(); ++iter) {
+		const Entity* pCurrEntity = *iter;
 
 		m_VertexShader.setUniform("worldFromModel", sf::Glsl::Mat4(sf::fromCore(pCurrEntity->m_Transform)));
 		m_VertexShader.setUniform("color", sf::Glsl::Vec4(sf::fromCore(pCurrEntity->m_Color)));
@@ -139,9 +152,9 @@ void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
 void EntityList::destroyAllShapes() {
 
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
-	for (int i = 0; i < m_Entities.size(); ++i) {
-		delete m_Entities.at(i);
-		m_Entities.at(i) = nullptr;
+	for (auto iter = m_Entities.begin(); iter != m_Entities.end(); ++iter) {
+		delete *iter;
+		*iter = nullptr;
 	}
 	m_Entities.clear();
 }

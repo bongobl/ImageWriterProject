@@ -39,6 +39,10 @@ def createSomeSampleShapes():
                 print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
     
     input("Press Enter")
+    if not imageWriter.RemoveEntity(statusMessage, 28):
+        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+
+    input("Press Enter")
     if not imageWriter.RemoveAllEntities(statusMessage):
         print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
 

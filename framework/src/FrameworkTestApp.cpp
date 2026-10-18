@@ -59,6 +59,12 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	}
 
 	system("pause");
+	if (!ImageWriter_Scene_RemoveEntity(instance, statusMessage, 28))
+	{
+		std::cerr << "ImageWriter error: " << statusMessage << std::endl;
+	}
+
+	system("pause");
 	if(!ImageWriter_Scene_RemoveAllEntities(instance, statusMessage))
 	{
 		std::cerr << "ImageWriter error: " << statusMessage << std::endl;

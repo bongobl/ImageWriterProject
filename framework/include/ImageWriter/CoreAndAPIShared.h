@@ -25,6 +25,7 @@ typedef bool (*PfnCore_Scene_SetCameraTransform)(InstanceData, Transform);
 typedef bool (*PfnCore_Scene_GetCameraTransform)(InstanceData, Transform*, float*);
 typedef bool (*PfnCore_Scene_TEMP_MoveCameraLocalSpace)(InstanceData, Transform);
 typedef bool (*PfnCore_Scene_AddEntity)(InstanceData, AddEntityParams);
+typedef bool (*PfnCore_Scene_RemoveEntity)(InstanceData, uint16_t);
 typedef bool (*PfnCore_Scene_removeAllEntities)(InstanceData);
 
 
@@ -46,6 +47,7 @@ struct InstanceData
     PfnCore_Scene_GetCameraTransform pfnCore_Scene_GetCameraTransform;
     PfnCore_Scene_TEMP_MoveCameraLocalSpace pfnCore_Scene_TEMP_MoveCameraLocalSpace;
     PfnCore_Scene_AddEntity pfnCore_Scene_AddEntity;
+    PfnCore_Scene_RemoveEntity pfnCore_Scene_RemoveEntity;
     PfnCore_Scene_removeAllEntities pfnCore_Scene_removeAllEntities;
 
     void* pCoreData;

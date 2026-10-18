@@ -17,13 +17,8 @@ class Command(IntEnum):
     Disconnecting = 5
 
 # Parameters =================================================================================
-class SetCameraTransformParams(ctypes.Structure):
-    _fields_ = [
-        ("transform", Transform)
-    ]
 
-    def __str__(self):
-        return f"(SetCameraTransformParams: transform = {self.transform})"
+# Empty for now
 
 # Replies ====================================================================================
 

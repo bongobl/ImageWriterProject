@@ -249,6 +249,35 @@ extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData,
 
 	pCoreData->m_pScene->addEntity(params);
 
+	return true;
+}
+
+extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, uint64_t id)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_removeEntity(): instanceData.pCoreData was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_removeEntity()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
+
+	if (!pCoreData->m_pScene) {
+		std::cerr << "Core entry scene_removeEntity(): pCoreData->m_pScene was null" << std::endl;
+		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_removeEntity() on non-existent scene");
+		return false;
+	}
+
+	if (!pCoreData->m_pScene->removeEntity(id)) {
+		// NOTE: this assumes it failed due to id key not found, we shouldn't be making
+		// assumptions on why it failed in the CoreEntry layer
+
+		std::string errorMessage = "No entity with a given ID of " + std::to_string(id) + std::string(" found");
+		strcpy(instanceData.pPublicStatusMessage, errorMessage.c_str());
+		return false;
+	}
 
 	return true;
 }

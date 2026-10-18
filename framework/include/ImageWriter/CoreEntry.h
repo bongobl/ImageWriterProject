@@ -20,5 +20,6 @@ extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData inst
 extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, Transform* pCameraTransform, float* pWidthFromheight);
 extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, Transform delta);
 extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, AddEntityParams params);
+extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, uint64_t id);
 extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData);
 

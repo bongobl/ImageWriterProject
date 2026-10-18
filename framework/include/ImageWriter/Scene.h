@@ -81,7 +81,6 @@ class Scene {
 	GridView m_GridView;
 public:
 
-
 	Camera m_Camera;
 
 	EntityList m_Entities;
@@ -94,6 +93,7 @@ public:
 	void render();
 
 	void addEntity(AddEntityParams params);
+	bool removeEntity(uint64_t id);
 	void updateRenderConfig(RenderConfig renderConfig);
 	bool isSelfManagedRenderWindowOpen() const;
 };

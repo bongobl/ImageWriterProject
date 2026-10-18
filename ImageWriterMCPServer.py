@@ -112,10 +112,9 @@ def setCameraTransform(
     transformRaw = iw.Transform()
     transformRaw.fromMCPPayload(transform)
 
-    params = iw.SetCameraTransformParams(transform = transformRaw)
-    logger.info(f"To server: {params}")
+    logger.info(f"To server: {transformRaw}")
 
-    return sendCommandToApp(iw.Command.SetCameraTransform, params, iw.PlainReply).toMCPPayload()
+    return sendCommandToApp(iw.Command.SetCameraTransform, transformRaw, iw.PlainReply).toMCPPayload()
 
 @mcp.tool()
 def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:

@@ -67,17 +67,17 @@ def runNetworkService():
                         
                         case iw.Command.SetCameraTransform:
                             
-                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(iw.SetCameraTransformParams))
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(iw.Transform))
                             if not status:
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
 
-                            # deserialize addEllipse params
-                            params = iw.SetCameraTransformParams.from_buffer_copy(paramsBuffer)
-                            print(f"From client: {params}")
+                            # deserialize params
+                            transform = iw.Transform.from_buffer_copy(paramsBuffer)
+                            print(f"From client: {transform}")
 
-                            frameworkFunctionSucceeded = framework.SetCameraTransform(frameworkFunctionMessage, params.transform)
+                            frameworkFunctionSucceeded = framework.SetCameraTransform(frameworkFunctionMessage, transform)
 
                             reply = iw.PlainReply(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
 
@@ -111,7 +111,7 @@ def runNetworkService():
                                 print(errorMessage)
                                 break
 
-                            # deserialize addEllipse params
+                            # deserialize params
                             entityParams = iw.AddEntityParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {entityParams}")
 

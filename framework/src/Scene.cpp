@@ -62,7 +62,6 @@ void Camera::setTransform(const Transform& transform) {
 
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_WorldFromCamera = transform;
-
 }
 
 Transform Camera::getTransform() const {
@@ -72,8 +71,6 @@ Transform Camera::getTransform() const {
 
 void Camera::validate(std::stringstream* pStream)
 {
-	// TODO: need to take in streamstream and append to it rather than writing to raw C string, 
-	// this will allow additional validate functions to attach their message to the MCP string
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	if (m_WorldFromCamera.scale > Camera::MaxScale) {
 
@@ -290,6 +287,11 @@ void Scene::render()
 void Scene::addEntity(AddEntityParams params)
 {
 	m_Entities.addEntity(params);
+}
+
+bool Scene::removeEntity(uint64_t id)
+{
+	return m_Entities.removeEntity(id);
 }
 void Scene::updateRenderConfig(RenderConfig renderConfig)
 {
