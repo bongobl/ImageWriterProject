@@ -21,12 +21,12 @@ typedef bool (*PfnCore_Scene_updateRenderConfig)(InstanceData, RenderConfig);
 
 
 // scene API
-typedef bool (*PfnCore_Scene_SetCameraTransform)(InstanceData, Transform);
-typedef bool (*PfnCore_Scene_GetCameraTransform)(InstanceData, Transform*, float*);
-typedef bool (*PfnCore_Scene_TEMP_MoveCameraLocalSpace)(InstanceData, Transform);
-typedef bool (*PfnCore_Scene_AddEntity)(InstanceData, AddEntityParams);
-typedef bool (*PfnCore_Scene_RemoveEntity)(InstanceData, uint16_t);
-typedef bool (*PfnCore_Scene_removeAllEntities)(InstanceData);
+typedef bool (*PfnCore_Scene_SetCameraTransform)(InstanceData, PlainReply*, Transform);
+typedef bool (*PfnCore_Scene_GetCameraTransform)(InstanceData, TransformReply*);
+typedef bool (*PfnCore_Scene_TEMP_MoveCameraLocalSpace)(InstanceData, PlainReply*, Transform);
+typedef bool (*PfnCore_Scene_AddEntity)(InstanceData, PlainReply*, AddEntityParams);
+typedef bool (*PfnCore_Scene_RemoveEntity)(InstanceData, PlainReply*, uint16_t);
+typedef bool (*PfnCore_Scene_removeAllEntities)(InstanceData, PlainReply*);
 
 
 
@@ -51,5 +51,4 @@ struct InstanceData
     PfnCore_Scene_removeAllEntities pfnCore_Scene_removeAllEntities;
 
     void* pCoreData;
-    char* pPublicStatusMessage;
 };

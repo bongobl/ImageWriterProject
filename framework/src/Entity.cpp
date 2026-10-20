@@ -107,7 +107,7 @@ bool EntityList::removeEntity(uint64_t id)
 
 	// If not found in map
 	if (mapIter == m_EntityIterFromId.end()) {
-		std::cerr << "Entity id not found in m_EntityIterFromId map" << std::endl;
+		std::cerr << "Entity id " << id << " not found in m_EntityIterFromId map" << std::endl;
 		return false;
 	}
 
@@ -157,6 +157,7 @@ void EntityList::destroyAllShapes() {
 		*iter = nullptr;
 	}
 	m_Entities.clear();
+	m_EntityIterFromId.clear();
 }
 
 EntityGeometry* EntityList::getGeometryForEntity(Entity::Type type)

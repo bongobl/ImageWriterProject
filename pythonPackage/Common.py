@@ -111,6 +111,7 @@ class Color(ctypes.Structure):
         self.blue = payload.blue 
         self.alpha = payload.alpha 
 
+# Parameters =================================================================================
 
 class EntityType(IntEnum):
     NONE = 0
@@ -177,3 +178,66 @@ class AddEntityParams(ctypes.Structure):
 
         return f"(AddEntityParams: transform = {self.transform}, color = {self.color}, entity type = " + typeStr
         
+
+# Replies ====================================================================================
+
+class PlainReplyMCPPayload(BaseModel):
+    success: bool = False
+    message: str = ""
+
+class PlainReply(ctypes.Structure):
+
+    _fields_ = [
+        ("success", ctypes.c_bool),
+        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
+    ]
+
+    def __init__(self):
+        self.success = False
+        self.message = b"UNINITIALIZED_MESSAGE"
+
+    def __str__(self):
+        return f"(PlainReply: success = {self.success}, message = {self.message.decode('utf-8')})"
+
+    def toMCPPayload(self) -> PlainReplyMCPPayload:
+        return PlainReplyMCPPayload(success = self.success, message = self.message.decode('utf-8'))
+
+# Transform (additional MCPPayload type for Camera transform)
+class TransformReplyMCPPayload(PlainReplyMCPPayload):
+    transform: TransformMCPPayload
+
+class CameraTransformReplyMCPPayload(TransformReplyMCPPayload):
+    widthFromHeight: float = Field(..., description="(float), aspect ratio of the camera view, ie the width / height")
+
+class TransformReply(ctypes.Structure):
+
+    _fields_ = [
+        ("success", ctypes.c_bool),
+        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
+        ("transform", Transform),
+        ("cameraWidthFromHeight", ctypes.c_float), # only used when getting camera transform
+    ]
+
+    def __init__(self):
+        self.success = False
+        self.message = b"UNINITIALIZED_MESSAGE"
+
+    def __str__(self):
+        return f"(TransformReply: success = {self.success}, message = {self.message.decode('utf-8')}, transform = {self.transform}, cameraWidthFromHeight = {self.cameraWidthFromHeight})"
+
+    def toMCPPayload(self) -> TransformReplyMCPPayload:
+
+        return TransformReplyMCPPayload(
+            success = self.success, 
+            message = self.message.decode('utf-8'),
+            transform = self.transform.toMCPPayload()
+        )
+
+    def toCameraMCPPayload(self) -> CameraTransformReplyMCPPayload:
+
+        return CameraTransformReplyMCPPayload(
+            success = self.success, 
+            message = self.message.decode('utf-8'),
+            transform = self.transform.toMCPPayload(),
+            widthFromHeight = self.cameraWidthFromHeight
+        )

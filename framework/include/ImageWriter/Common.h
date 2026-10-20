@@ -1,4 +1,5 @@
 #pragma once
+#define MAX_REPLY_MESSAGE_LENGTH 512
 
 struct Vec2 {
     float x;
@@ -27,7 +28,7 @@ enum EntityType {
     ENTITY_TYPE_TRIANGLE = 3,
 };
 
-
+// Parameters
 struct AddEllipseParams {
     Vec2 halfExtents;
 };
@@ -50,4 +51,17 @@ struct AddEntityParams {
         AddRectangleParams rectangle;
         AddTriangleParams triangle;
     };
+};
+
+// Replies
+struct PlainReply {
+    bool success;
+    char message[MAX_REPLY_MESSAGE_LENGTH];
+};
+
+struct TransformReply {
+    bool success;
+    char message[MAX_REPLY_MESSAGE_LENGTH];
+    Transform transform;
+    float cameraWidthFromHeight;
 };

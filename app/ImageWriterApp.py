@@ -62,7 +62,6 @@ def runNetworkService():
                     # wait here and receive message from client
                     paramsBuffer = bytearray()
                     
-                    frameworkFunctionMessage = ctypes.create_string_buffer(b"Command ran successfully", iw.MAX_REPLY_MESSAGE_LENGTH)
                     match command:
                         
                         case iw.Command.SetCameraTransform:
@@ -77,31 +76,15 @@ def runNetworkService():
                             transform = iw.Transform.from_buffer_copy(paramsBuffer)
                             print(f"From client: {transform}")
 
-                            frameworkFunctionSucceeded = framework.SetCameraTransform(frameworkFunctionMessage, transform)
-
-                            reply = iw.PlainReply(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = iw.PlainReply()
+                            frameworkFunctionSucceeded = framework.SetCameraTransform(reply, transform)
 
                         case iw.Command.GetCameraTransform:
 
                             print("From client: Getting the camera transform")
-                            cameraTransform = iw.Transform()
-                            widthFromheight = ctypes.c_float(0.0)
-                            frameworkFunctionSucceeded = framework.GetCameraTransform(frameworkFunctionMessage, cameraTransform, widthFromheight)
 
-                            reply = iw.TransformReply(
-                                success = frameworkFunctionSucceeded, 
-                                message = frameworkFunctionMessage.value,
-                                transform = cameraTransform, 
-                                cameraWidthFromHeight = widthFromheight
-                            )
-
-                        case iw.Command.RemoveAllEntities:
-
-                            print("From client: removing all entities from scene")
-                            frameworkFunctionSucceeded = framework.RemoveAllEntities(frameworkFunctionMessage)
-
-
-                            reply = iw.PlainReply(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                            reply = iw.TransformReply()
+                            frameworkFunctionSucceeded = framework.GetCameraTransform(reply)
 
                         case iw.Command.AddEntity:
 
@@ -115,9 +98,15 @@ def runNetworkService():
                             entityParams = iw.AddEntityParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {entityParams}")
 
-                            frameworkFunctionSucceeded = framework.AddEntity(frameworkFunctionMessage, entityParams)
+                            reply = iw.PlainReply()
+                            frameworkFunctionSucceeded = framework.AddEntity(reply, entityParams)
 
-                            reply = iw.PlainReply(success = frameworkFunctionSucceeded, message = frameworkFunctionMessage.value)
+                        case iw.Command.RemoveAllEntities:
+
+                            print("From client: removing all entities from scene")
+
+                            reply = iw.PlainReply()
+                            frameworkFunctionSucceeded = framework.RemoveAllEntities(reply)
 
                         case iw.Command.Disconnecting:
                             
@@ -130,10 +119,10 @@ def runNetworkService():
                             
                         case _:
                             print("Unrecognized command")
-                            reply = iw.PlainReply(
-                                success = False,
-                                message = ("Unrecognized command sent to ImageWriterApp over socket").encode('utf-8')
-                            )
+                            reply = iw.PlainReply()
+                            reply.success = False,
+                            reply.message = ("Unrecognized command sent to ImageWriterApp over socket").encode('utf-8')
+                            
 
 
                     print(f"To client: {reply}")

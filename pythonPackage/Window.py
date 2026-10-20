@@ -77,8 +77,8 @@ class Window(tk.Tk):
         self.mouseButtons[event.num] = True
 
         if event.num == 2:
-            statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-            self.framework.SetCameraTransform(statusMessage,
+            reply = PlainReply()
+            self.framework.SetCameraTransform(reply,
                 Transform(
                     position = Vec2(x = 0, y = 0), 
                     orientation = 0,
@@ -107,8 +107,8 @@ class Window(tk.Tk):
 
         deltaX, deltaY = (currX - prevX, currY - prevY)
 
-        statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-        self.framework.TEMP_MoveCameraLocalSpace(statusMessage,
+        reply = PlainReply()
+        self.framework.TEMP_MoveCameraLocalSpace(reply,
             Transform(
                 position = Vec2(x = deltaX if self.mouseButtons[1] else 0, y = deltaY if self.mouseButtons[1] else 0), 
                 orientation = deltaX / 14 if self.mouseButtons[3] else 0,
@@ -121,8 +121,8 @@ class Window(tk.Tk):
         self.mouseScrollDelta = 0
 
     def onClickedClearSceneButton(self):
-        statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
-        self.framework.RemoveAllEntities(statusMessage)
+        reply = PlainReply()
+        self.framework.RemoveAllEntities(reply)
 
     def onUpdatedGridViewModeOptionMenu(self, *args):
 

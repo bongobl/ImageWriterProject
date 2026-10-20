@@ -51,22 +51,22 @@ class Framework(ctypes.Structure):
         self.runtimeLib.ImageWriter_Scene_UpdateRenderConfig.argtypes = [Framework, RenderConfig]
         self.runtimeLib.ImageWriter_Scene_UpdateRenderConfig.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_SetCameraTransform.argtypes = [Framework, ctypes.c_char_p, Transform]
+        self.runtimeLib.ImageWriter_Scene_SetCameraTransform.argtypes = [Framework, ctypes.POINTER(PlainReply), Transform]
         self.runtimeLib.ImageWriter_Scene_SetCameraTransform.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_GetCameraTransform.argtypes = [Framework, ctypes.c_char_p, ctypes.POINTER(Transform), ctypes.POINTER(ctypes.c_float)]
+        self.runtimeLib.ImageWriter_Scene_GetCameraTransform.argtypes = [Framework, ctypes.POINTER(TransformReply)]
         self.runtimeLib.ImageWriter_Scene_GetCameraTransform.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.argtypes = [Framework, ctypes.c_char_p, Transform]
+        self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.argtypes = [Framework, ctypes.POINTER(PlainReply), Transform]
         self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_AddEntity.argtypes = [Framework, ctypes.c_char_p, AddEntityParams]
+        self.runtimeLib.ImageWriter_Scene_AddEntity.argtypes = [Framework, ctypes.POINTER(PlainReply), AddEntityParams]
         self.runtimeLib.ImageWriter_Scene_AddEntity.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_RemoveEntity.argtypes = [Framework, ctypes.c_char_p, c_uint64]
+        self.runtimeLib.ImageWriter_Scene_RemoveEntity.argtypes = [Framework, ctypes.POINTER(PlainReply), c_uint64]
         self.runtimeLib.ImageWriter_Scene_RemoveEntity.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.argtypes = [Framework, ctypes.c_char_p]
+        self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.argtypes = [Framework, ctypes.POINTER(PlainReply)]
         self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.restype = ctypes.c_bool
 
 
@@ -123,20 +123,20 @@ class Framework(ctypes.Structure):
     def UpdateRenderConfig(self):
         return self.runtimeLib.ImageWriter_Scene_UpdateRenderConfig(self, self.renderConfig)
 
-    def SetCameraTransform(self, statusMessage, transform):
-        return self.runtimeLib.ImageWriter_Scene_SetCameraTransform(self, statusMessage, transform)
+    def SetCameraTransform(self, outReply, transform):
+        return self.runtimeLib.ImageWriter_Scene_SetCameraTransform(self, ctypes.byref(outReply), transform)
 
-    def GetCameraTransform(self, statusMessage, outTransform, outWidthFromHeight):
-        return self.runtimeLib.ImageWriter_Scene_GetCameraTransform(self, statusMessage, ctypes.byref(outTransform), ctypes.byref(outWidthFromHeight))
+    def GetCameraTransform(self, outReply):
+        return self.runtimeLib.ImageWriter_Scene_GetCameraTransform(self, ctypes.byref(outReply))
 
-    def TEMP_MoveCameraLocalSpace(self, statusMessage, transform):
-        return self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace(self, statusMessage, transform)
+    def TEMP_MoveCameraLocalSpace(self, outReply, transform):
+        return self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace(self, ctypes.byref(outReply), transform)
 
-    def AddEntity(self, statusMessage, params):
-        return self.runtimeLib.ImageWriter_Scene_AddEntity(self, statusMessage, params)
+    def AddEntity(self, outReply, params):
+        return self.runtimeLib.ImageWriter_Scene_AddEntity(self, ctypes.byref(outReply), params)
 
-    def RemoveEntity(self, statusMessage, entityId):
-        return self.runtimeLib.ImageWriter_Scene_RemoveEntity(self, statusMessage, entityId)
+    def RemoveEntity(self, outReply, entityId):
+        return self.runtimeLib.ImageWriter_Scene_RemoveEntity(self, ctypes.byref(outReply), entityId)
 
-    def RemoveAllEntities(self, statusMessage):
-        return self.runtimeLib.ImageWriter_Scene_RemoveAllEntities(self, statusMessage)
+    def RemoveAllEntities(self, outReply):
+        return self.runtimeLib.ImageWriter_Scene_RemoveAllEntities(self, ctypes.byref(outReply))

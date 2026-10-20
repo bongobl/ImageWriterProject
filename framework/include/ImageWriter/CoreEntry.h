@@ -16,10 +16,10 @@ extern "C" __declspec(dllexport) bool scene_isSelfManagedRenderWindowOpen(Instan
 extern "C" __declspec(dllexport) bool scene_updateRenderConfig(InstanceData instanceData, RenderConfig renderConfig);
 
 // scene API
-extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, Transform transform);
-extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, Transform* pCameraTransform, float* pWidthFromheight);
-extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, Transform delta);
-extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, AddEntityParams params);
-extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, uint64_t id);
-extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData);
+extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, PlainReply* pReply, Transform transform);
+extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, TransformReply* pReply);
+extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, PlainReply* pReply, Transform delta);
+extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, PlainReply* pReply, AddEntityParams params);
+extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, PlainReply* pReply, uint64_t id);
+extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData, PlainReply* pReply);
 

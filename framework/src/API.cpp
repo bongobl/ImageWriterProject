@@ -226,81 +226,80 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateRenderConfig(HImag
     return pInstanceData->pfnCore_Scene_updateRenderConfig(*pInstanceData, renderConfig);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_SetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform transform)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_SetCameraTransform(HImageWriterInstance instance, PlainReply* pReply, Transform transform)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_SetCameraTransform: instance.pData was null\n");
-        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_SetCameraTransform() from its underlying framework correctly");
+        pReply->success = false;
+        strcpy(pReply->message, "App did not call ImageWriter_Scene_SetCameraTransform() from its underlying framework correctly");
         return false;
     }
-
+    
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_SetCameraTransform(*pInstanceData, transform);
+    return pInstanceData->pfnCore_Scene_SetCameraTransform(*pInstanceData, pReply, transform);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImageWriterInstance instance, char* pStatusMessage, Transform* pCameraTransform, float* pWidthFromheight)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImageWriterInstance instance, TransformReply* pReply)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_GetCameraTransform: instance.pData was null\n");
-        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_GetCameraTransform() from its underlying framework correctly");
+        pReply->success = false;
+        strcpy(pReply->message, "App did not call ImageWriter_Scene_GetCameraTransform() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_GetCameraTransform(*pInstanceData, pCameraTransform, pWidthFromheight);
+    return pInstanceData->pfnCore_Scene_GetCameraTransform(*pInstanceData, pReply);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_TEMP_MoveCameraLocalSpace(HImageWriterInstance instance, char* pStatusMessage, Transform delta)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_TEMP_MoveCameraLocalSpace(HImageWriterInstance instance, PlainReply* pReply, Transform delta)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_TEMP_MoveCameraLocalSpace: instance.pData was null\n");
-        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_TEMP_MoveCameraLocalSpace() from its underlying framework correctly");
+        pReply->success = false;
+        strcpy(pReply->message, "App did not call ImageWriter_Scene_TEMP_MoveCameraLocalSpace() from its underlying framework correctly");
         return false;
     }
-
+    
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_TEMP_MoveCameraLocalSpace(*pInstanceData, delta);
+    return pInstanceData->pfnCore_Scene_TEMP_MoveCameraLocalSpace(*pInstanceData, pReply, delta);
+
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterInstance instance, char* pStatusMessage, AddEntityParams params)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterInstance instance, PlainReply* pReply, AddEntityParams params)
 {
     if(!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_AddEntity: instance.pData was null\n");
-        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_AddEntity() from its underlying framework correctly");
+        pReply->success = false;
+        strcpy(pReply->message, "App did not call ImageWriter_Scene_AddEntity() from its underlying framework correctly");
         return false;
     }
-
+    
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-
-    return pInstanceData->pfnCore_Scene_AddEntity(*pInstanceData, params);
+    return pInstanceData->pfnCore_Scene_AddEntity(*pInstanceData, pReply, params);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveEntity(HImageWriterInstance instance, char* pStatusMessage, uint64_t id)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveEntity(HImageWriterInstance instance, PlainReply* pReply, uint64_t id)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_RemoveEntity: instance.pData was null\n");
-        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_RemoveEntity() from its underlying framework correctly");
+        pReply->success = false;
+        strcpy(pReply->message, "App did not call ImageWriter_Scene_RemoveEntity() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-
-    return pInstanceData->pfnCore_Scene_RemoveEntity(*pInstanceData, id);
+    return pInstanceData->pfnCore_Scene_RemoveEntity(*pInstanceData, pReply, id);
 }
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveAllEntities(HImageWriterInstance instance, char* pStatusMessage)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveAllEntities(HImageWriterInstance instance, PlainReply* pReply)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_RemoveAllEntities: instance.pData was null\n");
-        strcpy(pStatusMessage, "App did not call ImageWriter_Scene_RemoveAllEntities() from its underlying framework correctly");
+        pReply->success = false;
+        strcpy(pReply->message, "App did not call ImageWriter_Scene_RemoveAllEntities() from its underlying framework correctly");
         return false;
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    pInstanceData->pPublicStatusMessage = pStatusMessage;
-    return pInstanceData->pfnCore_Scene_removeAllEntities(*pInstanceData);
+    return pInstanceData->pfnCore_Scene_removeAllEntities(*pInstanceData, pReply);
 }

@@ -5,16 +5,15 @@ import ImageWriterPackage as iw
 def createSomeSampleShapes():
 
     imageWriter = window.framework;
-    statusMessage = ctypes.create_string_buffer(b"Command executed successfully", 256)
 
     input("Press Enter")
 
-    cameraTransform = iw.Transform()
-    widthFromheight = ctypes.c_float(0.0)
-    if not imageWriter.GetCameraTransform(statusMessage, cameraTransform, widthFromheight):
-        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+    transformReply = iw.TransformReply();
+    if not imageWriter.GetCameraTransform(transformReply):
+        print(f"ImageWriter error: {transformReply.message.decode('utf-8')}")
     else:
-        print(f"camera scaleX = {cameraTransform.scale * widthFromheight.value}, scaleY = {cameraTransform.scale}")
+        print(f"ImageWriter success: {transformReply.message.decode('utf-8')}")
+        print(f"camera scaleX = {transformReply.transform.scale * transformReply.cameraWidthFromHeight}, scaleY = {transformReply.transform.scale}")
 
     dimX = 8
     dimY = 6
@@ -24,11 +23,12 @@ def createSomeSampleShapes():
     startX = (dimX - 1) / 2 * spacingX
     startY = (dimY - 1) / 2 * spacingY
 
+    plainReply = iw.PlainReply();
     for i in range(dimY):
         for j in range(dimX):
 
             if not imageWriter.AddEntity(
-                statusMessage,
+                plainReply,
                 iw.AddEntityParams(
                     entityType = iw.EntityType.ELLIPSE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
@@ -36,21 +36,21 @@ def createSomeSampleShapes():
                     ellipse = iw.AddEllipseParams(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
-                print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+                print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
     
     input("Press Enter")
-    if not imageWriter.RemoveEntity(statusMessage, 28):
-        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+    if not imageWriter.RemoveEntity(plainReply, 28):
+        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
 
     input("Press Enter")
-    if not imageWriter.RemoveAllEntities(statusMessage):
-        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+    if not imageWriter.RemoveAllEntities(plainReply):
+        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
 
     input("Press Enter")
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddEntity(
-                statusMessage,
+                plainReply,
                 iw.AddEntityParams(
                     entityType = iw.EntityType.RECTANGLE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
@@ -58,17 +58,17 @@ def createSomeSampleShapes():
                     rectangle = iw.AddRectangleParams(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
-                print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+                print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
     
     input("Press Enter")
-    if not imageWriter.RemoveAllEntities(statusMessage):
-        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+    if not imageWriter.RemoveAllEntities(plainReply):
+        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
 
     input("Press Enter")
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddEntity(
-                statusMessage,
+                plainReply,
                 iw.AddEntityParams(
                     entityType = iw.EntityType.TRIANGLE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
@@ -80,11 +80,11 @@ def createSomeSampleShapes():
                     )
                 )
             ):
-                print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+                print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
     
     input("Press Enter")
-    if not imageWriter.RemoveAllEntities(statusMessage):
-        print(f"ImageWriter error: {statusMessage.value.decode('utf-8')}")
+    if not imageWriter.RemoveAllEntities(plainReply):
+        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
 
     # instance.AddEllipse(statusMessage, 
     #     Transform(positionX = cameraTransform.scaleX, positionY = cameraTransform.scaleY, scaleX = 1, scaleY = 1, angle = 0), 

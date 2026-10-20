@@ -121,11 +121,12 @@ extern "C" __declspec(dllexport) bool scene_updateRenderConfig(InstanceData inst
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, Transform transform)
+extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, PlainReply* pReply, Transform transform)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_setCameraTransform(): instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_setCameraTransform()");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework on scene_setCameraTransform()");
 		return false;
 	}
 
@@ -135,9 +136,13 @@ extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData inst
 
 	if (!pCoreData->m_pScene) {
 		std::cerr << "Core entry scene_setCameraTransform(): pCoreData->m_pScene was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_setCameraTransform() on non-existent scene");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework: calling scene_setCameraTransform() on non-existent scene");
 		return false;
 	}
+
+	// tentatively set success string
+	strcpy(pReply->message, "Camera transform set successfully");
 
 	Camera& camera = pCoreData->m_pScene->m_Camera;
 	camera.setTransform(transform);
@@ -148,17 +153,19 @@ extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData inst
 
 	// If there are any warnings, overwrite default success message
 	if (!warningsStream.str().empty()) {
-		strcpy(instanceData.pPublicStatusMessage, warningsStream.str().c_str());
+		strcpy(pReply->message, warningsStream.str().c_str());
 	}
 	
-	return true;
+	pReply->success = true;
+	return pReply->success;
 }
 
-extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, Transform* pCameraTransform, float* pWidthFromheight)
+extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, TransformReply* pReply)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_getCameraTransform(): instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_getCameraTransform()");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework on scene_getCameraTransform()");
 		return false;
 	}
 
@@ -168,26 +175,31 @@ extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData inst
 
 	if (!pCoreData->m_pScene) {
 		std::cerr << "Core entry scene_getCameraTransform(): pCoreData->m_pScene was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_getCameraTransform() on non-existent scene");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework: calling scene_getCameraTransform() on non-existent scene");
 		return false;
 	}
 
 	const Camera& camera = pCoreData->m_pScene->m_Camera;
-	*pCameraTransform = camera.getTransform();
+	pReply->transform = camera.getTransform();
 
 	// Note: a bit sloppy here accessing it without a mutex but it will never change
-	*pWidthFromheight = camera.m_widthFromHeight; 
-	return true;
+	pReply->cameraWidthFromHeight = camera.m_widthFromHeight;
+
+	pReply->success = true;
+	strcpy(pReply->message, "Camera transform obtained successfully");
+	return pReply->success;
 }
 
 // NOTE: for the mouse control rig in python, we are currently using the delta Transform to store screen space
 // translations (num pixels rather than world units), Maybe instead of fixing this we can just keep it as is
 // and have it as a scene lifecycle function rather than an MCP one
-extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, Transform delta)
+extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, PlainReply* pReply, Transform delta)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_TEMP_moveCameraLocalSpace(): instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_TEMP_moveCameraLocalSpace()");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework on scene_TEMP_moveCameraLocalSpace()");
 		return false;
 	}
 
@@ -197,7 +209,8 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 
 	if (!pCoreData->m_pScene) {
 		std::cerr << "Core entry scene_TEMP_moveCameraLocalSpace(): pCoreData->m_pScene was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_TEMP_moveCameraLocalSpace() on non-existent scene");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework: calling scene_TEMP_moveCameraLocalSpace() on non-existent scene");
 		return false;
 	}
 
@@ -223,17 +236,20 @@ extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceDa
 
 	// If there are any warnings, overwrite default success message
 	if (!warningsStream.str().empty()) {
-		strcpy(instanceData.pPublicStatusMessage, warningsStream.str().c_str());
+		strcpy(pReply->message, warningsStream.str().c_str());
 	}
 
+	pReply->success = true;
+	strcpy(pReply->message, "Camera moved in local space successfully");
 	return true;
 }
 
-extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, AddEntityParams params)
+extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, PlainReply* pReply, AddEntityParams params)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_addEntity(): instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_addEntity()");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework on scene_addEntity()");
 		return false;
 	}
 
@@ -243,20 +259,24 @@ extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData,
 
 	if (!pCoreData->m_pScene) {
 		std::cerr << "Core entry scene_addEntity(): pCoreData->m_pScene was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_addEntity() on non-existent scene");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework: calling scene_addEntity() on non-existent scene");
 		return false;
 	}
 
 	pCoreData->m_pScene->addEntity(params);
 
-	return true;
+	pReply->success = true;
+	strcpy(pReply->message, "Entity added successfully");
+	return pReply->success;
 }
 
-extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, uint64_t id)
+extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, PlainReply* pReply, uint64_t id)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_removeEntity(): instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_removeEntity()");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework on scene_removeEntity()");
 		return false;
 	}
 
@@ -266,7 +286,8 @@ extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceDa
 
 	if (!pCoreData->m_pScene) {
 		std::cerr << "Core entry scene_removeEntity(): pCoreData->m_pScene was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_removeEntity() on non-existent scene");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework: calling scene_removeEntity() on non-existent scene");
 		return false;
 	}
 
@@ -275,18 +296,22 @@ extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceDa
 		// assumptions on why it failed in the CoreEntry layer
 
 		std::string errorMessage = "No entity with a given ID of " + std::to_string(id) + std::string(" found");
-		strcpy(instanceData.pPublicStatusMessage, errorMessage.c_str());
+		pReply->success = false;
+		strcpy(pReply->message, errorMessage.c_str());
 		return false;
 	}
-
-	return true;
+	pReply->success = true;
+	std::string successMessage = "Entity with id " + std::to_string(id) + std::string(" removed successfully");
+	strcpy(pReply->message, successMessage.c_str());
+	return pReply->success = true;
 }
 
-extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData)
+extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData, PlainReply* pReply)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_removeAllEntities(): instanceData.pCoreData was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework on scene_removeAllEntities()");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework on scene_removeAllEntities()");
 		return false;
 	}
 
@@ -296,11 +321,14 @@ extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData insta
 
 	if (!pCoreData->m_pScene) {
 		std::cerr << "Core entry scene_removeAllEntities(): pCoreData->m_pScene was null" << std::endl;
-		strcpy(instanceData.pPublicStatusMessage, "Internal failure in framework: calling scene_removeAllEntities() on non-existent scene");
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework: calling scene_removeAllEntities() on non-existent scene");
 		return false;
 	}
 
 	pCoreData->m_pScene->m_Entities.destroyAllShapes();
 
-	return true;
+	pReply->success = true;
+	strcpy(pReply->message, "All entities removed successfully");
+	return pReply->success = true;
 }

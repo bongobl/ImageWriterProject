@@ -6,17 +6,16 @@
 
 void runImageWriterFlow(HImageWriterInstance instance)
 {
-	char statusMessage[256] = "Command executed successfully";
 
-	Transform cameraTransform = {};
-	float widthFromHeight = 0;
-	if (!ImageWriter_Scene_GetCameraTransform(instance, statusMessage, &cameraTransform, &widthFromHeight))
+	TransformReply transformReply = { .success = true, .message = "Command executed successfully" };
+	if (!ImageWriter_Scene_GetCameraTransform(instance, &transformReply))
 	{
-		std::cerr << "ImageWriter error: " << statusMessage << std::endl;
+		std::cerr << "ImageWriter error: " << transformReply.message << std::endl;
 	}
 	else 
 	{
-		std::cout << "scaleX = " << cameraTransform.scale * widthFromHeight << ", scaleY = " << cameraTransform.scale << std::endl;
+		std::cout << "ImageWriter success: " << transformReply.message << std::endl;
+		std::cout << "scaleX = " << transformReply.transform.scale * transformReply.cameraWidthFromHeight << ", scaleY = " << transformReply.transform.scale << std::endl;
 	}
 	
 
@@ -28,13 +27,14 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	float startX = (dimX - 1) / 2 * spacingX;
 	float startY = (dimY - 1) / 2 * spacingY;
 
+	PlainReply plainReply = { .success = true, .message = "Command executed successfully" };
 	// Ellipses
 	system("pause");
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddEntity(
 				instance, 
-				statusMessage,
+				&plainReply,
 				{
 					.entityType = ENTITY_TYPE_ELLIPSE,
 					.transform = {
@@ -53,21 +53,21 @@ void runImageWriterFlow(HImageWriterInstance instance)
 			)
 				
 			{
-				std::cerr << "ImageWriter error: " << statusMessage << std::endl;
+				std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 			}
 		}
 	}
-
+	
 	system("pause");
-	if (!ImageWriter_Scene_RemoveEntity(instance, statusMessage, 28))
+	if (!ImageWriter_Scene_RemoveEntity(instance, &plainReply, 28))
 	{
-		std::cerr << "ImageWriter error: " << statusMessage << std::endl;
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 	}
 
 	system("pause");
-	if(!ImageWriter_Scene_RemoveAllEntities(instance, statusMessage))
+	if(!ImageWriter_Scene_RemoveAllEntities(instance, &plainReply))
 	{
-		std::cerr << "ImageWriter error: " << statusMessage << std::endl;
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 	}
 
 	// Rectangles
@@ -76,7 +76,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddEntity(
 				instance,
-				statusMessage,
+				&plainReply,
 				{
 					.entityType = ENTITY_TYPE_RECTANGLE,
 					.transform = {
@@ -95,15 +95,15 @@ void runImageWriterFlow(HImageWriterInstance instance)
 			)
 
 			{
-				std::cerr << "ImageWriter error: " << statusMessage << std::endl;
+				std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 			}
 		}
 	}
 
 	system("pause");
-	if (!ImageWriter_Scene_RemoveAllEntities(instance, statusMessage))
+	if (!ImageWriter_Scene_RemoveAllEntities(instance, &plainReply))
 	{
-		std::cerr << "ImageWriter error: " << statusMessage << std::endl;
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 	}
 
 	// Triangles
@@ -112,7 +112,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddEntity(
 				instance,
-				statusMessage,
+				&plainReply,
 				{
 					.entityType = ENTITY_TYPE_TRIANGLE,
 					.transform = {
@@ -133,15 +133,15 @@ void runImageWriterFlow(HImageWriterInstance instance)
 			)
 
 			{
-				std::cerr << "ImageWriter error: " << statusMessage << std::endl;
+				std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 			}
 		}
 	}
 
 	system("pause");
-	if (!ImageWriter_Scene_RemoveAllEntities(instance, statusMessage))
+	if (!ImageWriter_Scene_RemoveAllEntities(instance, &plainReply))
 	{
-		std::cerr << "ImageWriter error: " << statusMessage << std::endl;
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 	}
 
 	//system("pause");
