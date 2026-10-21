@@ -93,7 +93,7 @@ public:
 	bool removeEntity(uint64_t id);
 	void dummyUpdateShapes(float deltaTime);
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
-	void destroyAllShapes();
+	void removeAllEntities();
 
 	EntityGeometry* getGeometryForEntity(Entity::Type type);
 };

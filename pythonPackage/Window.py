@@ -91,7 +91,7 @@ class Window(tk.Tk):
 
 
     def onMouseScroll(self, event):
-        self.mouseScrollDelta = -1 if event.delta > 0 else 1
+        self.mouseScrollDelta = 1 if event.delta > 0 else -1
 
     def onFrameUpdate(self):
 
@@ -108,11 +108,12 @@ class Window(tk.Tk):
         deltaX, deltaY = (currX - prevX, currY - prevY)
 
         reply = PlainReply()
-        self.framework.TEMP_MoveCameraLocalSpace(reply,
-            Transform(
-                position = Vec2(x = deltaX if self.mouseButtons[1] else 0, y = deltaY if self.mouseButtons[1] else 0), 
-                orientation = deltaX / 14 if self.mouseButtons[3] else 0,
-                scale = self.mouseScrollDelta
+        self.framework.UpdateScreenSpaceCameraControlRig(
+            ScreenSpaceControls(
+                moveX = deltaX if self.mouseButtons[1] else 0,
+                moveY = deltaY if self.mouseButtons[1] else 0,
+                rotate = deltaX if self.mouseButtons[3] else 0,
+                zoom = self.mouseScrollDelta
             )
         )
         self.after(9, self.onFrameUpdate)

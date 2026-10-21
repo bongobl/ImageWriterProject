@@ -78,7 +78,7 @@ EntityList::EntityList() :
 
 EntityList::~EntityList()
 {
-	destroyAllShapes();
+	removeAllEntities();
 }
 
 void EntityList::addEntity(AddEntityParams params)
@@ -149,7 +149,7 @@ void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
 	}
 }
 
-void EntityList::destroyAllShapes() {
+void EntityList::removeAllEntities() {
 
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 	for (auto iter = m_Entities.begin(); iter != m_Entities.end(); ++iter) {

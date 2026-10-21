@@ -21,6 +21,14 @@ struct Color {
     float alpha = 0;
 };
 
+struct ScreenSpaceControls {
+    int moveX = 0;
+    int moveY = 0;
+    int rotate = 0;
+    int zoom = 0;
+};
+
+// Parameters
 enum EntityType {
     ENTITY_TYPE_NONE = 0,
     ENTITY_TYPE_ELLIPSE = 1,
@@ -28,7 +36,6 @@ enum EntityType {
     ENTITY_TYPE_TRIANGLE = 3,
 };
 
-// Parameters
 struct AddEllipseParams {
     Vec2 halfExtents;
 };

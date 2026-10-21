@@ -14,11 +14,11 @@ extern "C" __declspec(dllexport) bool scene_dispose(InstanceData instanceData);
 extern "C" __declspec(dllexport) bool scene_updateFrame(InstanceData instanceData, float deltaTime);
 extern "C" __declspec(dllexport) bool scene_isSelfManagedRenderWindowOpen(InstanceData instanceData);
 extern "C" __declspec(dllexport) bool scene_updateRenderConfig(InstanceData instanceData, RenderConfig renderConfig);
+extern "C" __declspec(dllexport) bool scene_updateScreenSpaceCameraControlRig(InstanceData instanceData, ScreenSpaceControls controls);
 
 // scene API
 extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, PlainReply* pReply, Transform transform);
 extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData instanceData, TransformReply* pReply);
-extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, PlainReply* pReply, Transform delta);
 extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, PlainReply* pReply, AddEntityParams params);
 extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, PlainReply* pReply, uint64_t id);
 extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData, PlainReply* pReply);

@@ -58,18 +58,18 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         return false;
     }
 
-    PfnCore_Scene_isSelfManagedRenderWindowOpen pfnCore_Scene_isSelfManagedRenderWindowOpen = (PfnCore_Scene_isSelfManagedRenderWindowOpen)GetProcAddress(hDll, "scene_isSelfManagedRenderWindowOpen");
+    PfnCore_Scene_IsSelfManagedRenderWindowOpen pfnCore_Scene_IsSelfManagedRenderWindowOpen = (PfnCore_Scene_IsSelfManagedRenderWindowOpen)GetProcAddress(hDll, "scene_isSelfManagedRenderWindowOpen");
 
-    if (pfnCore_Scene_isSelfManagedRenderWindowOpen == NULL) {
+    if (pfnCore_Scene_IsSelfManagedRenderWindowOpen == NULL) {
         fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_isSelfManagedRenderWindowOpen could not load\n");
         FreeLibrary(hDll);
         return false;
     }
 
-    PfnCore_Scene_updateRenderConfig pfnCore_Scene_updateRenderConfig = (PfnCore_Scene_updateRenderConfig)GetProcAddress(hDll, "scene_updateRenderConfig");
+    PfnCore_Scene_UpdateRenderConfig pfnCore_Scene_UpdateRenderConfig = (PfnCore_Scene_UpdateRenderConfig)GetProcAddress(hDll, "scene_updateRenderConfig");
 
-    if (pfnCore_Scene_updateRenderConfig == NULL) {
-        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function pfnCore_Scene_updateRenderConfig could not load\n");
+    if (pfnCore_Scene_UpdateRenderConfig == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_updateRenderConfig could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -90,10 +90,10 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         return false;
     }
 
-    PfnCore_Scene_TEMP_MoveCameraLocalSpace pfnCore_Scene_TEMP_MoveCameraLocalSpace = (PfnCore_Scene_TEMP_MoveCameraLocalSpace)GetProcAddress(hDll, "scene_TEMP_moveCameraLocalSpace");
+    PfnCore_Scene_UpdateScreenSpaceCameraControlRig pfnCore_Scene_UpdateScreenSpaceCameraControlRig = (PfnCore_Scene_UpdateScreenSpaceCameraControlRig)GetProcAddress(hDll, "scene_updateScreenSpaceCameraControlRig");
 
-    if (pfnCore_Scene_TEMP_MoveCameraLocalSpace == NULL) {
-        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_TEMP_moveCameraLocalSpace could not load\n");
+    if (pfnCore_Scene_UpdateScreenSpaceCameraControlRig == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_updateScreenSpaceCameraControlRig could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -133,12 +133,12 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         .pfnCore_Scene_Initialize = pfnCore_Scene_Initialize,
         .pfnCore_Scene_Dispose = pfnCore_Scene_Dispose,
         .pfnCore_Scene_UpdateFrame = pfnCore_Scene_UpdateFrame,
-        .pfnCore_Scene_isSelfManagedRenderWindowOpen = pfnCore_Scene_isSelfManagedRenderWindowOpen,
-        .pfnCore_Scene_updateRenderConfig = pfnCore_Scene_updateRenderConfig,
+        .pfnCore_Scene_IsSelfManagedRenderWindowOpen = pfnCore_Scene_IsSelfManagedRenderWindowOpen,
+        .pfnCore_Scene_UpdateRenderConfig = pfnCore_Scene_UpdateRenderConfig,
 
         .pfnCore_Scene_SetCameraTransform = pfnCore_Scene_SetCameraTransform,
         .pfnCore_Scene_GetCameraTransform = pfnCore_Scene_GetCameraTransform,
-        .pfnCore_Scene_TEMP_MoveCameraLocalSpace = pfnCore_Scene_TEMP_MoveCameraLocalSpace,
+        .pfnCore_Scene_UpdateScreenSpaceCameraControlRig = pfnCore_Scene_UpdateScreenSpaceCameraControlRig,
         .pfnCore_Scene_AddEntity = pfnCore_Scene_AddEntity,
         .pfnCore_Scene_RemoveEntity = pfnCore_Scene_RemoveEntity,
         .pfnCore_Scene_removeAllEntities = pfnCore_Scene_removeAllEntities,
@@ -211,7 +211,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_IsSelfManagedRenderWindo
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
 
-    return pInstanceData->pfnCore_Scene_isSelfManagedRenderWindowOpen(*pInstanceData);
+    return pInstanceData->pfnCore_Scene_IsSelfManagedRenderWindowOpen(*pInstanceData);
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateRenderConfig(HImageWriterInstance instance, RenderConfig renderConfig)
@@ -223,7 +223,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateRenderConfig(HImag
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
 
-    return pInstanceData->pfnCore_Scene_updateRenderConfig(*pInstanceData, renderConfig);
+    return pInstanceData->pfnCore_Scene_UpdateRenderConfig(*pInstanceData, renderConfig);
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_SetCameraTransform(HImageWriterInstance instance, PlainReply* pReply, Transform transform)
@@ -252,17 +252,15 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetCameraTransform(HImag
     return pInstanceData->pfnCore_Scene_GetCameraTransform(*pInstanceData, pReply);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_TEMP_MoveCameraLocalSpace(HImageWriterInstance instance, PlainReply* pReply, Transform delta)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateScreenSpaceCameraControlRig(HImageWriterInstance instance, ScreenSpaceControls controls)
 {
     if (!instance.pData) {
-        fprintf(stderr, "ImageWriter_Scene_TEMP_MoveCameraLocalSpace: instance.pData was null\n");
-        pReply->success = false;
-        strcpy(pReply->message, "App did not call ImageWriter_Scene_TEMP_MoveCameraLocalSpace() from its underlying framework correctly");
+        fprintf(stderr, "ImageWriter_Scene_UpdateScreenSpaceCameraControlRig: instance.pData was null\n");
         return false;
     }
     
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    return pInstanceData->pfnCore_Scene_TEMP_MoveCameraLocalSpace(*pInstanceData, pReply, delta);
+    return pInstanceData->pfnCore_Scene_UpdateScreenSpaceCameraControlRig(*pInstanceData, controls);
 
 }
 

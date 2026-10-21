@@ -121,6 +121,26 @@ extern "C" __declspec(dllexport) bool scene_updateRenderConfig(InstanceData inst
 	return true;
 }
 
+extern "C" __declspec(dllexport) bool scene_updateScreenSpaceCameraControlRig(InstanceData instanceData, ScreenSpaceControls controls)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_TEMP_moveCameraLocalSpace(): instanceData.pCoreData was null" << std::endl;
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
+
+	if (!pCoreData->m_pScene) {
+		std::cerr << "Core entry scene_TEMP_moveCameraLocalSpace(): pCoreData->m_pScene was null" << std::endl;
+		return false;
+	}
+
+	pCoreData->m_pScene->updateScreenSpaceCameraControlRig(controls);
+	return true;
+}
+
 extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData instanceData, PlainReply* pReply, Transform transform)
 {
 	if (!instanceData.pCoreData) {
@@ -141,22 +161,7 @@ extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData inst
 		return false;
 	}
 
-	// tentatively set success string
-	strcpy(pReply->message, "Camera transform set successfully");
-
-	Camera& camera = pCoreData->m_pScene->m_Camera;
-	camera.setTransform(transform);
-
-	// Validate camera transform
-	std::stringstream warningsStream;
-	camera.validate(&warningsStream);
-
-	// If there are any warnings, overwrite default success message
-	if (!warningsStream.str().empty()) {
-		strcpy(pReply->message, warningsStream.str().c_str());
-	}
-	
-	pReply->success = true;
+	pCoreData->m_pScene->setCameraTransform(pReply, transform);
 	return pReply->success;
 }
 
@@ -180,68 +185,8 @@ extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData inst
 		return false;
 	}
 
-	const Camera& camera = pCoreData->m_pScene->m_Camera;
-	pReply->transform = camera.getTransform();
-
-	// Note: a bit sloppy here accessing it without a mutex but it will never change
-	pReply->cameraWidthFromHeight = camera.m_widthFromHeight;
-
-	pReply->success = true;
-	strcpy(pReply->message, "Camera transform obtained successfully");
+	pCoreData->m_pScene->getCameraTransform(pReply);
 	return pReply->success;
-}
-
-// NOTE: for the mouse control rig in python, we are currently using the delta Transform to store screen space
-// translations (num pixels rather than world units), Maybe instead of fixing this we can just keep it as is
-// and have it as a scene lifecycle function rather than an MCP one
-extern "C" __declspec(dllexport) bool scene_TEMP_moveCameraLocalSpace(InstanceData instanceData, PlainReply* pReply, Transform delta)
-{
-	if (!instanceData.pCoreData) {
-		std::cerr << "Core entry scene_TEMP_moveCameraLocalSpace(): instanceData.pCoreData was null" << std::endl;
-		pReply->success = false;
-		strcpy(pReply->message, "Internal failure in framework on scene_TEMP_moveCameraLocalSpace()");
-		return false;
-	}
-
-	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
-
-	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
-
-	if (!pCoreData->m_pScene) {
-		std::cerr << "Core entry scene_TEMP_moveCameraLocalSpace(): pCoreData->m_pScene was null" << std::endl;
-		pReply->success = false;
-		strcpy(pReply->message, "Internal failure in framework: calling scene_TEMP_moveCameraLocalSpace() on non-existent scene");
-		return false;
-	}
-
-	Scene& scene = *pCoreData->m_pScene;
-	Camera& camera = scene.m_Camera;
-	sf::Vector2f deltaMouseScreenSpace = sf::fromCore(delta.position);
-
-	const Transform& cameraTransform = camera.getTransform();
-
-	// Move
-	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / camera.getComputedState().pixelsPerWorldUnit;
-	camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
-
-	// Rotate
-	camera.rotate(delta.orientation);
-
-	// Scale
-	camera.incrementScale(delta.scale);
-
-	// Validate camera transform
-	std::stringstream warningsStream;
-	camera.validate(&warningsStream);
-
-	// If there are any warnings, overwrite default success message
-	if (!warningsStream.str().empty()) {
-		strcpy(pReply->message, warningsStream.str().c_str());
-	}
-
-	pReply->success = true;
-	strcpy(pReply->message, "Camera moved in local space successfully");
-	return true;
 }
 
 extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, PlainReply* pReply, AddEntityParams params)
@@ -326,7 +271,7 @@ extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData insta
 		return false;
 	}
 
-	pCoreData->m_pScene->m_Entities.destroyAllShapes();
+	pCoreData->m_pScene->removeAllEntities();
 
 	pReply->success = true;
 	strcpy(pReply->message, "All entities removed successfully");

@@ -111,6 +111,15 @@ class Color(ctypes.Structure):
         self.blue = payload.blue 
         self.alpha = payload.alpha 
 
+class ScreenSpaceControls(ctypes.Structure):
+
+    _fields_ = [
+        ("moveX", ctypes.c_int),
+        ("moveY", ctypes.c_int),
+        ("rotate", ctypes.c_int),
+        ("zoom", ctypes.c_int),
+    ]
+
 # Parameters =================================================================================
 
 class EntityType(IntEnum):

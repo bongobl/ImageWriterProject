@@ -79,21 +79,30 @@ class Scene {
 	sf::Vector2i mousePosition;
 
 	GridView m_GridView;
-public:
-
-	Camera m_Camera;
 
 	EntityList m_Entities;
 
+	Camera m_Camera;
+
 public:
+
 	Scene(int64_t windowHandle, RenderConfig renderConfig);
 	~Scene();
-	
+	bool isSelfManagedRenderWindowOpen() const;
+
+	// Scene lifecycle
 	void updateState(float deltaTime);
 	void render();
+	void updateRenderConfig(RenderConfig renderConfig);
+	void updateScreenSpaceCameraControlRig(ScreenSpaceControls controls);
+
+	// API
 
 	void addEntity(AddEntityParams params);
 	bool removeEntity(uint64_t id);
-	void updateRenderConfig(RenderConfig renderConfig);
-	bool isSelfManagedRenderWindowOpen() const;
+	void removeAllEntities();
+	
+	void setCameraTransform(PlainReply* pReply, Transform transform);
+	void getCameraTransform(TransformReply* pReply);
+	
 };

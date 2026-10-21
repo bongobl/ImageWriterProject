@@ -196,9 +196,18 @@ Scene::Scene(int64_t windowHandle, RenderConfig renderConfig) :
 }
 Scene::~Scene()
 {
-	m_Entities.destroyAllShapes();
+	m_Entities.removeAllEntities();
 	delete m_pWindow;
 	m_pWindow = nullptr;
+}
+
+bool Scene::isSelfManagedRenderWindowOpen() const
+{
+	if (!m_isWindowSelfManaged) {
+		std::cerr << "\nError: Calling Scene::isSelfManagedRenderWindowOpen() on a non-self managed window" << std::endl;
+		exit(1);
+	}
+	return m_pWindow->isOpen();
 }
 
 void Scene::updateState(float deltaTime)
@@ -209,11 +218,13 @@ void Scene::updateState(float deltaTime)
 	// Update mouse tracking
 	sf::Vector2i prevFrameMousePosition = mousePosition;
 	mousePosition = sf::Mouse::getPosition(*m_pWindow);
-	sf::Vector2f deltaMouseScreenSpace = (sf::Vector2f)(mousePosition - prevFrameMousePosition);
+	sf::Vector2i deltaMouseScreenSpace = mousePosition - prevFrameMousePosition;
 
 	
 	// Scene controls for self managed windows
 	if (m_isWindowSelfManaged) {
+
+		ScreenSpaceControls controls;
 
 		while (const std::optional event = m_pWindow->pollEvent())
 		{
@@ -223,19 +234,14 @@ void Scene::updateState(float deltaTime)
 			if (m_pWindow->hasFocus()) {
 				if (const sf::Event::MouseWheelScrolled* mouseWheelScrolled = event->getIf<sf::Event::MouseWheelScrolled>()) {
 
-
 					float scrollDelta = mouseWheelScrolled->delta;
-
-					m_Camera.incrementScale(-scrollDelta);
-					m_Camera.validate(nullptr);
+					controls.zoom = scrollDelta;
 				}
 
 				if (const sf::Event::MouseButtonPressed* MouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
 
 					if (MouseButtonPressed->button == sf::Mouse::Button::Middle) {
-						m_Camera.setPosition(Vec2(0, 0));
-						m_Camera.setOrientation(0);
-						m_Camera.setScale(Camera::StartingScale);
+						m_Camera.setTransform({ .position = Vec2(0,0), .orientation = 0, .scale = 13 });
 					}
 				}
 			}
@@ -244,17 +250,17 @@ void Scene::updateState(float deltaTime)
 		if (m_pWindow->hasFocus()) {
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
 
-				const Transform& cameraTransform = m_Camera.getTransform();
-
-				sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / m_Camera.getComputedState().pixelsPerWorldUnit;
-
-				m_Camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
+				controls.moveX = deltaMouseScreenSpace.x;
+				controls.moveY = deltaMouseScreenSpace.y;
 			}
 
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-				m_Camera.rotate(deltaMouseScreenSpace.x / 14);
+				
+				controls.rotate = deltaMouseScreenSpace.x;
 			}
 		}
+
+		updateScreenSpaceCameraControlRig(controls);
 	}
 
 	m_Camera.updateComputedState(windowInitialExtents.y);
@@ -284,6 +290,32 @@ void Scene::render()
 	m_pWindow->display();
 }
 
+void Scene::updateRenderConfig(RenderConfig renderConfig)
+{
+	std::unique_lock<std::shared_mutex> renderConfigLock(m_RenderConfigMutex);
+	m_RenderConfig = renderConfig;
+}
+
+void Scene::updateScreenSpaceCameraControlRig(ScreenSpaceControls controls)
+{
+	sf::Vector2f deltaMouseScreenSpace(controls.moveX, controls.moveY);
+
+	const Transform& cameraTransform = m_Camera.getTransform();
+
+	// Move
+	sf::Vector2f cameraDeltaWorldSpaceYFlipped = deltaMouseScreenSpace.rotatedBy(-sf::degrees(cameraTransform.orientation)) / m_Camera.getComputedState().pixelsPerWorldUnit;
+	m_Camera.move(Vec2(-cameraDeltaWorldSpaceYFlipped.x, cameraDeltaWorldSpaceYFlipped.y));
+
+	// Rotate
+	m_Camera.rotate(controls.rotate / 14.0f);
+
+	// Scale
+	m_Camera.incrementScale(-controls.zoom);
+
+	// keep in bounds
+	m_Camera.validate(nullptr);
+}
+
 void Scene::addEntity(AddEntityParams params)
 {
 	m_Entities.addEntity(params);
@@ -293,17 +325,36 @@ bool Scene::removeEntity(uint64_t id)
 {
 	return m_Entities.removeEntity(id);
 }
-void Scene::updateRenderConfig(RenderConfig renderConfig)
+
+void Scene::removeAllEntities()
 {
-	std::unique_lock<std::shared_mutex> renderConfigLock(m_RenderConfigMutex);
-	m_RenderConfig = renderConfig;
+	m_Entities.removeAllEntities();
 }
 
-bool Scene::isSelfManagedRenderWindowOpen() const
+void Scene::setCameraTransform(PlainReply* pReply, Transform transform)
 {
-	if (!m_isWindowSelfManaged) {
-		std::cerr << "\nError: Calling Scene::isSelfManagedRenderWindowOpen() on a non-self managed window" << std::endl;
-		exit(1);
+	// tentatively set success string
+	strcpy(pReply->message, "Camera transform set successfully");
+
+	m_Camera.setTransform(transform);
+
+	// Validate camera transform
+	std::stringstream warningsStream;
+	m_Camera.validate(&warningsStream);
+
+	// If there are any warnings, overwrite default success message
+	if (!warningsStream.str().empty()) {
+		strcpy(pReply->message, warningsStream.str().c_str());
 	}
-	return m_pWindow->isOpen();
+
+	pReply->success = true;
+}
+
+void Scene::getCameraTransform(TransformReply* pReply)
+{
+	pReply->transform = m_Camera.getTransform();
+	pReply->cameraWidthFromHeight = m_Camera.m_widthFromHeight;
+
+	pReply->success = true;
+	strcpy(pReply->message, "Camera transform obtained successfully");
 }

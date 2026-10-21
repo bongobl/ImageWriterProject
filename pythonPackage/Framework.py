@@ -57,8 +57,8 @@ class Framework(ctypes.Structure):
         self.runtimeLib.ImageWriter_Scene_GetCameraTransform.argtypes = [Framework, ctypes.POINTER(TransformReply)]
         self.runtimeLib.ImageWriter_Scene_GetCameraTransform.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.argtypes = [Framework, ctypes.POINTER(PlainReply), Transform]
-        self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace.restype = ctypes.c_bool
+        self.runtimeLib.ImageWriter_Scene_UpdateScreenSpaceCameraControlRig.argtypes = [Framework, ScreenSpaceControls]
+        self.runtimeLib.ImageWriter_Scene_UpdateScreenSpaceCameraControlRig.restype = ctypes.c_bool
 
         self.runtimeLib.ImageWriter_Scene_AddEntity.argtypes = [Framework, ctypes.POINTER(PlainReply), AddEntityParams]
         self.runtimeLib.ImageWriter_Scene_AddEntity.restype = ctypes.c_bool
@@ -129,8 +129,8 @@ class Framework(ctypes.Structure):
     def GetCameraTransform(self, outReply):
         return self.runtimeLib.ImageWriter_Scene_GetCameraTransform(self, ctypes.byref(outReply))
 
-    def TEMP_MoveCameraLocalSpace(self, outReply, transform):
-        return self.runtimeLib.ImageWriter_Scene_TEMP_MoveCameraLocalSpace(self, ctypes.byref(outReply), transform)
+    def UpdateScreenSpaceCameraControlRig(self, controls):
+        return self.runtimeLib.ImageWriter_Scene_UpdateScreenSpaceCameraControlRig(self, controls)
 
     def AddEntity(self, outReply, params):
         return self.runtimeLib.ImageWriter_Scene_AddEntity(self, ctypes.byref(outReply), params)
