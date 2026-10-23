@@ -39,6 +39,7 @@ void Camera::setOrientation(float orientation) {
 void Camera::setScale(float scale) {
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_WorldFromCamera.scale = scale;
+	validateScale();
 }
 
 void Camera::move(Vec2 delta) {
@@ -56,12 +57,15 @@ void Camera::rotate(float deltaDegrees) {
 void Camera::incrementScale(float deltaScale) {
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_WorldFromCamera.scale += deltaScale;
+	validateScale();
 }
 
-void Camera::setTransform(const Transform& transform) {
+bool Camera::setTransform(const Transform& transform, std::string* pMessage) {
 
 	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	m_WorldFromCamera = transform;
+
+	return validateScale(pMessage);
 }
 
 Transform Camera::getTransform() const {
@@ -69,27 +73,45 @@ Transform Camera::getTransform() const {
 	return m_WorldFromCamera;
 }
 
-void Camera::validate(std::stringstream* pStream)
+bool Camera::validateScale(std::string* pMessage)
 {
-	std::unique_lock<std::shared_mutex> lock(m_TransformMutex);
 	if (m_WorldFromCamera.scale > Camera::MaxScale) {
 
-		if (pStream) {
-			*pStream << "Warning: camera scale can not be greater than " << Camera::MaxScale << ", setting camera scale to " << Camera::MaxScale;
+		if (pMessage) {
+			*pMessage = "Warning: camera scale can not be greater than " + std::to_string(Camera::MaxScale) + ", setting camera scale to " + std::to_string(Camera::MaxScale);
 		}
 		
 		m_WorldFromCamera.scale = Camera::MaxScale;
 	}
 	else if (m_WorldFromCamera.scale < Camera::MinScale) {
 
-		if (pStream) {
-			*pStream << "Warning: camera scale can not be less than " << Camera::MinScale << ", setting camera scale to " << Camera::MinScale;
+		if (pMessage) {
+			*pMessage = "Warning: camera scale can not be less than " + std::to_string(Camera::MinScale) + ", setting camera scale to " + std::to_string(Camera::MinScale);
 		}
 		
 		m_WorldFromCamera.scale = Camera::MinScale;
 	}
+	return true;
 }
 
+void Camera::API_setTransform(PlainReply* pReply, Transform transform)
+{
+	// tentatively set success string
+	std::string message = "Camera transform set successfully";
+
+	pReply->success = setTransform(transform, &message);
+
+	strcpy(pReply->message, message.c_str());
+}
+
+void Camera::API_getTransform(TransformReply* pReply) const
+{
+	pReply->transform = getTransform();
+	pReply->cameraWidthFromHeight = m_widthFromHeight;
+
+	pReply->success = true;
+	strcpy(pReply->message, "Camera transform obtained successfully");
+}
 ///////////////////////////////////////////////////////////////////
 
 GridView::GridView()
@@ -313,48 +335,15 @@ void Scene::updateScreenSpaceCameraControlRig(ScreenSpaceControls controls)
 	m_Camera.incrementScale(-controls.zoom);
 
 	// keep in bounds
-	m_Camera.validate(nullptr);
+	m_Camera.validateScale();
 }
 
-void Scene::addEntity(AddEntityParams params)
+EntityList* Scene::getEntityList()
 {
-	m_Entities.addEntity(params);
+	return &m_Entities;
 }
 
-bool Scene::removeEntity(uint64_t id)
+Camera* Scene::getCamera()
 {
-	return m_Entities.removeEntity(id);
-}
-
-void Scene::removeAllEntities()
-{
-	m_Entities.removeAllEntities();
-}
-
-void Scene::setCameraTransform(PlainReply* pReply, Transform transform)
-{
-	// tentatively set success string
-	strcpy(pReply->message, "Camera transform set successfully");
-
-	m_Camera.setTransform(transform);
-
-	// Validate camera transform
-	std::stringstream warningsStream;
-	m_Camera.validate(&warningsStream);
-
-	// If there are any warnings, overwrite default success message
-	if (!warningsStream.str().empty()) {
-		strcpy(pReply->message, warningsStream.str().c_str());
-	}
-
-	pReply->success = true;
-}
-
-void Scene::getCameraTransform(TransformReply* pReply)
-{
-	pReply->transform = m_Camera.getTransform();
-	pReply->cameraWidthFromHeight = m_Camera.m_widthFromHeight;
-
-	pReply->success = true;
-	strcpy(pReply->message, "Camera transform obtained successfully");
+	return &m_Camera;
 }

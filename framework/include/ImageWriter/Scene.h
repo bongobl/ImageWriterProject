@@ -44,14 +44,17 @@ public:
 	void rotate(float deltaDegrees);
 	void incrementScale(float deltaScale);
 
-	void setTransform(const Transform& transform);
+	bool setTransform(const Transform& transform, std::string* pMessage = nullptr);
 	Transform getTransform() const;
 
-	void validate(std::stringstream* pStream);
+	bool validateScale(std::string* pMessage = nullptr);
 
 	// Computed state
 	void updateComputedState(int initialWindowHeight);
 	ComputedState getComputedState() const;
+
+	void API_setTransform(PlainReply* pReply, Transform transform);
+	void API_getTransform(TransformReply* pReply) const;
 };
 
 class GridView
@@ -96,13 +99,6 @@ public:
 	void updateRenderConfig(RenderConfig renderConfig);
 	void updateScreenSpaceCameraControlRig(ScreenSpaceControls controls);
 
-	// API
-
-	void addEntity(AddEntityParams params);
-	bool removeEntity(uint64_t id);
-	void removeAllEntities();
-	
-	void setCameraTransform(PlainReply* pReply, Transform transform);
-	void getCameraTransform(TransformReply* pReply);
-	
+	EntityList* getEntityList();
+	Camera* getCamera();
 };

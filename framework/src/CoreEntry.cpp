@@ -161,7 +161,8 @@ extern "C" __declspec(dllexport) bool scene_setCameraTransform(InstanceData inst
 		return false;
 	}
 
-	pCoreData->m_pScene->setCameraTransform(pReply, transform);
+	Camera* pCamera = pCoreData->m_pScene->getCamera();
+	pCamera->API_setTransform(pReply, transform);
 	return pReply->success;
 }
 
@@ -185,7 +186,8 @@ extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData inst
 		return false;
 	}
 
-	pCoreData->m_pScene->getCameraTransform(pReply);
+	const Camera* pCamera = pCoreData->m_pScene->getCamera();
+	pCamera->API_getTransform(pReply);
 	return pReply->success;
 }
 
@@ -209,7 +211,8 @@ extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData,
 		return false;
 	}
 
-	pCoreData->m_pScene->addEntity(params);
+	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
+	pEntityList->addEntity(params);
 
 	pReply->success = true;
 	strcpy(pReply->message, "Entity added successfully");
@@ -236,7 +239,9 @@ extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceDa
 		return false;
 	}
 
-	if (!pCoreData->m_pScene->removeEntity(id)) {
+	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
+
+	if (!pEntityList->removeEntity(id)) {
 		// NOTE: this assumes it failed due to id key not found, we shouldn't be making
 		// assumptions on why it failed in the CoreEntry layer
 
@@ -271,7 +276,8 @@ extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData insta
 		return false;
 	}
 
-	pCoreData->m_pScene->removeAllEntities();
+	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
+	pEntityList->removeAllEntities();
 
 	pReply->success = true;
 	strcpy(pReply->message, "All entities removed successfully");
