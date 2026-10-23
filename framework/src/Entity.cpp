@@ -2,6 +2,7 @@
 #include <ImageWriter/Scene.h>
 #include <ImageWriter/CoreCommon.h>
 #include <iostream>
+#include <cstring>
 
 Entity::Entity(Type type, uint64_t id, const Transform& transform, Color& color) :
 	m_Type(type),
@@ -81,7 +82,7 @@ EntityList::~EntityList()
 	removeAllEntities();
 }
 
-void EntityList::addEntity(AddEntityParams params)
+void EntityList::addEntity(AddEntityParams params, uint64_t* pNewEntityId)
 {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
@@ -96,18 +97,26 @@ void EntityList::addEntity(AddEntityParams params)
 	}
 
 	m_EntityIterFromId[m_NextEntityId] = --m_Entities.end();
+
+	if (pNewEntityId) {
+		*pNewEntityId = m_NextEntityId;
+	}
 	++m_NextEntityId;
 }
 
-bool EntityList::removeEntity(uint64_t id)
+bool EntityList::removeEntity(uint64_t entityId, std::string* pMessage)
 {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
-	auto mapIter = m_EntityIterFromId.find(id);
+	auto mapIter = m_EntityIterFromId.find(entityId);
 
 	// If not found in map
 	if (mapIter == m_EntityIterFromId.end()) {
-		std::cerr << "Entity id " << id << " not found in m_EntityIterFromId map" << std::endl;
+		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
+
+		if (pMessage) {
+			*pMessage = "No entity with a given ID of " + std::to_string(entityId) + " found";
+		}
 		return false;
 	}
 
@@ -119,7 +128,7 @@ bool EntityList::removeEntity(uint64_t id)
 
 	// remove from list and id map
 	m_Entities.erase(entityIter);
-	m_EntityIterFromId.erase(id);
+	m_EntityIterFromId.erase(entityId);
 
 	return true;
 }
@@ -171,4 +180,19 @@ EntityGeometry* EntityList::getGeometryForEntity(Entity::Type type)
 		return &m_TriangleVerts;
 	}
 	return nullptr;
+}
+
+void EntityList::API_addEntity(AddEntityReply* pReply, AddEntityParams params)
+{
+	addEntity(params, &pReply->entityId);
+	pReply->success = true;
+	strcpy(pReply->message, "Entity added successfully");
+}
+void EntityList::API_removeEntity(PlainReply* pReply, uint64_t id)
+{
+	// tentatively set success string
+	std::string message = "Entity with id " + std::to_string(id) + " removed successfully";
+
+	pReply->success = removeEntity(id, &message);
+	strcpy(pReply->message, message.c_str());
 }

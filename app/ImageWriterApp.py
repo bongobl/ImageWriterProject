@@ -98,8 +98,23 @@ def runNetworkService():
                             entityParams = iw.AddEntityParams.from_buffer_copy(paramsBuffer)
                             print(f"From client: {entityParams}")
 
-                            reply = iw.PlainReply()
+                            
+                            reply = iw.AddEntityReply()
                             frameworkFunctionSucceeded = framework.AddEntity(reply, entityParams)
+                            
+                        case iw.Command.RemoveEntity:
+                            
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(ctypes.c_uint64))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+                            
+                            entityId = ctypes.c_uint64.from_buffer_copy(paramsBuffer)
+                            print(f"From client: Removing entity with id {entityId.value}")
+
+                            reply = iw.PlainReply()
+                            frameworkFunctionSucceeded = framework.RemoveEntity(reply, entityId)
 
                         case iw.Command.RemoveAllEntities:
 
@@ -141,6 +156,13 @@ def runNetworkService():
 
 # main
 if __name__ == "__main__":
+
+    #original_val = ctypes.c_uint64(352)
+    #buffer = bytes(original_val)
+    #returnedVal = ctypes.c_uint64.from_buffer_copy(buffer)
+    #print(original_val)
+    #print(returnedVal)
+    #exit(0)
 
     # create UI
     window = iw.Window(name = "ImageWriter App", windowSize="1920x1480")   

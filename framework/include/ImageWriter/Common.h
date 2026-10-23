@@ -1,6 +1,6 @@
 #pragma once
 #define MAX_REPLY_MESSAGE_LENGTH 512
-
+#include <stdint.h>
 struct Vec2 {
     float x;
     float y;
@@ -71,4 +71,10 @@ struct TransformReply {
     char message[MAX_REPLY_MESSAGE_LENGTH];
     Transform transform;
     float cameraWidthFromHeight;
+};
+
+struct AddEntityReply {
+    bool success;
+    char message[MAX_REPLY_MESSAGE_LENGTH];
+    uint64_t entityId;
 };

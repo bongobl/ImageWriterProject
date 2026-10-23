@@ -137,7 +137,7 @@ def addEllipseEntity(
         transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new ellipse. {iw.TRANSFORM_DOC}")],
         color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {iw.COLOR_DOC}")],
         halfExtents: Annotated[iw.Vec2MCPPayload, Field(description = f"half extents of the ellipse in its local space. {iw.VEC2_DOC}")],
-) -> iw.PlainReplyMCPPayload:
+) -> iw.AddEntityReplyMCPPayload:
     """
     Places a new ellipse within the world at specified transform and color
     Note that the half extents define the shape's size in its own local space, where its global size is then obtained by multiplying
@@ -161,14 +161,14 @@ def addEllipseEntity(
         ellipse = iw.AddEllipseParams(halfExtents = halfExtentsRaw)
     )
 
-    return sendCommandToApp(iw.Command.AddEntity, ellipseParams, iw.PlainReply).toMCPPayload()
+    return sendCommandToApp(iw.Command.AddEntity, ellipseParams, iw.AddEntityReply).toMCPPayload()
     
 @mcp.tool()
 def addRectangleEntity(
     transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {iw.TRANSFORM_DOC}")],
     color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {iw.COLOR_DOC}")],
     halfExtents: Annotated[iw.Vec2MCPPayload, Field(description = f"half extents of the rectangle in its local space. {iw.VEC2_DOC}")],
-) -> iw.PlainReplyMCPPayload:
+) -> iw.AddEntityReplyMCPPayload:
     """
     Places a new rectangle within the world at specified transform and color
     Note that the half extents define the shape's size in its own local space, where its global size is then obtained by multiplying
@@ -193,7 +193,7 @@ def addRectangleEntity(
         rectangle = iw.AddRectangleParams(halfExtents = halfExtentsRaw)
     )
     
-    return sendCommandToApp(iw.Command.AddEntity, rectangleParams, iw.PlainReply).toMCPPayload()
+    return sendCommandToApp(iw.Command.AddEntity, rectangleParams, iw.AddEntityReply).toMCPPayload()
 
 @mcp.tool()
 def addTriangleEntity(
@@ -202,7 +202,7 @@ def addTriangleEntity(
     point1: Annotated[iw.Vec2MCPPayload, Field(description = f"position of first point. {iw.VEC2_DOC}")],
     point2: Annotated[iw.Vec2MCPPayload, Field(description = f"position of second point. {iw.VEC2_DOC}")],
     point3: Annotated[iw.Vec2MCPPayload, Field(description = f"position of third point. {iw.VEC2_DOC}")],
-) -> iw.PlainReplyMCPPayload:
+) -> iw.AddEntityReplyMCPPayload:
     """
     Places a new triangle within the world at specified transform and color
     Note that each point specifies a position in the shape's local space, whose world space is then computed
@@ -236,7 +236,19 @@ def addTriangleEntity(
         )
     )
 
-    return sendCommandToApp(iw.Command.AddEntity, triangleParams, iw.PlainReply).toMCPPayload()
+    return sendCommandToApp(iw.Command.AddEntity, triangleParams, iw.AddEntityReply).toMCPPayload()
+
+
+@mcp.tool()
+def removeEntity(
+    entityId: Annotated[int, Field(description = "The id of the entity to remove")],
+) -> iw.PlainReplyMCPPayload:
+    """
+    Allows entity removal given its id
+    """
+
+    entityIdRaw = ctypes.c_uint64(entityId)
+    return sendCommandToApp(iw.Command.RemoveEntity, entityIdRaw, iw.PlainReply).toMCPPayload()
 
 if __name__ == "__main__":
 

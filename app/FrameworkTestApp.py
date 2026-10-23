@@ -23,12 +23,13 @@ def createSomeSampleShapes():
     startX = (dimX - 1) / 2 * spacingX
     startY = (dimY - 1) / 2 * spacingY
 
-    plainReply = iw.PlainReply();
+    addEntityReply = iw.AddEntityReply()
+
     for i in range(dimY):
         for j in range(dimX):
 
             if not imageWriter.AddEntity(
-                plainReply,
+                addEntityReply,
                 iw.AddEntityParams(
                     entityType = iw.EntityType.ELLIPSE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
@@ -36,10 +37,11 @@ def createSomeSampleShapes():
                     ellipse = iw.AddEllipseParams(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
-                print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+                print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
     
+    plainReply = iw.PlainReply();
     input("Press Enter")
-    if not imageWriter.RemoveEntity(plainReply, 28):
+    if not imageWriter.RemoveEntity(plainReply, 26):
         print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
 
     input("Press Enter")
@@ -50,7 +52,7 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddEntity(
-                plainReply,
+                addEntityReply,
                 iw.AddEntityParams(
                     entityType = iw.EntityType.RECTANGLE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
@@ -58,7 +60,7 @@ def createSomeSampleShapes():
                     rectangle = iw.AddRectangleParams(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
-                print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+                print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
     
     input("Press Enter")
     if not imageWriter.RemoveAllEntities(plainReply):
@@ -68,7 +70,7 @@ def createSomeSampleShapes():
     for i in range(dimY):
         for j in range(dimX):
             if not imageWriter.AddEntity(
-                plainReply,
+                addEntityReply,
                 iw.AddEntityParams(
                     entityType = iw.EntityType.TRIANGLE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
@@ -80,7 +82,7 @@ def createSomeSampleShapes():
                     )
                 )
             ):
-                print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+                print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
     
     input("Press Enter")
     if not imageWriter.RemoveAllEntities(plainReply):

@@ -100,7 +100,6 @@ void Camera::API_setTransform(PlainReply* pReply, Transform transform)
 	std::string message = "Camera transform set successfully";
 
 	pReply->success = setTransform(transform, &message);
-
 	strcpy(pReply->message, message.c_str());
 }
 

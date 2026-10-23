@@ -80,10 +80,10 @@ COLOR_DOC = (
     "For each channel, 0 = no strength and 1 = max strength"
 )
 class ColorMCPPayload(BaseModel):
-    red: float = Field(..., description="(float), red channel value")
-    green: float = Field(..., description="(float), green channel value")
-    blue: float = Field(..., description="(float), blue channel value")
-    alpha: float = Field(..., description="(float), alpha channel value")
+    red: float = Field(..., ge=0.0, le=1.0, description="(float), red channel value")
+    green: float = Field(..., ge=0.0, le=1.0, description="(float), green channel value")
+    blue: float = Field(..., ge=0.0, le=1.0, description="(float), blue channel value")
+    alpha: float = Field(..., ge=0.0, le=1.0, description="(float), alpha channel value")
 
 class Color(ctypes.Structure):
 
@@ -190,6 +190,7 @@ class AddEntityParams(ctypes.Structure):
 
 # Replies ====================================================================================
 
+# Plain
 class PlainReplyMCPPayload(BaseModel):
     success: bool = False
     message: str = ""
@@ -249,4 +250,29 @@ class TransformReply(ctypes.Structure):
             message = self.message.decode('utf-8'),
             transform = self.transform.toMCPPayload(),
             widthFromHeight = self.cameraWidthFromHeight
+        )
+# Entity
+class AddEntityReplyMCPPayload(PlainReplyMCPPayload):
+    entityId: int
+
+class AddEntityReply(ctypes.Structure):
+    _fields_ = [
+        ("success", ctypes.c_bool),
+        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
+        ("entityId", ctypes.c_uint64),
+    ]
+
+    def __init__(self):
+        self.success = False
+        self.message = b"UNINITIALIZED_MESSAGE"
+
+    def __str__(self):
+        return f"(AddEntityReply: success = {self.success}, message = {self.message.decode('utf-8')}, id = {self.entityId})"
+
+    def toMCPPayload(self) -> AddEntityReplyMCPPayload:
+
+        return AddEntityReplyMCPPayload(
+            success = self.success, 
+            message = self.message.decode('utf-8'),
+            entityId = self.entityId
         )

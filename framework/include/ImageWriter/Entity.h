@@ -89,11 +89,14 @@ public:
 	EntityList();
 	~EntityList();
 
-	void addEntity(AddEntityParams params);
-	bool removeEntity(uint64_t id);
+	void addEntity(AddEntityParams params, uint64_t* pNewEntityId = nullptr);
+	bool removeEntity(uint64_t id, std::string* pMessage = nullptr);
 	void dummyUpdateShapes(float deltaTime);
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
 	void removeAllEntities();
 
 	EntityGeometry* getGeometryForEntity(Entity::Type type);
+
+	void API_addEntity(AddEntityReply* pReply, AddEntityParams params);
+	void API_removeEntity(PlainReply* pReply, uint64_t entityId);
 };

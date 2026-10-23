@@ -18,7 +18,6 @@ void runImageWriterFlow(HImageWriterInstance instance)
 		std::cout << "scaleX = " << transformReply.transform.scale * transformReply.cameraWidthFromHeight << ", scaleY = " << transformReply.transform.scale << std::endl;
 	}
 	
-
 	float dimX = 8;
 	float dimY = 6;
 	float spacingX = 2.4f;
@@ -27,14 +26,15 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	float startX = (dimX - 1) / 2 * spacingX;
 	float startY = (dimY - 1) / 2 * spacingY;
 
-	PlainReply plainReply = { .success = true, .message = "Command executed successfully" };
+	AddEntityReply addEntityReply = { .success = true, .message = "Command executed successfully", .entityId = 0 };
+
 	// Ellipses
 	system("pause");
 	for (int i = 0; i < dimY; ++i) {
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddEntity(
 				instance, 
-				&plainReply,
+				&addEntityReply,
 				{
 					.entityType = ENTITY_TYPE_ELLIPSE,
 					.transform = {
@@ -53,13 +53,15 @@ void runImageWriterFlow(HImageWriterInstance instance)
 			)
 				
 			{
-				std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+				std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
 			}
 		}
 	}
 	
+	PlainReply plainReply = { .success = true, .message = "Command executed successfully" };
+
 	system("pause");
-	if (!ImageWriter_Scene_RemoveEntity(instance, &plainReply, 28))
+	if (!ImageWriter_Scene_RemoveEntity(instance, &plainReply, 26))
 	{
 		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 	}
@@ -76,7 +78,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddEntity(
 				instance,
-				&plainReply,
+				&addEntityReply,
 				{
 					.entityType = ENTITY_TYPE_RECTANGLE,
 					.transform = {
@@ -95,7 +97,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 			)
 
 			{
-				std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+				std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
 			}
 		}
 	}
@@ -112,7 +114,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 		for (int j = 0; j < dimX; ++j) {
 			if (!ImageWriter_Scene_AddEntity(
 				instance,
-				&plainReply,
+				&addEntityReply,
 				{
 					.entityType = ENTITY_TYPE_TRIANGLE,
 					.transform = {
@@ -133,7 +135,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 			)
 
 			{
-				std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+				std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
 			}
 		}
 	}

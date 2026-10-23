@@ -264,7 +264,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateScreenSpaceCameraC
 
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterInstance instance, PlainReply* pReply, AddEntityParams params)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterInstance instance, AddEntityReply* pReply, AddEntityParams params)
 {
     if(!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_AddEntity: instance.pData was null\n");

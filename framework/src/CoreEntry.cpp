@@ -191,7 +191,7 @@ extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData inst
 	return pReply->success;
 }
 
-extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, PlainReply* pReply, AddEntityParams params)
+extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, AddEntityReply* pReply, AddEntityParams params)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_addEntity(): instanceData.pCoreData was null" << std::endl;
@@ -212,10 +212,7 @@ extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData,
 	}
 
 	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
-	pEntityList->addEntity(params);
-
-	pReply->success = true;
-	strcpy(pReply->message, "Entity added successfully");
+	pEntityList->API_addEntity(pReply, params);
 	return pReply->success;
 }
 
@@ -240,20 +237,8 @@ extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceDa
 	}
 
 	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
-
-	if (!pEntityList->removeEntity(id)) {
-		// NOTE: this assumes it failed due to id key not found, we shouldn't be making
-		// assumptions on why it failed in the CoreEntry layer
-
-		std::string errorMessage = "No entity with a given ID of " + std::to_string(id) + std::string(" found");
-		pReply->success = false;
-		strcpy(pReply->message, errorMessage.c_str());
-		return false;
-	}
-	pReply->success = true;
-	std::string successMessage = "Entity with id " + std::to_string(id) + std::string(" removed successfully");
-	strcpy(pReply->message, successMessage.c_str());
-	return pReply->success = true;
+	pEntityList->API_removeEntity(pReply, id);
+	return pReply->success;
 }
 
 extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData, PlainReply* pReply)
@@ -264,7 +249,7 @@ extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData insta
 		strcpy(pReply->message, "Internal failure in framework on scene_removeAllEntities()");
 		return false;
 	}
-
+	
 	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
 
 	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
