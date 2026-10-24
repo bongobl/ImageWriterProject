@@ -25,7 +25,7 @@ logger = logging.getLogger("imagewriter")
 mcp = MCPServer(
     "ImageWriter",
     instructions=(
-        "This server connects to an image writer application tells it to draw whatever the user wishes. "
+        "This server connects to an image writer application and tells it to draw whatever the user wishes. "
         "With every shape you draw, you specify a Transform describing its position, orientation and scale "
         "in the 2D world, in addition you can also query the camera Transform to see what the user is currently looking at"
     ),
@@ -136,6 +136,7 @@ def removeAllEntities() -> iw.PlainReplyMCPPayload:
 def addEllipseEntity(
         transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new ellipse. {iw.TRANSFORM_DOC}")],
         color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {iw.COLOR_DOC}")],
+        zOrder: Annotated[int, Field(description = f"the Z order {iw.Z_ORDER_DOC}")],
         halfExtents: Annotated[iw.Vec2MCPPayload, Field(description = f"half extents of the ellipse in its local space. {iw.VEC2_DOC}")],
 ) -> iw.AddEntityReplyMCPPayload:
     """
@@ -151,6 +152,8 @@ def addEllipseEntity(
     colorRaw = iw.Color()
     colorRaw.fromMCPPayload(color)
 
+    zOrderRaw = ctypes.c_int(zOrder)
+
     halfExtentsRaw = iw.Vec2()
     halfExtentsRaw.fromMCPPayload(halfExtents)
 
@@ -158,6 +161,7 @@ def addEllipseEntity(
         entityType = iw.EntityType.ELLIPSE, 
         transform = transformRaw,
         color = colorRaw,
+        zOrder = zOrderRaw,
         ellipse = iw.AddEllipseParams(halfExtents = halfExtentsRaw)
     )
 
@@ -167,6 +171,7 @@ def addEllipseEntity(
 def addRectangleEntity(
     transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {iw.TRANSFORM_DOC}")],
     color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {iw.COLOR_DOC}")],
+    zOrder: Annotated[int, Field(description = f"the Z order {iw.Z_ORDER_DOC}")],
     halfExtents: Annotated[iw.Vec2MCPPayload, Field(description = f"half extents of the rectangle in its local space. {iw.VEC2_DOC}")],
 ) -> iw.AddEntityReplyMCPPayload:
     """
@@ -183,6 +188,8 @@ def addRectangleEntity(
     colorRaw = iw.Color()
     colorRaw.fromMCPPayload(color)
 
+    zOrderRaw = ctypes.c_int(zOrder)
+
     halfExtentsRaw = iw.Vec2()
     halfExtentsRaw.fromMCPPayload(halfExtents)
 
@@ -190,6 +197,7 @@ def addRectangleEntity(
         entityType = iw.EntityType.RECTANGLE, 
         transform = transformRaw,
         color = colorRaw,
+        zOrder = zOrderRaw,
         rectangle = iw.AddRectangleParams(halfExtents = halfExtentsRaw)
     )
     
@@ -199,6 +207,7 @@ def addRectangleEntity(
 def addTriangleEntity(
     transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new triangle. {iw.TRANSFORM_DOC}")],
     color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {iw.COLOR_DOC}")],
+    zOrder: Annotated[int, Field(description = f"the Z order {iw.Z_ORDER_DOC}")],
     point1: Annotated[iw.Vec2MCPPayload, Field(description = f"position of first point. {iw.VEC2_DOC}")],
     point2: Annotated[iw.Vec2MCPPayload, Field(description = f"position of second point. {iw.VEC2_DOC}")],
     point3: Annotated[iw.Vec2MCPPayload, Field(description = f"position of third point. {iw.VEC2_DOC}")],
@@ -216,6 +225,8 @@ def addTriangleEntity(
     colorRaw = iw.Color()
     colorRaw.fromMCPPayload(color)
 
+    zOrderRaw = ctypes.c_int(zOrder)
+
     point1Raw = iw.Vec2()
     point1Raw.fromMCPPayload(point1)
 
@@ -229,6 +240,7 @@ def addTriangleEntity(
         entityType = iw.EntityType.TRIANGLE, 
         transform = transformRaw,
         color = colorRaw,
+        zOrder = zOrderRaw,
         triangle = iw.AddTriangleParams(
             point1 = point1Raw,
             point2 = point2Raw,

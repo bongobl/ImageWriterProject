@@ -20,18 +20,20 @@ enum class Core_Internal_EntityType
 struct Entity {
 
 	using Type = Core_Internal_EntityType;
+
 	Type m_Type;
 	Transform m_Transform;
 	Color m_Color;
 	uint64_t m_Id;
+	int m_zOrder;
 
-	Entity(Type type, uint64_t id, const Transform& transform, Color& color);
+	Entity(Type type, uint64_t id, int zOrder, const Transform& transform, Color& color);
 	virtual void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const {};
 };
 
 struct EllipseEntity : Entity {
 
-	EllipseEntity(uint64_t id, const Transform& transform, Color& color, Vec2 halfExtents);
+	EllipseEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 halfExtents);
 
 	Vec2 m_HalfExtents;
 
@@ -40,7 +42,7 @@ struct EllipseEntity : Entity {
 
 struct RectangleEntity : Entity {
 
-	RectangleEntity(uint64_t id, const Transform& transform, Color& color, Vec2 halfExtents);
+	RectangleEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 halfExtents);
 
 	Vec2 m_HalfExtents;
 
@@ -52,7 +54,7 @@ struct TriangleEntity : Entity {
 	Vec2 m_Point2;
 	Vec2 m_Point3;
 
-	TriangleEntity(uint64_t id, const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
+	TriangleEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
 
 	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
 };
@@ -89,7 +91,7 @@ public:
 	EntityList();
 	~EntityList();
 
-	void addEntity(AddEntityParams params, uint64_t* pNewEntityId = nullptr);
+	bool addEntity(AddEntityParams params, uint64_t* pNewEntityId = nullptr, int* pNewZOrder = nullptr, std::string* pMessage = nullptr);
 	bool removeEntity(uint64_t id, std::string* pMessage = nullptr);
 	void dummyUpdateShapes(float deltaTime);
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
@@ -99,4 +101,9 @@ public:
 
 	void API_addEntity(AddEntityReply* pReply, AddEntityParams params);
 	void API_removeEntity(PlainReply* pReply, uint64_t entityId);
+
+private:
+
+	// Brute force Z order setting
+	void realignAllEntityZOrders();
 };

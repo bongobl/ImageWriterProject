@@ -4,27 +4,28 @@
 #include <iostream>
 #include <cstring>
 
-Entity::Entity(Type type, uint64_t id, const Transform& transform, Color& color) :
+Entity::Entity(Type type, uint64_t id, int zOrder, const Transform& transform, Color& color) :
 	m_Type(type),
 	m_Id(id),
 	m_Transform(transform),
-	m_Color(color)
+	m_Color(color),
+	m_zOrder(zOrder)
 {
 }
 
-EllipseEntity::EllipseEntity(uint64_t id, const Transform& transform, Color& color, Vec2 halfExtents) :
-	Entity(Entity::Type::Ellipse, id, transform, color), m_HalfExtents(halfExtents)
+EllipseEntity::EllipseEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 halfExtents) :
+	Entity(Entity::Type::Ellipse, id, zOrder, transform, color), m_HalfExtents(halfExtents)
 {
 
 }
 
-RectangleEntity::RectangleEntity(uint64_t id, const Transform& transform, Color& color, Vec2 halfExtents) :
-	Entity(Entity::Type::Rectangle, id, transform, color), m_HalfExtents(halfExtents)
+RectangleEntity::RectangleEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 halfExtents) :
+	Entity(Entity::Type::Rectangle, id, zOrder, transform, color), m_HalfExtents(halfExtents)
 {
 }
 
-TriangleEntity::TriangleEntity(uint64_t id, const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3) :
-	Entity(Entity::Type::Triangle, id, transform, color), m_Point1(point1), m_Point2(point2), m_Point3(point3)
+TriangleEntity::TriangleEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3) :
+	Entity(Entity::Type::Triangle, id, zOrder, transform, color), m_Point1(point1), m_Point2(point2), m_Point3(point3)
 {
 }
 
@@ -82,26 +83,60 @@ EntityList::~EntityList()
 	removeAllEntities();
 }
 
-void EntityList::addEntity(AddEntityParams params, uint64_t* pNewEntityId)
+bool EntityList::addEntity(AddEntityParams params, uint64_t* pNewEntityId, int* pNewZOrder, std::string* pMessage)
 {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
-	if (params.entityType == ENTITY_TYPE_ELLIPSE) {
-		m_Entities.push_back(new EllipseEntity(m_NextEntityId, params.transform, params.color, params.ellipse.halfExtents));
-	}
-	if (params.entityType == ENTITY_TYPE_RECTANGLE) {
-		m_Entities.push_back(new RectangleEntity(m_NextEntityId, params.transform, params.color, params.rectangle.halfExtents));
-	}
-	if (params.entityType == ENTITY_TYPE_TRIANGLE) {
-		m_Entities.push_back(new TriangleEntity(m_NextEntityId, params.transform, params.color, params.triangle.point1, params.triangle.point2, params.triangle.point3));
+	// Error check on specified Z order
+	if (params.zOrder < -1) {
+		*pMessage = "Error: Invalid Z order specified: " + std::to_string(params.zOrder) +
+			", must specify a value between -1 and the current number of entities (" + std::to_string(m_Entities.size()) + ")";
+		return false;
 	}
 
-	m_EntityIterFromId[m_NextEntityId] = --m_Entities.end();
+	// Find true Z order to use
+	int zOrderToAdd = params.zOrder == -1 ? m_Entities.size() : params.zOrder;
+	if (zOrderToAdd > m_Entities.size()) {
+		zOrderToAdd = m_Entities.size();
+		if (pMessage) {
+			*pMessage = "Warning: Specifying a Z order of " + std::to_string(params.zOrder) +
+				" which is greater than the number of entities (" + std::to_string(m_Entities.size()) +
+				"), assigning a Z order of " + std::to_string(zOrderToAdd) + " instead";
+		}
+	}
+
+	// Go to insersion spot
+	auto iter = m_Entities.begin();
+	for (int i = 0; i < zOrderToAdd; ++i) {
+		++iter;
+	}
+
+	// Perform insertion
+	if (params.entityType == ENTITY_TYPE_ELLIPSE) {
+		iter = m_Entities.insert(iter, new EllipseEntity(m_NextEntityId, zOrderToAdd, params.transform, params.color, params.ellipse.halfExtents));
+	}
+	if (params.entityType == ENTITY_TYPE_RECTANGLE) {
+		iter = m_Entities.insert(iter, new RectangleEntity(m_NextEntityId, zOrderToAdd, params.transform, params.color, params.rectangle.halfExtents));
+	}
+	if (params.entityType == ENTITY_TYPE_TRIANGLE) {
+		iter = m_Entities.insert(iter, new TriangleEntity(m_NextEntityId, zOrderToAdd, params.transform, params.color, params.triangle.point1, params.triangle.point2, params.triangle.point3));
+	}
+
+	// Brute force way to align all entity Z-orders to their indices
+	realignAllEntityZOrders();
+
+	// Update bookkeeping and output params
+	m_EntityIterFromId[m_NextEntityId] = iter;
 
 	if (pNewEntityId) {
 		*pNewEntityId = m_NextEntityId;
 	}
+	if (pNewZOrder) {
+		*pNewZOrder = zOrderToAdd;
+	}
+
 	++m_NextEntityId;
+	return true;
 }
 
 bool EntityList::removeEntity(uint64_t entityId, std::string* pMessage)
@@ -129,6 +164,9 @@ bool EntityList::removeEntity(uint64_t entityId, std::string* pMessage)
 	// remove from list and id map
 	m_Entities.erase(entityIter);
 	m_EntityIterFromId.erase(entityId);
+
+	// Brute force way to align all entity Z-orders to their indices
+	realignAllEntityZOrders();
 
 	return true;
 }
@@ -184,10 +222,13 @@ EntityGeometry* EntityList::getGeometryForEntity(Entity::Type type)
 
 void EntityList::API_addEntity(AddEntityReply* pReply, AddEntityParams params)
 {
-	addEntity(params, &pReply->entityId);
-	pReply->success = true;
-	strcpy(pReply->message, "Entity added successfully");
+	// tentatively set success string
+	std::string message = "Entity added successfully";
+
+	pReply->success = addEntity(params, &pReply->entityId, &pReply->zOrder, &message);
+	strcpy(pReply->message, message.c_str());
 }
+
 void EntityList::API_removeEntity(PlainReply* pReply, uint64_t id)
 {
 	// tentatively set success string
@@ -195,4 +236,15 @@ void EntityList::API_removeEntity(PlainReply* pReply, uint64_t id)
 
 	pReply->success = removeEntity(id, &message);
 	strcpy(pReply->message, message.c_str());
+}
+
+void EntityList::realignAllEntityZOrders()
+{
+	int zOrder = 0;
+	for (auto iter = m_Entities.begin(); iter != m_Entities.end(); ++iter)
+	{
+		Entity* pCurrEntity = *iter;
+		pCurrEntity->m_zOrder = zOrder;
+		++zOrder;
+	}
 }

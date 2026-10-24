@@ -34,6 +34,7 @@ def createSomeSampleShapes():
                     entityType = iw.EntityType.ELLIPSE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
                     color = iw.Color(red = 1, green = 0, blue = 0, alpha = 1),
+                    zOrder = -1,
                     ellipse = iw.AddEllipseParams(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
@@ -57,6 +58,7 @@ def createSomeSampleShapes():
                     entityType = iw.EntityType.RECTANGLE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
                     color = iw.Color(red = 0, green = 1, blue = 1, alpha = 1),
+                    zOrder = -1,
                     rectangle = iw.AddRectangleParams(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
@@ -75,6 +77,7 @@ def createSomeSampleShapes():
                     entityType = iw.EntityType.TRIANGLE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
                     color = iw.Color(red = 1, green = 1, blue = 0, alpha = 1),
+                    zOrder = -1,
                     triangle = iw.AddTriangleParams(
                         point1 = iw.Vec2(-0.5, 0.35), 
                         point2 = iw.Vec2(-0.5, -0.35), 

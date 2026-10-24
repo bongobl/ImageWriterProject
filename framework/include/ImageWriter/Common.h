@@ -52,6 +52,7 @@ struct AddEntityParams {
     int entityType = 0;
     Transform transform;
     Color color;
+    int zOrder = -1;
 
     union {
         AddEllipseParams ellipse;
@@ -77,4 +78,5 @@ struct AddEntityReply {
     bool success;
     char message[MAX_REPLY_MESSAGE_LENGTH];
     uint64_t entityId;
+    int zOrder = -1;
 };

@@ -121,7 +121,14 @@ class ScreenSpaceControls(ctypes.Structure):
     ]
 
 # Parameters =================================================================================
-
+Z_ORDER_DOC = {
+    "The Z order of en entity represents how 'high up' off the 2D world it is, which dictates which entites it is drawn in front of"
+    "and which ones it is drawn behind. A higher Z order represents a higher value off the 2D world. The Z orders for all N entites"
+    "in the current scene starts at 0 and is contiguous up to all N-1, meaning you can insert a new entity 'A' between an existing"
+    "entity 'B' and the entity just behind it by specifying the Z order of 'B' when creating 'A'. This follows an array list behavior"
+    "where insertion and removal from the middle of the list causes elements of indices above it to shift accordingly. Note here that"
+    "specifying a Z order of -1 places the new entity at the top, giving it the highest Z order for all existing entities"
+}
 class EntityType(IntEnum):
     NONE = 0
     ELLIPSE = 1
@@ -166,6 +173,7 @@ class AddEntityParams(ctypes.Structure):
         ("entityType", ctypes.c_int),
         ("transform", Transform),
         ("color", Color),
+        ("zOrder", ctypes.c_int),
         ("entityParamsUnion", EntityParamsUnion),
     ]
     _anonymous_ = ("entityParamsUnion",)
@@ -185,7 +193,7 @@ class AddEntityParams(ctypes.Structure):
             case _:
                 typeStr = "Unrecognized type value"
 
-        return f"(AddEntityParams: transform = {self.transform}, color = {self.color}, entity type = " + typeStr
+        return f"(AddEntityParams: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + ")"
         
 
 # Replies ====================================================================================
@@ -254,12 +262,14 @@ class TransformReply(ctypes.Structure):
 # Entity
 class AddEntityReplyMCPPayload(PlainReplyMCPPayload):
     entityId: int
+    zOrder: int
 
 class AddEntityReply(ctypes.Structure):
     _fields_ = [
         ("success", ctypes.c_bool),
         ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
         ("entityId", ctypes.c_uint64),
+        ("zOrder", ctypes.c_int),
     ]
 
     def __init__(self):
@@ -267,12 +277,13 @@ class AddEntityReply(ctypes.Structure):
         self.message = b"UNINITIALIZED_MESSAGE"
 
     def __str__(self):
-        return f"(AddEntityReply: success = {self.success}, message = {self.message.decode('utf-8')}, id = {self.entityId})"
+        return f"(AddEntityReply: success = {self.success}, message = {self.message.decode('utf-8')}, entityId = {self.entityId}, zOrder = {self.zOrder})"
 
     def toMCPPayload(self) -> AddEntityReplyMCPPayload:
 
         return AddEntityReplyMCPPayload(
             success = self.success, 
             message = self.message.decode('utf-8'),
-            entityId = self.entityId
+            entityId = self.entityId,
+            zOrder = self.zOrder,
         )
