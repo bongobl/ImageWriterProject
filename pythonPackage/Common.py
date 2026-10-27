@@ -2,7 +2,7 @@ import ctypes
 from ctypes import *
 from pydantic import BaseModel, Field
 from enum import IntEnum
-
+from typing import Literal, Union, Annotated
 MAX_REPLY_MESSAGE_LENGTH = 512
 
 ######## Vec2 ########
@@ -142,19 +142,24 @@ class ScreenSpaceControls(ctypes.Structure):
         self.zoom = zoom
 
 # Parameters =================================================================================
-Z_ORDER_DOC = {
-    "The Z order of en entity represents how 'high up' off the 2D world it is, which dictates which entites it is drawn in front of"
+Z_ORDER_DOC = (
+    "The Z order of an entity represents how 'high up' off the 2D world it is, which dictates which entites it is drawn in front of"
     "and which ones it is drawn behind. A higher Z order represents a higher value off the 2D world. The Z orders for all N entites"
     "in the current scene starts at 0 and is contiguous up to all N-1, meaning you can insert a new entity 'A' between an existing"
     "entity 'B' and the entity just behind it by specifying the Z order of 'B' when creating 'A'. This follows an array list behavior"
     "where insertion and removal from the middle of the list causes elements of indices above it to shift accordingly. Note here that"
     "specifying a Z order of -1 places the new entity at the top, giving it the highest Z order for all existing entities"
-}
+)
 class EntityType(IntEnum):
     NONE = 0
     ELLIPSE = 1
     RECTANGLE = 2
     TRIANGLE = 3
+
+# Ellipse
+class EllipseParamsMCPPayload(BaseModel):
+    kind: Literal["ellipse"] = "ellipse"
+    halfExtents: Vec2MCPPayload
 
 class AddEllipseParams(ctypes.Structure):
     _fields_ = [
@@ -164,6 +169,14 @@ class AddEllipseParams(ctypes.Structure):
     def __str__(self):
         return f"(AddEllipseParams: halfExtents = {self.halfExtents})"
 
+    def fromMCPPayload(self, payload):
+        self.halfExtents.fromMCPPayload(payload.halfExtents)
+
+# Rectangle
+class RectangleParamsMCPPayload(BaseModel):
+    kind: Literal["rectangle"] = "rectangle"
+    halfExtents: Vec2MCPPayload
+
 class AddRectangleParams(ctypes.Structure):
     _fields_ = [
         ("halfExtents", Vec2),
@@ -171,6 +184,16 @@ class AddRectangleParams(ctypes.Structure):
 
     def __str__(self):
         return f"(AddRectangleParams: halfExtents = {self.halfExtents})"
+
+    def fromMCPPayload(self, payload):
+        self.halfExtents.fromMCPPayload(payload.halfExtents)
+
+# Triangle
+class TriangleParamsMCPPayload(BaseModel):
+    kind: Literal["triangle"] = "triangle"
+    point1: Vec2MCPPayload
+    point2: Vec2MCPPayload
+    point3: Vec2MCPPayload
 
 class AddTriangleParams(ctypes.Structure):
     _fields_ = [
@@ -181,6 +204,23 @@ class AddTriangleParams(ctypes.Structure):
 
     def __str__(self):
         return f"(AddTriangleParams: point1 = {self.point1}, point2 = {self.point2}, point3 = {self.point3})"
+
+    def fromMCPPayload(self, payload):
+        self.point1.fromMCPPayload(payload.point1)
+        self.point2.fromMCPPayload(payload.point2)
+        self.point3.fromMCPPayload(payload.point3)
+
+# Entity common
+
+ENTITY_PARAMS_UNION_DOC = """Geometry for the entity. A discriminated union selected by the required string field 'kind'. (Vec2 = { x: float, y: float }.)
+- kind='ellipse'   -> { kind, halfExtents: Vec2 }   // radii along local x and y
+- kind='rectangle' -> { kind, halfExtents: Vec2 }   // half-width and half-height
+- kind='triangle'  -> { kind, point1: Vec2, point2: Vec2, point3: Vec2 }  // three vertices in local space"""
+
+EntityParamsUnionMCPPayload = Annotated[
+    Union[EllipseParamsMCPPayload, RectangleParamsMCPPayload, TriangleParamsMCPPayload],
+    Field(discriminator="kind"),
+]
 
 class EntityParamsUnion(ctypes.Union):
     _fields_ = [
@@ -231,6 +271,22 @@ class AddEntityParams(ctypes.Structure):
                 typeStr = "Unrecognized type value"
 
         return f"(AddEntityParams: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + ")"
+
+    def fromMCPPayload(self, transform, color, zOrder, entityParamsUnion):
+        self.transform.fromMCPPayload(transform)
+        self.color.fromMCPPayload(color)
+        self.zOrder = ctypes.c_int(zOrder)
+        
+        match entityParamsUnion:
+            case EllipseParamsMCPPayload():
+                self.entityType = EntityType.ELLIPSE
+                self.ellipse.fromMCPPayload(entityParamsUnion)
+            case RectangleParamsMCPPayload():
+                self.entityType = EntityType.RECTANGLE
+                self.rectangle.fromMCPPayload(entityParamsUnion)
+            case TriangleParamsMCPPayload():
+                self.entityType = EntityType.TRIANGLE
+                self.triangle.fromMCPPayload(entityParamsUnion)
         
 
 # Replies ====================================================================================

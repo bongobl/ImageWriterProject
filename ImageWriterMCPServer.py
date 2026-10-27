@@ -127,128 +127,21 @@ def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
     return sendCommandToApp(iw.Command.GetCameraTransform, None, iw.TransformReply).toCameraMCPPayload()
 
 @mcp.tool()
-def removeAllEntities() -> iw.PlainReplyMCPPayload:
-    """clears the world of all spawned entities"""
-
-    return sendCommandToApp(iw.Command.RemoveAllEntities, None, iw.PlainReply).toMCPPayload()
-
-@mcp.tool()
-def addEllipseEntity(
-        transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new ellipse. {iw.TRANSFORM_DOC}")],
-        color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {iw.COLOR_DOC}")],
-        zOrder: Annotated[int, Field(description = f"the Z order {iw.Z_ORDER_DOC}")],
-        halfExtents: Annotated[iw.Vec2MCPPayload, Field(description = f"half extents of the ellipse in its local space. {iw.VEC2_DOC}")],
-) -> iw.AddEntityReplyMCPPayload:
-    """
-    Places a new ellipse within the world at specified transform and color
-    Note that the half extents define the shape's size in its own local space, where its global size is then obtained by multiplying
-    the extents by the shape's scale transform
-    """
-
-    # create addEllipse command params
-    transformRaw = iw.Transform()
-    transformRaw.fromMCPPayload(transform)
-
-    colorRaw = iw.Color()
-    colorRaw.fromMCPPayload(color)
-
-    zOrderRaw = ctypes.c_int(zOrder)
-
-    halfExtentsRaw = iw.Vec2()
-    halfExtentsRaw.fromMCPPayload(halfExtents)
-
-    ellipseParams = iw.AddEntityParams(
-        entityType = iw.EntityType.ELLIPSE, 
-        transform = transformRaw,
-        color = colorRaw,
-        zOrder = zOrderRaw,
-        ellipse = iw.AddEllipseParams(halfExtents = halfExtentsRaw)
-    )
-
-    return sendCommandToApp(iw.Command.AddEntity, ellipseParams, iw.AddEntityReply).toMCPPayload()
-    
-@mcp.tool()
-def addRectangleEntity(
-    transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new rectangle. {iw.TRANSFORM_DOC}")],
+def addEntity(
+    transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new entity. {iw.TRANSFORM_DOC}")],
     color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {iw.COLOR_DOC}")],
-    zOrder: Annotated[int, Field(description = f"the Z order {iw.Z_ORDER_DOC}")],
-    halfExtents: Annotated[iw.Vec2MCPPayload, Field(description = f"half extents of the rectangle in its local space. {iw.VEC2_DOC}")],
+    zOrder: Annotated[int, Field(description = f"the Z order, {iw.Z_ORDER_DOC}")],
+    shape: Annotated[iw.EntityParamsUnionMCPPayload, Field(description = iw.ENTITY_PARAMS_UNION_DOC)]
 ) -> iw.AddEntityReplyMCPPayload:
+
     """
-    Places a new rectangle within the world at specified transform and color
-    Note that the half extents define the shape's size in its own local space, where its global size is then obtained by multiplying
-    the extents by the shape's scale transform
+    Places a new entity within the world at specified transform and color
     """
-
-
-    # create addRectangle command params
-    transformRaw = iw.Transform()
-    transformRaw.fromMCPPayload(transform)
-
-    colorRaw = iw.Color()
-    colorRaw.fromMCPPayload(color)
-
-    zOrderRaw = ctypes.c_int(zOrder)
-
-    halfExtentsRaw = iw.Vec2()
-    halfExtentsRaw.fromMCPPayload(halfExtents)
-
-    rectangleParams = iw.AddEntityParams(
-        entityType = iw.EntityType.RECTANGLE, 
-        transform = transformRaw,
-        color = colorRaw,
-        zOrder = zOrderRaw,
-        rectangle = iw.AddRectangleParams(halfExtents = halfExtentsRaw)
-    )
+    entityParams = iw.AddEntityParams()
+    entityParams.fromMCPPayload(transform, color, zOrder, shape)
     
-    return sendCommandToApp(iw.Command.AddEntity, rectangleParams, iw.AddEntityReply).toMCPPayload()
+    return sendCommandToApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
 
-@mcp.tool()
-def addTriangleEntity(
-    transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new triangle. {iw.TRANSFORM_DOC}")],
-    color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {iw.COLOR_DOC}")],
-    zOrder: Annotated[int, Field(description = f"the Z order {iw.Z_ORDER_DOC}")],
-    point1: Annotated[iw.Vec2MCPPayload, Field(description = f"position of first point. {iw.VEC2_DOC}")],
-    point2: Annotated[iw.Vec2MCPPayload, Field(description = f"position of second point. {iw.VEC2_DOC}")],
-    point3: Annotated[iw.Vec2MCPPayload, Field(description = f"position of third point. {iw.VEC2_DOC}")],
-) -> iw.AddEntityReplyMCPPayload:
-    """
-    Places a new triangle within the world at specified transform and color
-    Note that each point specifies a position in the shape's local space, whose world space is then computed
-    via transformation by the transform parameter
-    """
-
-    # create addTriangle command params
-    transformRaw = iw.Transform()
-    transformRaw.fromMCPPayload(transform)
-
-    colorRaw = iw.Color()
-    colorRaw.fromMCPPayload(color)
-
-    zOrderRaw = ctypes.c_int(zOrder)
-
-    point1Raw = iw.Vec2()
-    point1Raw.fromMCPPayload(point1)
-
-    point2Raw = iw.Vec2()
-    point2Raw.fromMCPPayload(point2)
-
-    point3Raw = iw.Vec2()
-    point3Raw.fromMCPPayload(point3)
-
-    triangleParams = iw.AddEntityParams(
-        entityType = iw.EntityType.TRIANGLE, 
-        transform = transformRaw,
-        color = colorRaw,
-        zOrder = zOrderRaw,
-        triangle = iw.AddTriangleParams(
-            point1 = point1Raw,
-            point2 = point2Raw,
-            point3 = point3Raw,
-        )
-    )
-
-    return sendCommandToApp(iw.Command.AddEntity, triangleParams, iw.AddEntityReply).toMCPPayload()
 
 
 @mcp.tool()
@@ -261,6 +154,12 @@ def removeEntity(
 
     entityIdRaw = ctypes.c_uint64(entityId)
     return sendCommandToApp(iw.Command.RemoveEntity, entityIdRaw, iw.PlainReply).toMCPPayload()
+
+@mcp.tool()
+def removeAllEntities() -> iw.PlainReplyMCPPayload:
+    """clears the world of all spawned entities"""
+
+    return sendCommandToApp(iw.Command.RemoveAllEntities, None, iw.PlainReply).toMCPPayload()
 
 if __name__ == "__main__":
 
