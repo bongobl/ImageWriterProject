@@ -261,7 +261,6 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateScreenSpaceCameraC
     
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
     return pInstanceData->pfnCore_Scene_UpdateScreenSpaceCameraControlRig(*pInstanceData, controls);
-
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterInstance instance, AddEntityReply* pReply, AddEntityParams params)

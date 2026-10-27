@@ -7,7 +7,7 @@
 void runImageWriterFlow(HImageWriterInstance instance)
 {
 
-	TransformReply transformReply = { .success = true, .message = "Command executed successfully" };
+	TransformReply transformReply;
 	if (!ImageWriter_Scene_GetCameraTransform(instance, &transformReply))
 	{
 		std::cerr << "ImageWriter error: " << transformReply.message << std::endl;
@@ -26,7 +26,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	float startX = (dimX - 1) / 2 * spacingX;
 	float startY = (dimY - 1) / 2 * spacingY;
 
-	AddEntityReply addEntityReply = { .success = true, .message = "Command executed successfully", .entityId = 0 };
+	AddEntityReply addEntityReply;
 
 	// Ellipses
 	system("pause");
@@ -58,7 +58,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 		}
 	}
 	
-	PlainReply plainReply = { .success = true, .message = "Command executed successfully" };
+	PlainReply plainReply;
 
 	system("pause");
 	if (!ImageWriter_Scene_RemoveEntity(instance, &plainReply, 26))

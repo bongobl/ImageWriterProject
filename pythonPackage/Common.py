@@ -21,6 +21,10 @@ class Vec2(ctypes.Structure):
         ("y", ctypes.c_float),
     ]
 
+    def __init__(self, x = 0, y = 0):
+        self.x = x
+        self.y = y
+
     def __str__(self):
         return f"(Vec2: x = {self.x}, y = {self.y})"
 
@@ -54,6 +58,11 @@ class Transform(ctypes.Structure):
         ("orientation", ctypes.c_float),
         ("scale", ctypes.c_float)
     ]
+
+    def __init__(self, position = Vec2(0,0), orientation = 0, scale = 0):
+        self.position = position
+        self.orientation = orientation
+        self.scale = scale
 
     def __str__(self):
         return f"(Transform: position = {self.position}, orientation = {self.orientation}, scale = {self.scale})"
@@ -94,6 +103,12 @@ class Color(ctypes.Structure):
         ("alpha", ctypes.c_float),
     ]
 
+    def __init__(self, red = 0, green = 0, blue = 0, alpha = 0):
+        self.red = red
+        self.green = green
+        self.blue = blue
+        self.alpha = alpha
+        
     def __str__(self):
         return f"(Color: red = {self.red}, green = {self.green}, blue = {self.blue}, alpha = {self.alpha})"
 
@@ -119,6 +134,12 @@ class ScreenSpaceControls(ctypes.Structure):
         ("rotate", ctypes.c_int),
         ("zoom", ctypes.c_int),
     ]
+
+    def __init__(self, moveX = 0, moveY = 0, rotate = 0, zoom = 0):
+        self.moveX = moveX
+        self.moveY = moveY
+        self.rotate = rotate
+        self.zoom = zoom
 
 # Parameters =================================================================================
 Z_ORDER_DOC = {
@@ -178,6 +199,22 @@ class AddEntityParams(ctypes.Structure):
     ]
     _anonymous_ = ("entityParamsUnion",)
 
+    def __init__(self, entityType = EntityType.NONE, transform = Transform(), color = Color(), zOrder = -1, ellipse = None, rectangle = None, triangle = None):
+        
+        self.entityType = entityType
+        self.transform = transform
+        self.color = color
+        self.zOrder = zOrder
+
+        match(entityType):
+            case EntityType.ELLIPSE:   
+                self.ellipse = ellipse
+            case EntityType.RECTANGLE:   
+                self.rectangle = rectangle
+            case EntityType.TRIANGLE:   
+                self.triangle = triangle
+
+
     def __str__(self):
 
         typeStr = ""
@@ -210,9 +247,9 @@ class PlainReply(ctypes.Structure):
         ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
     ]
 
-    def __init__(self):
-        self.success = False
-        self.message = b"UNINITIALIZED_MESSAGE"
+    def __init__(self, success = False, message = b"UNINITIALIZED_MESSAGE"):
+        self.success = success
+        self.message = message
 
     def __str__(self):
         return f"(PlainReply: success = {self.success}, message = {self.message.decode('utf-8')})"
@@ -236,9 +273,11 @@ class TransformReply(ctypes.Structure):
         ("cameraWidthFromHeight", ctypes.c_float), # only used when getting camera transform
     ]
 
-    def __init__(self):
-        self.success = False
-        self.message = b"UNINITIALIZED_MESSAGE"
+    def __init__(self, success = False, message = b"UNINITIALIZED_MESSAGE", transform = Transform(), cameraWidthFromHeight = 0):
+        self.success = success
+        self.message = message
+        self.transform = transform
+        self.cameraWidthFromHeight = cameraWidthFromHeight
 
     def __str__(self):
         return f"(TransformReply: success = {self.success}, message = {self.message.decode('utf-8')}, transform = {self.transform}, cameraWidthFromHeight = {self.cameraWidthFromHeight})"
@@ -272,9 +311,11 @@ class AddEntityReply(ctypes.Structure):
         ("zOrder", ctypes.c_int),
     ]
 
-    def __init__(self):
-        self.success = False
-        self.message = b"UNINITIALIZED_MESSAGE"
+    def __init__(self, success = False, message = b"UNINITIALIZED_MESSAGE", entityId = -1, zOrder = -1):
+        self.success = success
+        self.message = message
+        self.entityId = entityId
+        self.zOrder = zOrder
 
     def __str__(self):
         return f"(AddEntityReply: success = {self.success}, message = {self.message.decode('utf-8')}, entityId = {self.entityId}, zOrder = {self.zOrder})"

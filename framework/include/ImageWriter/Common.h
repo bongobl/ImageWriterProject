@@ -2,8 +2,8 @@
 #define MAX_REPLY_MESSAGE_LENGTH 512
 #include <stdint.h>
 struct Vec2 {
-    float x;
-    float y;
+    float x = 0;
+    float y = 0;
 };
 
 // TODO: don't let scale go below or equal to 0, 
@@ -49,7 +49,7 @@ struct AddTriangleParams {
 };
 
 struct AddEntityParams {
-    int entityType = 0;
+    int entityType = ENTITY_TYPE_NONE;
     Transform transform;
     Color color;
     int zOrder = -1;
@@ -63,20 +63,20 @@ struct AddEntityParams {
 
 // Replies
 struct PlainReply {
-    bool success;
-    char message[MAX_REPLY_MESSAGE_LENGTH];
+    bool success = false;
+    char message[MAX_REPLY_MESSAGE_LENGTH] = "UNINITIALIZED_MESSAGE";
 };
 
 struct TransformReply {
-    bool success;
-    char message[MAX_REPLY_MESSAGE_LENGTH];
+    bool success = false;
+    char message[MAX_REPLY_MESSAGE_LENGTH] = "UNINITIALIZED_MESSAGE";
     Transform transform;
-    float cameraWidthFromHeight;
+    float cameraWidthFromHeight = 0;
 };
 
 struct AddEntityReply {
-    bool success;
-    char message[MAX_REPLY_MESSAGE_LENGTH];
-    uint64_t entityId;
+    bool success = false;
+    char message[MAX_REPLY_MESSAGE_LENGTH] = "UNINITIALIZED_MESSAGE";
+    uint64_t entityId = -1;
     int zOrder = -1;
 };
