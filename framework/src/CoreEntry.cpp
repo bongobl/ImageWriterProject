@@ -191,7 +191,7 @@ extern "C" __declspec(dllexport) bool scene_getCameraTransform(InstanceData inst
 	return pReply->success;
 }
 
-extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, AddEntityReply* pReply, AddEntityParams params)
+extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData, AddEntityReply* pReply, EntityData params)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_addEntity(): instanceData.pCoreData was null" << std::endl;

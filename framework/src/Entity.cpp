@@ -83,7 +83,7 @@ EntityList::~EntityList()
 	removeAllEntities();
 }
 
-bool EntityList::addEntity(AddEntityParams params, uint64_t* pNewEntityId, int* pNewZOrder, std::string* pMessage)
+bool EntityList::addEntity(EntityData params, uint64_t* pNewEntityId, int* pNewZOrder, std::string* pMessage)
 {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
@@ -220,7 +220,7 @@ EntityGeometry* EntityList::getGeometryForEntity(Entity::Type type)
 	return nullptr;
 }
 
-void EntityList::API_addEntity(AddEntityReply* pReply, AddEntityParams params)
+void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 {
 	// tentatively set success string
 	std::string message = "Entity added successfully";

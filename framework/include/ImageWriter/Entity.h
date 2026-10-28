@@ -91,7 +91,7 @@ public:
 	EntityList();
 	~EntityList();
 
-	bool addEntity(AddEntityParams params, uint64_t* pNewEntityId = nullptr, int* pNewZOrder = nullptr, std::string* pMessage = nullptr);
+	bool addEntity(EntityData params, uint64_t* pNewEntityId = nullptr, int* pNewZOrder = nullptr, std::string* pMessage = nullptr);
 	bool removeEntity(uint64_t id, std::string* pMessage = nullptr);
 	void dummyUpdateShapes(float deltaTime);
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
@@ -99,7 +99,7 @@ public:
 
 	EntityGeometry* getGeometryForEntity(Entity::Type type);
 
-	void API_addEntity(AddEntityReply* pReply, AddEntityParams params);
+	void API_addEntity(AddEntityReply* pReply, EntityData params);
 	void API_removeEntity(PlainReply* pReply, uint64_t entityId);
 
 private:

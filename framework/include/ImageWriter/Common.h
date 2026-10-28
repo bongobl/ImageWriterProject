@@ -28,7 +28,6 @@ struct ScreenSpaceControls {
     int zoom = 0;
 };
 
-// Parameters
 enum EntityType {
     ENTITY_TYPE_NONE = 0,
     ENTITY_TYPE_ELLIPSE = 1,
@@ -36,28 +35,28 @@ enum EntityType {
     ENTITY_TYPE_TRIANGLE = 3,
 };
 
-struct AddEllipseParams {
+struct EllipseData {
     Vec2 halfExtents;
 };
 
-typedef AddEllipseParams AddRectangleParams;
+typedef EllipseData RectangleData;
 
-struct AddTriangleParams {
+struct TriangleData {
     Vec2 point1;
     Vec2 point2;
     Vec2 point3;
 };
 
-struct AddEntityParams {
+struct EntityData {
     int entityType = ENTITY_TYPE_NONE;
     Transform transform;
     Color color;
     int zOrder = -1;
 
     union {
-        AddEllipseParams ellipse;
-        AddRectangleParams rectangle;
-        AddTriangleParams triangle;
+        EllipseData ellipse;
+        RectangleData rectangle;
+        TriangleData triangle;
     };
 };
 

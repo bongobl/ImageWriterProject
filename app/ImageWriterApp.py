@@ -88,14 +88,14 @@ def runNetworkService():
 
                         case iw.Command.AddEntity:
 
-                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(iw.AddEntityParams))
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(iw.EntityData))
                             if not status:
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
 
                             # deserialize params
-                            entityParams = iw.AddEntityParams.from_buffer_copy(paramsBuffer)
+                            entityParams = iw.EntityData.from_buffer_copy(paramsBuffer)
                             print(f"From client: {entityParams}")
 
                             

@@ -30,12 +30,12 @@ def createSomeSampleShapes():
 
             if not imageWriter.AddEntity(
                 addEntityReply,
-                iw.AddEntityParams(
+                iw.EntityData(
                     entityType = iw.EntityType.ELLIPSE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
                     color = iw.Color(red = 1, green = 0, blue = 0, alpha = 1),
                     zOrder = -1,
-                    ellipse = iw.AddEllipseParams(halfExtents = iw.Vec2(0.5, 0.35))
+                    ellipse = iw.EllipseData(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
                 print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
@@ -54,12 +54,12 @@ def createSomeSampleShapes():
         for j in range(dimX):
             if not imageWriter.AddEntity(
                 addEntityReply,
-                iw.AddEntityParams(
+                iw.EntityData(
                     entityType = iw.EntityType.RECTANGLE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
                     color = iw.Color(red = 0, green = 1, blue = 1, alpha = 1),
                     zOrder = -1,
-                    rectangle = iw.AddRectangleParams(halfExtents = iw.Vec2(0.5, 0.35))
+                    rectangle = iw.RectangleData(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
                 print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
@@ -73,12 +73,12 @@ def createSomeSampleShapes():
         for j in range(dimX):
             if not imageWriter.AddEntity(
                 addEntityReply,
-                iw.AddEntityParams(
+                iw.EntityData(
                     entityType = iw.EntityType.TRIANGLE, 
                     transform = iw.Transform(position = iw.Vec2(x = j * spacingX - startX, y = i * spacingY - startY), orientation = 0, scale = 1),
                     color = iw.Color(red = 1, green = 1, blue = 0, alpha = 1),
                     zOrder = -1,
-                    triangle = iw.AddTriangleParams(
+                    triangle = iw.TriangleData(
                         point1 = iw.Vec2(-0.5, 0.35), 
                         point2 = iw.Vec2(-0.5, -0.35), 
                         point3 = iw.Vec2(0.5, 0)

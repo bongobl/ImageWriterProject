@@ -60,7 +60,7 @@ class Framework(ctypes.Structure):
         self.runtimeLib.ImageWriter_Scene_UpdateScreenSpaceCameraControlRig.argtypes = [Framework, ScreenSpaceControls]
         self.runtimeLib.ImageWriter_Scene_UpdateScreenSpaceCameraControlRig.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_AddEntity.argtypes = [Framework, ctypes.POINTER(AddEntityReply), AddEntityParams]
+        self.runtimeLib.ImageWriter_Scene_AddEntity.argtypes = [Framework, ctypes.POINTER(AddEntityReply), EntityData]
         self.runtimeLib.ImageWriter_Scene_AddEntity.restype = ctypes.c_bool
 
         self.runtimeLib.ImageWriter_Scene_RemoveEntity.argtypes = [Framework, ctypes.POINTER(PlainReply), c_uint64]
