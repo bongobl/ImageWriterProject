@@ -6,11 +6,6 @@ from typing import Literal, Union, Annotated
 MAX_REPLY_MESSAGE_LENGTH = 512
 
 ######## Vec2 ########
-VEC2_DOC = (
-    "A Vec2 consists of: " 
-    "x (float) = x spatial component, " 
-    "y (float)= y spatial component"
-)
 class Vec2MCPPayload(BaseModel):
     x: float = Field(..., description="(float), x spatial component")
     y: float = Field(..., description="(float), y spatial component")
@@ -39,13 +34,6 @@ class Vec2(ctypes.Structure):
         self.y = payload.y
 
 ######## Transform ########
-TRANSFORM_DOC = (
-    "A Transform consists of: " 
-    "position (Vec2MCPPayload) = 2D (x and y) position, " 
-    "orientation (float) = counter clockwise angle orientation on world plane in degrees, "
-    "scale (float) = scale"
-)
-
 class TransformMCPPayload(BaseModel):
     position: Vec2MCPPayload = Field(..., description="(Vec2MCPPayload), position")
     orientation: float = Field(..., description="(float), counter clockwise angle orientation in degrees")
@@ -80,14 +68,6 @@ class Transform(ctypes.Structure):
         self.scale = payload.scale 
 
 ######## Color ########
-COLOR_DOC = (
-    "A Color consists of: " 
-    "red (float) = red channel value, " 
-    "green (float)= green channel value, "
-    "blue (float) = blue channel value, "
-    "alpha (float) = alpha channel value, "
-    "For each channel, 0 = no strength and 1 = max strength"
-)
 class ColorMCPPayload(BaseModel):
     red: float = Field(..., ge=0.0, le=1.0, description="(float), red channel value")
     green: float = Field(..., ge=0.0, le=1.0, description="(float), green channel value")

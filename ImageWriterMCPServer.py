@@ -14,15 +14,15 @@ import ctypes
 from ctypes import *
 from typing import Annotated
 from pydantic import Field
-from mcp.server.mcpserver import MCPServer
-from mcp.server.mcpserver.exceptions import ToolError
+from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 
 # Logs go to stderr; stdout is reserved for the MCP protocol.
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("imagewriter")
 
 
-mcp = MCPServer(
+mcp = FastMCP(
     "ImageWriter",
     instructions=(
         "This server connects to an image writer application and tells it to draw whatever the user wishes. "
@@ -103,7 +103,7 @@ def sendCommandToApp(command: iw.Command, params, ReplyType: type):
 
 @mcp.tool()
 def setCameraTransform(
-    transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies the new transform of the camera. {iw.TRANSFORM_DOC}")],
+    transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies the new transform of the camera.")],
 ) -> iw.PlainReplyMCPPayload:
     """sets the transform of the camera, note the scale determines the camera view rectangle's half Y extent
     where the halfX extent is then internally determined by the screen aspect ratio
@@ -128,8 +128,8 @@ def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
 
 @mcp.tool()
 def addEntity(
-    transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new entity. {iw.TRANSFORM_DOC}")],
-    color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape. {iw.COLOR_DOC}")],
+    transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new entity.")],
+    color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape")],
     zOrder: Annotated[int, Field(description = f"the Z order, {iw.Z_ORDER_DOC}")],
     shape: Annotated[iw.EntityParamsUnionMCPPayload, Field(description = iw.ENTITY_PARAMS_UNION_DOC)]
 ) -> iw.AddEntityReplyMCPPayload:
