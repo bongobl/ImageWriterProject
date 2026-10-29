@@ -216,7 +216,7 @@ extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData,
 	return pReply->success;
 }
 
-extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, PlainReply* pReply, uint64_t id)
+extern "C" __declspec(dllexport) bool scene_getEntityData(InstanceData instanceData, EntityDataReply* pReply, uint64_t entityId)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_removeEntity(): instanceData.pCoreData was null" << std::endl;
@@ -237,7 +237,32 @@ extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceDa
 	}
 
 	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
-	pEntityList->API_removeEntity(pReply, id);
+	pEntityList->API_getEntityData(pReply, entityId);
+	return pReply->success;
+}
+
+extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, PlainReply* pReply, uint64_t entityId)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_removeEntity(): instanceData.pCoreData was null" << std::endl;
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework on scene_removeEntity()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
+
+	if (!pCoreData->m_pScene) {
+		std::cerr << "Core entry scene_removeEntity(): pCoreData->m_pScene was null" << std::endl;
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework: calling scene_removeEntity() on non-existent scene");
+		return false;
+	}
+
+	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
+	pEntityList->API_removeEntity(pReply, entityId);
 	return pReply->success;
 }
 

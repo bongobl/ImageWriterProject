@@ -132,7 +132,7 @@ def addEntity(
     color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape")],
     zOrder: Annotated[int, Field(description = f"the Z order, {iw.Z_ORDER_DOC}")],
     shape: Annotated[iw.ShapeDataUnionMCPPayload, Field(description = iw.SHAPE_DATA_UNION_DOC)]
-) -> iw.AddEntityReplyMCPPayload:
+):
 
     """
     Places a new entity within the world at specified transform and color
@@ -142,7 +142,16 @@ def addEntity(
     
     return sendCommandToApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
 
+@mcp.tool()
+def getEntityData(
+    entityId: Annotated[int, Field(description = "The id of the entity to get info on")],
+):
+    """
+    Returns data on an entity given its id
+    """
 
+    entityIdRaw = ctypes.c_uint64(entityId)
+    return sendCommandToApp(iw.Command.GetEntityData, entityIdRaw, iw.EntityDataReply).toMCPPayload()
 
 @mcp.tool()
 def removeEntity(

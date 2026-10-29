@@ -29,6 +29,7 @@ struct Entity {
 
 	Entity(Type type, uint64_t id, int zOrder, const Transform& transform, Color& color);
 	virtual void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const {};
+	virtual EntityData getData() const = 0;
 };
 
 struct EllipseEntity : Entity {
@@ -38,6 +39,7 @@ struct EllipseEntity : Entity {
 	Vec2 m_HalfExtents;
 
 	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
+	EntityData getData() const override;
 };
 
 struct RectangleEntity : Entity {
@@ -47,6 +49,7 @@ struct RectangleEntity : Entity {
 	Vec2 m_HalfExtents;
 
 	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
+	EntityData getData() const override;
 };
 
 struct TriangleEntity : Entity {
@@ -57,6 +60,7 @@ struct TriangleEntity : Entity {
 	TriangleEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
 
 	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
+	EntityData getData() const override;
 };
 
 struct EntityGeometry : public sf::VertexArray {
@@ -100,6 +104,7 @@ public:
 	EntityGeometry* getGeometryForEntity(Entity::Type type);
 
 	void API_addEntity(AddEntityReply* pReply, EntityData params);
+	void API_getEntityData(EntityDataReply* pReply, uint64_t entityId);
 	void API_removeEntity(PlainReply* pReply, uint64_t entityId);
 
 private:

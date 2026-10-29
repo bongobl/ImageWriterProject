@@ -24,6 +24,7 @@ typedef bool (*PfnCore_Scene_UpdateScreenSpaceCameraControlRig)(InstanceData, Sc
 typedef bool (*PfnCore_Scene_SetCameraTransform)(InstanceData, PlainReply*, Transform);
 typedef bool (*PfnCore_Scene_GetCameraTransform)(InstanceData, TransformReply*);
 typedef bool (*PfnCore_Scene_AddEntity)(InstanceData, AddEntityReply*, EntityData);
+typedef bool (*PfnCore_Scene_GetEntityData)(InstanceData, EntityDataReply*, int64_t);
 typedef bool (*PfnCore_Scene_RemoveEntity)(InstanceData, PlainReply*, uint16_t);
 typedef bool (*PfnCore_Scene_removeAllEntities)(InstanceData, PlainReply*);
 
@@ -46,6 +47,7 @@ struct InstanceData
     PfnCore_Scene_GetCameraTransform pfnCore_Scene_GetCameraTransform;
     PfnCore_Scene_UpdateScreenSpaceCameraControlRig pfnCore_Scene_UpdateScreenSpaceCameraControlRig;
     PfnCore_Scene_AddEntity pfnCore_Scene_AddEntity;
+    PfnCore_Scene_GetEntityData pfnCore_Scene_GetEntityData;
     PfnCore_Scene_RemoveEntity pfnCore_Scene_RemoveEntity;
     PfnCore_Scene_removeAllEntities pfnCore_Scene_removeAllEntities;
 

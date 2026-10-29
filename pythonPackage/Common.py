@@ -356,11 +356,94 @@ class AddEntityReply(ctypes.Structure):
     def __str__(self):
         return f"(AddEntityReply: success = {self.success}, message = {self.message.decode('utf-8')}, entityId = {self.entityId}, zOrder = {self.zOrder})"
 
-    def toMCPPayload(self) -> AddEntityReplyMCPPayload:
+    def toMCPPayload(self):
 
-        return AddEntityReplyMCPPayload(
-            success = self.success, 
-            message = self.message.decode('utf-8'),
-            entityId = self.entityId,
-            zOrder = self.zOrder,
-        )
+        if self.success:
+            return AddEntityReplyMCPPayload(
+                success = self.success, 
+                message = self.message.decode('utf-8'),
+                entityId = self.entityId,
+                zOrder = self.zOrder,
+            )
+        else:
+            return PlainReplyMCPPayload(
+                success = self.success, 
+                message = self.message.decode('utf-8'),
+            )
+
+class EntityDataReplyMCPPayload(PlainReplyMCPPayload):
+    transform: TransformMCPPayload
+    color: ColorMCPPayload
+    zOrder: int
+
+class EllipseDataReplyMCPPayload(EntityDataReplyMCPPayload):
+    shape: Literal["ellipse"] = "ellipse"
+    halfExtents: Vec2MCPPayload
+
+class RectangleDataReplyMCPPayload(EntityDataReplyMCPPayload):
+    shape: Literal["rectangle"] = "rectangle"
+    halfExtents: Vec2MCPPayload
+class TriangleDataReplyMCPPayload(EntityDataReplyMCPPayload):
+    shape: Literal["triangle"] = "triangle"
+    point1: Vec2MCPPayload
+    point2: Vec2MCPPayload
+    point3: Vec2MCPPayload
+
+class EntityDataReply(ctypes.Structure):
+    
+    _fields_ = [
+        ("success", ctypes.c_bool),
+        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
+        ("entityData", EntityData),
+    ]
+
+    def __init__(self, success = False, message = b"UNINITIALIZED_MESSAGE", entityData = EntityData()):
+        self.success = success
+        self.message = message
+        self.entityData = entityData
+
+    def __str__(self):
+        return f"(EntityDataReply: success = {self.success}, message = {self.message.decode('utf-8')}, entityData = {self.entityData})"
+
+    def toMCPPayload(self):
+            
+        match self.entityData.entityType:
+            case EntityType.NONE:
+                return PlainReplyMCPPayload(
+                    success = self.success, 
+                    message = self.message.decode('utf-8'),
+                )
+            case EntityType.ELLIPSE:
+                return EllipseDataReplyMCPPayload(
+                    success = self.success,
+                    message = self.message.decode('utf-8'),
+                    transform = self.entityData.transform.toMCPPayload(),
+                    color = self.entityData.color.toMCPPayload(),
+                    zOrder = int(self.entityData.zOrder),
+                    halfExtents = self.entityData.ellipse.halfExtents.toMCPPayload()
+                )
+            case EntityType.RECTANGLE:
+                return RectangleDataReplyMCPPayload(
+                    success = self.success, 
+                    message = self.message.decode('utf-8'),
+                    transform = self.entityData.transform.toMCPPayload(),
+                    color = self.entityData.color.toMCPPayload(),
+                    zOrder = int(self.entityData.zOrder),
+                    halfExtents = self.entityData.rectangle.halfExtents.toMCPPayload()
+                )
+            case EntityType.TRIANGLE:
+                return TriangleDataReplyMCPPayload(
+                    success = self.success, 
+                    message = self.message.decode('utf-8'),
+                    transform = self.entityData.transform.toMCPPayload(),
+                    color = self.entityData.color.toMCPPayload(),
+                    zOrder = int(self.entityData.zOrder),
+                    point1 = self.entityData.triangle.point1.toMCPPayload(),
+                    point2 = self.entityData.triangle.point2.toMCPPayload(),
+                    point3 = self.entityData.triangle.point3.toMCPPayload(),
+                )
+            case _:
+                return PlainReplyMCPPayload(
+                    success = False, 
+                    message = "Unknown shape type received by the app",
+                )

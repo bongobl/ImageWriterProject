@@ -49,6 +49,47 @@ void TriangleEntity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::
 	vertexShader.setUniform("scaleOffset", sf::Glsl::Vec2(1, 1));
 }
 
+EntityData EllipseEntity::getData() const
+{
+	return {
+		.entityType = ENTITY_TYPE_ELLIPSE,
+		.transform = m_Transform,
+		.color = m_Color,
+		.zOrder = m_zOrder,
+		.ellipse = {
+			.halfExtents = m_HalfExtents
+		}
+	};
+}
+
+EntityData RectangleEntity::getData() const
+{
+	return {
+		.entityType = ENTITY_TYPE_RECTANGLE,
+		.transform = m_Transform,
+		.color = m_Color,
+		.zOrder = m_zOrder,
+		.rectangle = {
+			.halfExtents = m_HalfExtents
+		}
+	};
+}
+
+EntityData TriangleEntity::getData() const
+{
+	return {
+		.entityType = ENTITY_TYPE_TRIANGLE,
+		.transform = m_Transform,
+		.color = m_Color,
+		.zOrder = m_zOrder,
+		.triangle = {
+			.point1 = m_Point1,
+			.point2 = m_Point2,
+			.point3 = m_Point3,
+		}
+	};
+}
+
 EntityList::EntityList() :
 	m_EllipseVerts(sf::PrimitiveType::TriangleFan, 100),
 	m_RectangleVerts(sf::PrimitiveType::TriangleStrip, 4),
@@ -229,6 +270,30 @@ void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 	strcpy(pReply->message, message.c_str());
 }
 
+void EntityList::API_getEntityData(EntityDataReply* pReply, uint64_t entityId)
+{
+	std::shared_lock<std::shared_mutex> lock(m_EntitiesMutex);
+
+	// tentatively set success string
+	std::string message = "Entity with id " + std::to_string(entityId) + " found";
+
+	auto mapIter = m_EntityIterFromId.find(entityId);
+
+	// If not found in map
+	if (mapIter == m_EntityIterFromId.end()) {
+		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
+
+		message = "No entity with a given ID of " + std::to_string(entityId) + " found";
+		pReply->success = false;
+	}
+	else {
+		IterT entityIter = mapIter->second;
+		Entity* pEntity = *entityIter;
+		pReply->entityData = pEntity->getData();
+		pReply->success = true;
+	}
+	strcpy(pReply->message, message.c_str());
+}
 void EntityList::API_removeEntity(PlainReply* pReply, uint64_t id)
 {
 	// tentatively set success string

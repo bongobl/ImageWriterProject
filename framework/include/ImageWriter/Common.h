@@ -79,3 +79,8 @@ struct AddEntityReply {
     uint64_t entityId = -1;
     int zOrder = -1;
 };
+struct EntityDataReply {
+    bool success = false;
+    char message[MAX_REPLY_MESSAGE_LENGTH] = "UNINITIALIZED_MESSAGE";
+    EntityData entityData;
+};

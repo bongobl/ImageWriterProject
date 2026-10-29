@@ -105,6 +105,14 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         FreeLibrary(hDll);
         return false;
     }
+    
+    PfnCore_Scene_GetEntityData pfnCore_Scene_GetEntityData = (PfnCore_Scene_GetEntityData)GetProcAddress(hDll, "scene_getEntityData");
+
+    if (pfnCore_Scene_AddEntity == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_addEntity could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
 
     PfnCore_Scene_RemoveEntity pfnCore_Scene_RemoveEntity = (PfnCore_Scene_RemoveEntity)GetProcAddress(hDll, "scene_removeEntity");
 
@@ -140,6 +148,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         .pfnCore_Scene_GetCameraTransform = pfnCore_Scene_GetCameraTransform,
         .pfnCore_Scene_UpdateScreenSpaceCameraControlRig = pfnCore_Scene_UpdateScreenSpaceCameraControlRig,
         .pfnCore_Scene_AddEntity = pfnCore_Scene_AddEntity,
+        .pfnCore_Scene_GetEntityData = pfnCore_Scene_GetEntityData,
         .pfnCore_Scene_RemoveEntity = pfnCore_Scene_RemoveEntity,
         .pfnCore_Scene_removeAllEntities = pfnCore_Scene_removeAllEntities,
     };
@@ -276,7 +285,19 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterIn
     return pInstanceData->pfnCore_Scene_AddEntity(*pInstanceData, pReply, params);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveEntity(HImageWriterInstance instance, PlainReply* pReply, uint64_t id)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetEntityData(HImageWriterInstance instance, EntityDataReply* pReply, uint64_t entityId)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "ImageWriter_Scene_GetEntityData: instance.pData was null\n");
+        pReply->success = false;
+        strcpy(pReply->message, "App did not call ImageWriter_Scene_GetEntityData() from its underlying framework correctly");
+        return false;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    return pInstanceData->pfnCore_Scene_GetEntityData(*pInstanceData, pReply, entityId);
+}
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveEntity(HImageWriterInstance instance, PlainReply* pReply, uint64_t entityId)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_RemoveEntity: instance.pData was null\n");
@@ -286,7 +307,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveEntity(HImageWrite
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    return pInstanceData->pfnCore_Scene_RemoveEntity(*pInstanceData, pReply, id);
+    return pInstanceData->pfnCore_Scene_RemoveEntity(*pInstanceData, pReply, entityId);
 }
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveAllEntities(HImageWriterInstance instance, PlainReply* pReply)
 {

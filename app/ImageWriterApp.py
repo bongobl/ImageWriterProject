@@ -102,6 +102,20 @@ def runNetworkService():
                             reply = iw.AddEntityReply()
                             frameworkFunctionSucceeded = framework.AddEntity(reply, entityParams)
                             
+                        case iw.Command.GetEntityData:
+                            
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(ctypes.c_uint64))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+                            
+                            entityId = ctypes.c_uint64.from_buffer_copy(paramsBuffer)
+                            print(f"Getting data on entity with id {entityId.value}")
+
+                            reply = iw.EntityDataReply()
+                            frameworkFunctionSucceeded = framework.GetEntityData(reply, entityId)
+
                         case iw.Command.RemoveEntity:
                             
                             status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(ctypes.c_uint64))
