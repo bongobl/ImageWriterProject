@@ -4,7 +4,39 @@
 #include <iostream>
 #include <cstring>
 
-Entity::Entity(uint64_t id, EntityData entityData):
+
+static bool validateZOrder(int& zOrder, int numEntities, std::string* pMessage, bool warnOnLessThanNegativeOne)
+{
+	// Error check on specified Z order
+	if (zOrder < -1) {
+
+		if (pMessage) {
+			std::string prefix = warnOnLessThanNegativeOne ? "Warning" : "Error";
+			*pMessage += prefix + ": Invalid Z order specified: " + std::to_string(zOrder) +
+				", must specify a value between -1 and the current number of entities (" + std::to_string(numEntities) + ")";
+
+		}
+		if (!warnOnLessThanNegativeOne) {
+			return false;
+		}
+	}
+
+	// Find true Z order to use
+	int correctZOrder = zOrder == -1 ? numEntities : zOrder;
+	if (correctZOrder > numEntities) {
+		correctZOrder = numEntities;
+		if (pMessage) {
+			*pMessage += "Warning: Specifying a Z order of " + std::to_string(zOrder) +
+				" which is greater than the number of entities (" + std::to_string(numEntities) +
+				"), assigning a Z order of " + std::to_string(correctZOrder) + " instead";
+		}
+	}
+
+	zOrder = correctZOrder;
+	return true;
+}
+
+Entity::Entity(uint64_t id, EntityData entityData) :
 	m_Type((Type)entityData.entityType),
 	m_Transform(entityData.transform),
 	m_Color(entityData.color),
@@ -16,15 +48,13 @@ Entity::Entity(uint64_t id, EntityData entityData):
 			std::cerr << "Entity(): Entity type was 'None' " << std::endl;
 			exit(1);
 		case Type::Ellipse:
-			ellipse.halfExtents = entityData.ellipse.halfExtents;
+			ellipse = entityData.ellipse;
 			break;
 		case Type::Rectangle:
-			rectangle.halfExtents = entityData.rectangle.halfExtents;
+			rectangle = entityData.rectangle;
 			break;
 		case Type::Triangle:
-			triangle.point1 = entityData.triangle.point1;
-			triangle.point2 = entityData.triangle.point2;
-			triangle.point3 = entityData.triangle.point3;
+			triangle = entityData.triangle;
 			break;
 		default:
 			std::cerr << "Entity(): Unknown type enum value of " << entityData.entityType << std::endl;
@@ -58,6 +88,96 @@ void Entity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& 
 			exit(1);
 	}
 }
+
+bool Entity::modify(EntityData params, std::string* pMessage)
+{
+	std::unique_lock<std::shared_mutex> lock(m_Mutex);
+
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TYPE) {
+
+		m_Type = (Type)params.entityType;
+			switch (params.entityType) {
+			case ENTITY_TYPE_NONE:
+				std::cerr << "Entity::applyCustomDrawingProperties(): Entity type was 'None' " << std::endl;
+				exit(1);
+			case ENTITY_TYPE_ELLIPSE:
+				ellipse = params.ellipse;
+				break;
+			case ENTITY_TYPE_RECTANGLE:
+				rectangle = params.rectangle;
+				break;
+			case ENTITY_TYPE_TRIANGLE:
+				triangle = params.triangle;
+			default:
+				std::cerr << "Entity::applyCustomDrawingProperties(): Unknown type enum value of " << (unsigned int)m_Type << std::endl;
+				exit(1);
+		}
+		
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_POSITION) {
+		m_Transform.position = params.transform.position;
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_ORIENTATION) {
+		m_Transform.orientation = params.transform.orientation;
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_SCALE) {
+		m_Transform.scale = params.transform.scale;
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_COLOR) {
+		m_Color = params.color;
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_Z_ORDER) {
+		m_zOrder = params.zOrder;
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_HALF_EXTENTS) {
+		
+		if (m_Type != Type::Ellipse && m_Type != Type::Rectangle) {
+			std::cerr << "Entity::modify(): setting 'halfExtents' on type that is not a rectangle" << std::endl;
+			if (pMessage) {
+				*pMessage += "Warning: Trying to set 'halfExtents' parameter on a non-ellipse/rectangle entity, ignoring... ";
+			}
+		}
+		else {
+			ellipse.halfExtents = params.ellipse.halfExtents;
+		}
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_1) {
+		if (m_Type != Type::Triangle) {
+			std::cerr << "Entity::modify(): setting 'point1' parameter on a type that is not a triangle" << std::endl;
+			if (pMessage) {
+				*pMessage += "Warning: Trying to set 'point1' parameter on a non-triangle entity, ignoring... ";
+			}
+		}
+		else {
+			triangle.point1 = params.triangle.point1;
+		}
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_2) {
+		if (m_Type != Type::Triangle) {
+			std::cerr << "Entity::modify(): setting 'point2' parameter on a type that is not a triangle" << std::endl;
+			if (pMessage) {
+				*pMessage += "Warning: Trying to set 'point2' parameter on a non-triangle entity, ignoring... ";
+			}
+		}
+		else {
+			triangle.point2 = params.triangle.point2;
+		}
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_3) {
+		if (m_Type != Type::Triangle) {
+			std::cerr << "Entity::modify(): setting 'point3' parameter on a type that is not a triangle" << std::endl;
+			if (pMessage) {
+				*pMessage += "Warning: Trying to set 'point3' parameter on a non-triangle entity, ignoring... ";
+			}
+		}
+		else {
+			triangle.point3 = params.triangle.point3;
+		}
+	}
+
+	return true;
+}
+
 EntityData Entity::getData()
 {
 	switch (m_Type) {
@@ -70,9 +190,7 @@ EntityData Entity::getData()
 				.transform = m_Transform,
 				.color = m_Color,
 				.zOrder = m_zOrder,
-				.ellipse = {
-					.halfExtents = ellipse.halfExtents
-				}
+				.ellipse = ellipse
 			};
 
 		case Type::Rectangle:
@@ -81,9 +199,7 @@ EntityData Entity::getData()
 				.transform = m_Transform,
 				.color = m_Color,
 				.zOrder = m_zOrder,
-				.rectangle = {
-					.halfExtents = rectangle.halfExtents
-				}
+				.rectangle = rectangle
 			};
 		case Type::Triangle: {
 			return {
@@ -91,11 +207,7 @@ EntityData Entity::getData()
 				.transform = m_Transform,
 				.color = m_Color,
 				.zOrder = m_zOrder,
-				.triangle = {
-					.point1 = triangle.point1,
-					.point2 = triangle.point2,
-					.point3 = triangle.point3,
-				}
+				.triangle = triangle
 			};
 		}
 		default:
@@ -142,31 +254,17 @@ bool EntityList::addEntity(EntityData params, uint64_t* pNewEntityId, int* pNewZ
 {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
-	// Error check on specified Z order
-	if (params.zOrder < -1) {
-		*pMessage = "Error: Invalid Z order specified: " + std::to_string(params.zOrder) +
-			", must specify a value between -1 and the current number of entities (" + std::to_string(m_Entities.size()) + ")";
+	// Note: we can simply pass in pMessage since we're not appending to any 
+	// existing locally declared string
+	if (!validateZOrder(params.zOrder, m_Entities.size(), pMessage, false)) {
 		return false;
-	}
-
-	// Find true Z order to use
-	int zOrderToAdd = params.zOrder == -1 ? m_Entities.size() : params.zOrder;
-	if (zOrderToAdd > m_Entities.size()) {
-		zOrderToAdd = m_Entities.size();
-		if (pMessage) {
-			*pMessage = "Warning: Specifying a Z order of " + std::to_string(params.zOrder) +
-				" which is greater than the number of entities (" + std::to_string(m_Entities.size()) +
-				"), assigning a Z order of " + std::to_string(zOrderToAdd) + " instead";
-		}
 	}
 
 	// Go to insersion spot
 	auto iter = m_Entities.begin();
-	for (int i = 0; i < zOrderToAdd; ++i) {
+	for (int i = 0; i < params.zOrder; ++i) {
 		++iter;
 	}
-
-	params.zOrder = zOrderToAdd;
 
 	iter = m_Entities.insert(iter, new Entity(m_NextEntityId, params));
 
@@ -180,7 +278,7 @@ bool EntityList::addEntity(EntityData params, uint64_t* pNewEntityId, int* pNewZ
 		*pNewEntityId = m_NextEntityId;
 	}
 	if (pNewZOrder) {
-		*pNewZOrder = zOrderToAdd;
+		*pNewZOrder = params.zOrder;
 	}
 
 	++m_NextEntityId;
@@ -198,7 +296,7 @@ bool EntityList::removeEntity(uint64_t entityId, std::string* pMessage)
 		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
 
 		if (pMessage) {
-			*pMessage = "No entity with a given ID of " + std::to_string(entityId) + " found";
+			*pMessage += "No entity with a given ID of " + std::to_string(entityId) + " found";
 		}
 		return false;
 	}
@@ -218,6 +316,7 @@ bool EntityList::removeEntity(uint64_t entityId, std::string* pMessage)
 
 	return true;
 }
+
 void EntityList::dummyUpdateShapes(float deltaTime) {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
@@ -226,6 +325,7 @@ void EntityList::dummyUpdateShapes(float deltaTime) {
 		pCurrEntity->m_Transform.orientation += sf::radians(deltaTime).asDegrees();
 	}
 }
+
 void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
 
 	std::shared_lock<std::shared_mutex> lock(m_EntitiesMutex);
@@ -270,10 +370,12 @@ EntityGeometry* EntityList::getGeometryForEntity(Entity::Type type)
 
 void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 {
-	// tentatively set success string
-	std::string message = "Entity added successfully";
+	std::string message = "";
 
 	pReply->success = addEntity(params, &pReply->entityId, &pReply->zOrder, &message);
+	if (message == "") {
+		message = "Entity added successfully";
+	}
 	strcpy(pReply->message, message.c_str());
 }
 
@@ -281,8 +383,37 @@ void EntityList::API_getEntityData(EntityDataReply* pReply, uint64_t entityId)
 {
 	std::shared_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
+	std::string message = "";
+
+	auto mapIter = m_EntityIterFromId.find(entityId);
+
+	// If not found in map
+	if (mapIter == m_EntityIterFromId.end()) {
+		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
+
+		message += "No entity with a given ID of " + std::to_string(entityId) + " found";
+		pReply->success = false;
+	}
+	else {
+		IterT entityIter = mapIter->second;
+		Entity* pEntity = *entityIter;
+		pReply->entityData = pEntity->getData();
+		pReply->success = true;
+	}
+
+	if (message == "") {
+		message = "Entity with id " + std::to_string(entityId) + " found";
+	}
+
+	strcpy(pReply->message, message.c_str());
+}
+
+void EntityList::API_modifyEntity(PlainReply* pReply, uint64_t entityId, EntityData params)
+{
+	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
+
 	// tentatively set success string
-	std::string message = "Entity with id " + std::to_string(entityId) + " found";
+	std::string message = "";
 
 	auto mapIter = m_EntityIterFromId.find(entityId);
 
@@ -296,20 +427,51 @@ void EntityList::API_getEntityData(EntityDataReply* pReply, uint64_t entityId)
 	else {
 		IterT entityIter = mapIter->second;
 		Entity* pEntity = *entityIter;
-		pReply->entityData = pEntity->getData();
-		pReply->success = true;
+
+		if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_Z_ORDER && params.zOrder != pEntity->m_zOrder) {
+
+			validateZOrder(params.zOrder, m_Entities.size() - 1 /*size after removal*/, &message, true);
+
+			m_Entities.erase(entityIter);
+
+			// Go to insersion spot
+			entityIter = m_Entities.begin();
+			for (int i = 0; i < params.zOrder; ++i) {
+				++entityIter;
+			}
+
+			entityIter = m_Entities.insert(entityIter, pEntity);
+
+			// Brute force way to align all entity Z-orders to their indices
+			realignAllEntityZOrders();
+
+			// Update bookkeeping
+			m_EntityIterFromId[entityId] = entityIter;
+		}
+
+		pReply->success = pEntity->modify(params, &message);
 	}
+
+	if (message == "") {
+		message = "Entity with id " + std::to_string(entityId) + " modified without any messages";
+	}
+
 	strcpy(pReply->message, message.c_str());
 }
 void EntityList::API_removeEntity(PlainReply* pReply, uint64_t id)
 {
 	// tentatively set success string
-	std::string message = "Entity with id " + std::to_string(id) + " removed successfully";
+	std::string message = "";
 
 	pReply->success = removeEntity(id, &message);
+
+	if (message == "") {
+		message = "Entity with id " + std::to_string(id) + " removed successfully";
+	}
 	strcpy(pReply->message, message.c_str());
 }
 
+// Private
 void EntityList::realignAllEntityZOrders()
 {
 	int zOrder = 0;

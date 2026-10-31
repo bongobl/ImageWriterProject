@@ -47,6 +47,19 @@ struct TriangleData {
     Vec2 point3;
 };
 
+enum EntityDataModifiable {
+    ENTITY_DATA_MODIFIABLE_TYPE = 1 << 0x0,
+    ENTITY_DATA_MODIFIABLE_POSITION = 1 << 0x1,
+    ENTITY_DATA_MODIFIABLE_ORIENTATION = 1 << 0x2,
+    ENTITY_DATA_MODIFIABLE_SCALE = 1 << 0x3,
+    ENTITY_DATA_MODIFIABLE_COLOR = 1 << 0x4,
+    ENTITY_DATA_MODIFIABLE_Z_ORDER = 1 << 0x5,
+    ENTITY_DATA_MODIFIABLE_HALF_EXTENTS = 1 << 0x6,
+    ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_1 = 1 << 0x7,
+    ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_2 = 1 << 0x8,
+    ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_3 = 1 << 0x9,
+};
+
 struct EntityData {
     int entityType = ENTITY_TYPE_NONE;
     Transform transform;
@@ -58,6 +71,8 @@ struct EntityData {
         RectangleData rectangle;
         TriangleData triangle;
     };
+
+    uint32_t fieldsToModify = 0x0;
 };
 
 // Replies

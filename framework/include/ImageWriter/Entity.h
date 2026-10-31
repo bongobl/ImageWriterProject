@@ -9,13 +9,13 @@
 class Camera;
 class EntityGeometry;
 
-// Note: Should mirror API level EntityType
+// Note: Must mirror API level EntityType
 enum class Core_Internal_EntityType
 {
-	None = 0,
-	Ellipse = 1,
-	Rectangle = 2,
-	Triangle = 3
+	None = ENTITY_TYPE_NONE,
+	Ellipse = ENTITY_TYPE_ELLIPSE,
+	Rectangle = ENTITY_TYPE_RECTANGLE,
+	Triangle = ENTITY_TYPE_TRIANGLE
 };
 struct Entity {
 
@@ -27,6 +27,8 @@ struct Entity {
 	uint64_t m_Id;
 	int m_zOrder;
 
+	mutable std::shared_mutex m_Mutex;
+
 	union {
 		EllipseData ellipse;
 		RectangleData rectangle;
@@ -35,6 +37,7 @@ struct Entity {
 	
 	Entity(uint64_t id, EntityData entityData);
 	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const;
+	bool modify(EntityData params, std::string* pMessage = nullptr);
 	EntityData getData();
 };
 
@@ -80,6 +83,7 @@ public:
 
 	void API_addEntity(AddEntityReply* pReply, EntityData params);
 	void API_getEntityData(EntityDataReply* pReply, uint64_t entityId);
+	void API_modifyEntity(PlainReply* pReply, uint64_t entityId, EntityData params);
 	void API_removeEntity(PlainReply* pReply, uint64_t entityId);
 
 private:

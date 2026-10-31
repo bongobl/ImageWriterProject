@@ -97,9 +97,13 @@ bool Camera::validateScale(std::string* pMessage)
 void Camera::API_setTransform(PlainReply* pReply, Transform transform)
 {
 	// tentatively set success string
-	std::string message = "Camera transform set successfully";
+	std::string message;
 
 	pReply->success = setTransform(transform, &message);
+
+	if (message == "") {
+		message = "Camera transform set successfully";
+	}
 	strcpy(pReply->message, message.c_str());
 }
 

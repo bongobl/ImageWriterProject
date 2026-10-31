@@ -115,6 +115,34 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	}
 
 	system("pause");
+
+	if (!ImageWriter_Scene_ModifyEntity(
+		instance, 
+		&plainReply, 57, 
+		{
+			.entityType = ENTITY_TYPE_ELLIPSE,
+			.transform = {
+				.position = {.x = 3, .y = 2}
+			},
+			.color = { .red = 1, .green = 0, .blue = 0, .alpha = 1 },
+			.zOrder = 47,
+			.ellipse = {
+				.halfExtents = { 1, 0.7f }
+			},
+			.fieldsToModify = ENTITY_DATA_MODIFIABLE_TYPE | ENTITY_DATA_MODIFIABLE_COLOR | ENTITY_DATA_MODIFIABLE_POSITION | ENTITY_DATA_MODIFIABLE_Z_ORDER,
+		})
+	)
+	{
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+	}
+
+	system("pause");
+	if (!ImageWriter_Scene_RemoveEntity(instance, &plainReply, 57))
+	{
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+	}
+
+	system("pause");
 	if (!ImageWriter_Scene_RemoveAllEntities(instance, &plainReply))
 	{
 		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;

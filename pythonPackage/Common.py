@@ -202,6 +202,18 @@ ShapeDataUnionMCPPayload = Annotated[
     Field(discriminator="kind"),
 ]
 
+class EntityDataModifiable(IntEnum):
+    TYPE = 1 << 0x0
+    POSITION = 1 << 0x1
+    ORIENTATION = 1 << 0x2
+    SCALE = 1 << 0x3
+    COLOR = 1 << 0x4
+    Z_ORDER = 1 << 0x5
+    HALF_EXTENTS = 1 << 0x6
+    TRIANGLE_POINT_1 = 1 << 0x7
+    TRIANGLE_POINT_2 = 1 << 0x8
+    TRIANGLE_POINT_3 = 1 << 0x9
+
 class ShapeDataUnion(ctypes.Union):
     _fields_ = [
         ("ellipse", EllipseData),
@@ -216,10 +228,11 @@ class EntityData(ctypes.Structure):
         ("color", Color),
         ("zOrder", ctypes.c_int),
         ("shapeDataUnion", ShapeDataUnion),
+        ("fieldsToModify", ctypes.c_uint32),
     ]
     _anonymous_ = ("shapeDataUnion",)
 
-    def __init__(self, entityType = EntityType.NONE, transform = Transform(), color = Color(), zOrder = -1, ellipse = None, rectangle = None, triangle = None):
+    def __init__(self, entityType = EntityType.NONE, transform = Transform(), color = Color(), zOrder = -1, ellipse = None, rectangle = None, triangle = None, fieldsToModify = 0x0):
         
         self.entityType = entityType
         self.transform = transform
@@ -233,6 +246,8 @@ class EntityData(ctypes.Structure):
                 self.rectangle = rectangle
             case EntityType.TRIANGLE:   
                 self.triangle = triangle
+
+        self.fieldsToModify = fieldsToModify
 
 
     def __str__(self):
@@ -250,7 +265,7 @@ class EntityData(ctypes.Structure):
             case _:
                 typeStr = "Unrecognized type value"
 
-        return f"(EntityData: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + ")"
+        return f"(EntityData: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + f"), fieldsToModify = {self.fieldsToModify:x}"
 
     def fromMCPPayload(self, transform, color, zOrder, shapeDataUnion):
         self.transform.fromMCPPayload(transform)

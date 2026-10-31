@@ -105,11 +105,19 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         FreeLibrary(hDll);
         return false;
     }
+
+    PfnCore_Scene_ModifyEntity pfnCore_Scene_ModifyEntity = (PfnCore_Scene_ModifyEntity)GetProcAddress(hDll, "scene_modifyEntity");
+
+    if (pfnCore_Scene_AddEntity == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_modifyEntity could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
     
     PfnCore_Scene_GetEntityData pfnCore_Scene_GetEntityData = (PfnCore_Scene_GetEntityData)GetProcAddress(hDll, "scene_getEntityData");
 
-    if (pfnCore_Scene_AddEntity == NULL) {
-        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_addEntity could not load\n");
+    if (pfnCore_Scene_GetEntityData == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_getEntityData could not load\n");
         FreeLibrary(hDll);
         return false;
     }
@@ -122,7 +130,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         return false;
     }
 
-    PfnCore_Scene_removeAllEntities pfnCore_Scene_removeAllEntities = (PfnCore_Scene_removeAllEntities)GetProcAddress(hDll, "scene_removeAllEntities");
+    PfnCore_Scene_RemoveAllEntities pfnCore_Scene_removeAllEntities = (PfnCore_Scene_RemoveAllEntities)GetProcAddress(hDll, "scene_removeAllEntities");
 
     if (pfnCore_Scene_removeAllEntities == NULL) {
         fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_removeAllEntities could not load\n");
@@ -148,9 +156,10 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         .pfnCore_Scene_GetCameraTransform = pfnCore_Scene_GetCameraTransform,
         .pfnCore_Scene_UpdateScreenSpaceCameraControlRig = pfnCore_Scene_UpdateScreenSpaceCameraControlRig,
         .pfnCore_Scene_AddEntity = pfnCore_Scene_AddEntity,
+        .pfnCore_Scene_ModifyEntity = pfnCore_Scene_ModifyEntity,
         .pfnCore_Scene_GetEntityData = pfnCore_Scene_GetEntityData,
         .pfnCore_Scene_RemoveEntity = pfnCore_Scene_RemoveEntity,
-        .pfnCore_Scene_removeAllEntities = pfnCore_Scene_removeAllEntities,
+        .pfnCore_Scene_RemoveAllEntities = pfnCore_Scene_removeAllEntities,
     };
 
     // initialize core
@@ -231,7 +240,6 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_UpdateRenderConfig(HImag
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-
     return pInstanceData->pfnCore_Scene_UpdateRenderConfig(*pInstanceData, renderConfig);
 }
 
@@ -285,6 +293,19 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterIn
     return pInstanceData->pfnCore_Scene_AddEntity(*pInstanceData, pReply, params);
 }
 
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_ModifyEntity(HImageWriterInstance instance, PlainReply* pReply, uint64_t entityId, EntityData params)
+{
+    if (!instance.pData) {
+        fprintf(stderr, "ImageWriter_Scene_ModifyEntity: instance.pData was null\n");
+        pReply->success = false;
+        strcpy(pReply->message, "App did not call ImageWriter_Scene_ModifyEntity() from its underlying framework correctly");
+        return false;
+    }
+
+    InstanceData* pInstanceData = (InstanceData*)instance.pData;
+    return pInstanceData->pfnCore_Scene_ModifyEntity(*pInstanceData, pReply, entityId, params);
+}
+
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetEntityData(HImageWriterInstance instance, EntityDataReply* pReply, uint64_t entityId)
 {
     if (!instance.pData) {
@@ -319,5 +340,5 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveAllEntities(HImage
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    return pInstanceData->pfnCore_Scene_removeAllEntities(*pInstanceData, pReply);
+    return pInstanceData->pfnCore_Scene_RemoveAllEntities(*pInstanceData, pReply);
 }

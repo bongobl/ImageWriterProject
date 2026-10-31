@@ -216,6 +216,30 @@ extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData,
 	return pReply->success;
 }
 
+extern "C" __declspec(dllexport) bool scene_modifyEntity(InstanceData instanceData, PlainReply* pReply, uint64_t entityId, EntityData params)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_addEntity(): instanceData.pCoreData was null" << std::endl;
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework on scene_addEntity()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
+
+	if (!pCoreData->m_pScene) {
+		std::cerr << "Core entry scene_addEntity(): pCoreData->m_pScene was null" << std::endl;
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework: calling scene_addEntity() on non-existent scene");
+		return false;
+	}
+
+	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
+	pEntityList->API_modifyEntity(pReply, entityId, params);
+	return pReply->success;
+}
 extern "C" __declspec(dllexport) bool scene_getEntityData(InstanceData instanceData, EntityDataReply* pReply, uint64_t entityId)
 {
 	if (!instanceData.pCoreData) {
