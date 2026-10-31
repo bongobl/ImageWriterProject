@@ -27,40 +27,15 @@ struct Entity {
 	uint64_t m_Id;
 	int m_zOrder;
 
-	Entity(Type type, uint64_t id, int zOrder, const Transform& transform, Color& color);
-	virtual void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const {};
-	virtual EntityData getData() const = 0;
-};
-
-struct EllipseEntity : Entity {
-
-	EllipseEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 halfExtents);
-
-	Vec2 m_HalfExtents;
-
-	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
-	EntityData getData() const override;
-};
-
-struct RectangleEntity : Entity {
-
-	RectangleEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 halfExtents);
-
-	Vec2 m_HalfExtents;
-
-	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
-	EntityData getData() const override;
-};
-
-struct TriangleEntity : Entity {
-	Vec2 m_Point1;
-	Vec2 m_Point2;
-	Vec2 m_Point3;
-
-	TriangleEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3);
-
-	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const override;
-	EntityData getData() const override;
+	union {
+		EllipseData ellipse;
+		RectangleData rectangle;
+		TriangleData triangle;
+	};
+	
+	Entity(uint64_t id, EntityData entityData);
+	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const;
+	EntityData getData();
 };
 
 struct EntityGeometry : public sf::VertexArray {

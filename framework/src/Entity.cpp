@@ -4,90 +4,104 @@
 #include <iostream>
 #include <cstring>
 
-Entity::Entity(Type type, uint64_t id, int zOrder, const Transform& transform, Color& color) :
-	m_Type(type),
+Entity::Entity(uint64_t id, EntityData entityData):
+	m_Type((Type)entityData.entityType),
+	m_Transform(entityData.transform),
+	m_Color(entityData.color),
 	m_Id(id),
-	m_Transform(transform),
-	m_Color(color),
-	m_zOrder(zOrder)
+	m_zOrder(entityData.zOrder)
 {
+	switch (m_Type) {
+		case Type::None:
+			std::cerr << "Entity(): Entity type was 'None' " << std::endl;
+			exit(1);
+		case Type::Ellipse:
+			ellipse.halfExtents = entityData.ellipse.halfExtents;
+			break;
+		case Type::Rectangle:
+			rectangle.halfExtents = entityData.rectangle.halfExtents;
+			break;
+		case Type::Triangle:
+			triangle.point1 = entityData.triangle.point1;
+			triangle.point2 = entityData.triangle.point2;
+			triangle.point3 = entityData.triangle.point3;
+			break;
+		default:
+			std::cerr << "Entity(): Unknown type enum value of " << entityData.entityType << std::endl;
+			exit(1);
+	}
 }
 
-EllipseEntity::EllipseEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 halfExtents) :
-	Entity(Entity::Type::Ellipse, id, zOrder, transform, color), m_HalfExtents(halfExtents)
+void Entity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const
 {
+	switch (m_Type) {
+		case Type::None:
+			std::cerr << "Entity::applyCustomDrawingProperties(): Entity type was 'None' " << std::endl;
+			exit(1);
+		case Type::Ellipse:
+			vertexShader.setUniform("scaleOffset", sf::fromCore(ellipse.halfExtents));
+			break;
+		case Type::Rectangle:
+			vertexShader.setUniform("scaleOffset", sf::fromCore(rectangle.halfExtents));
+			break;
+		case Type::Triangle: {
+			std::unique_lock<std::shared_mutex> lock(geometry.m_Mutex);
+			geometry[0].position = sf::fromCore(triangle.point1);
+			geometry[1].position = sf::fromCore(triangle.point2);
+			geometry[2].position = sf::fromCore(triangle.point3);
 
-}
-
-RectangleEntity::RectangleEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 halfExtents) :
-	Entity(Entity::Type::Rectangle, id, zOrder, transform, color), m_HalfExtents(halfExtents)
-{
-}
-
-TriangleEntity::TriangleEntity(uint64_t id, int zOrder, const Transform& transform, Color& color, Vec2 point1, Vec2 point2, Vec2 point3) :
-	Entity(Entity::Type::Triangle, id, zOrder, transform, color), m_Point1(point1), m_Point2(point2), m_Point3(point3)
-{
-}
-
-void EllipseEntity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const
-{
-	vertexShader.setUniform("scaleOffset", sf::fromCore(m_HalfExtents));
-}
-
-void RectangleEntity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const
-{
-	vertexShader.setUniform("scaleOffset", sf::fromCore(m_HalfExtents));
-}
-
-void TriangleEntity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const
-{
-	std::unique_lock<std::shared_mutex> lock(geometry.m_Mutex);
-	geometry[0].position = sf::fromCore(m_Point1);
-	geometry[1].position = sf::fromCore(m_Point2);
-	geometry[2].position = sf::fromCore(m_Point3);
-
-	vertexShader.setUniform("scaleOffset", sf::Glsl::Vec2(1, 1));
-}
-
-EntityData EllipseEntity::getData() const
-{
-	return {
-		.entityType = ENTITY_TYPE_ELLIPSE,
-		.transform = m_Transform,
-		.color = m_Color,
-		.zOrder = m_zOrder,
-		.ellipse = {
-			.halfExtents = m_HalfExtents
+			vertexShader.setUniform("scaleOffset", sf::Glsl::Vec2(1, 1));
+			break;
 		}
-	};
+		default:
+			std::cerr << "Entity::applyCustomDrawingProperties(): Unknown type enum value of " << (unsigned int)m_Type << std::endl;
+			exit(1);
+	}
 }
-
-EntityData RectangleEntity::getData() const
+EntityData Entity::getData()
 {
-	return {
-		.entityType = ENTITY_TYPE_RECTANGLE,
-		.transform = m_Transform,
-		.color = m_Color,
-		.zOrder = m_zOrder,
-		.rectangle = {
-			.halfExtents = m_HalfExtents
-		}
-	};
-}
+	switch (m_Type) {
+		case Type::None:
+			std::cerr << "Entity::getData(): Entity type was 'None' " << std::endl;
+			exit(1);
+		case Type::Ellipse:
+			return {
+				.entityType = ENTITY_TYPE_ELLIPSE,
+				.transform = m_Transform,
+				.color = m_Color,
+				.zOrder = m_zOrder,
+				.ellipse = {
+					.halfExtents = ellipse.halfExtents
+				}
+			};
 
-EntityData TriangleEntity::getData() const
-{
-	return {
-		.entityType = ENTITY_TYPE_TRIANGLE,
-		.transform = m_Transform,
-		.color = m_Color,
-		.zOrder = m_zOrder,
-		.triangle = {
-			.point1 = m_Point1,
-			.point2 = m_Point2,
-			.point3 = m_Point3,
+		case Type::Rectangle:
+			return {
+				.entityType = ENTITY_TYPE_RECTANGLE,
+				.transform = m_Transform,
+				.color = m_Color,
+				.zOrder = m_zOrder,
+				.rectangle = {
+					.halfExtents = rectangle.halfExtents
+				}
+			};
+		case Type::Triangle: {
+			return {
+				.entityType = ENTITY_TYPE_TRIANGLE,
+				.transform = m_Transform,
+				.color = m_Color,
+				.zOrder = m_zOrder,
+				.triangle = {
+					.point1 = triangle.point1,
+					.point2 = triangle.point2,
+					.point3 = triangle.point3,
+				}
+			};
 		}
-	};
+		default:
+			std::cerr << "Entity::getData(): Unknown type enum value of " << (unsigned int)m_Type << std::endl;
+			exit(1);
+	}
 }
 
 EntityList::EntityList() :
@@ -152,16 +166,9 @@ bool EntityList::addEntity(EntityData params, uint64_t* pNewEntityId, int* pNewZ
 		++iter;
 	}
 
-	// Perform insertion
-	if (params.entityType == ENTITY_TYPE_ELLIPSE) {
-		iter = m_Entities.insert(iter, new EllipseEntity(m_NextEntityId, zOrderToAdd, params.transform, params.color, params.ellipse.halfExtents));
-	}
-	if (params.entityType == ENTITY_TYPE_RECTANGLE) {
-		iter = m_Entities.insert(iter, new RectangleEntity(m_NextEntityId, zOrderToAdd, params.transform, params.color, params.rectangle.halfExtents));
-	}
-	if (params.entityType == ENTITY_TYPE_TRIANGLE) {
-		iter = m_Entities.insert(iter, new TriangleEntity(m_NextEntityId, zOrderToAdd, params.transform, params.color, params.triangle.point1, params.triangle.point2, params.triangle.point3));
-	}
+	params.zOrder = zOrderToAdd;
+
+	iter = m_Entities.insert(iter, new Entity(m_NextEntityId, params));
 
 	// Brute force way to align all entity Z-orders to their indices
 	realignAllEntityZOrders();
