@@ -293,7 +293,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_AddEntity(HImageWriterIn
     return pInstanceData->pfnCore_Scene_AddEntity(*pInstanceData, pReply, params);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_ModifyEntity(HImageWriterInstance instance, PlainReply* pReply, uint64_t entityId, EntityData params)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_ModifyEntity(HImageWriterInstance instance, PlainReply* pReply, EntityData params)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_ModifyEntity: instance.pData was null\n");
@@ -303,7 +303,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_ModifyEntity(HImageWrite
     }
 
     InstanceData* pInstanceData = (InstanceData*)instance.pData;
-    return pInstanceData->pfnCore_Scene_ModifyEntity(*pInstanceData, pReply, entityId, params);
+    return pInstanceData->pfnCore_Scene_ModifyEntity(*pInstanceData, pReply, params);
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetEntityData(HImageWriterInstance instance, EntityDataReply* pReply, uint64_t entityId)

@@ -216,7 +216,7 @@ extern "C" __declspec(dllexport) bool scene_addEntity(InstanceData instanceData,
 	return pReply->success;
 }
 
-extern "C" __declspec(dllexport) bool scene_modifyEntity(InstanceData instanceData, PlainReply* pReply, uint64_t entityId, EntityData params)
+extern "C" __declspec(dllexport) bool scene_modifyEntity(InstanceData instanceData, PlainReply* pReply, EntityData params)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_addEntity(): instanceData.pCoreData was null" << std::endl;
@@ -237,7 +237,7 @@ extern "C" __declspec(dllexport) bool scene_modifyEntity(InstanceData instanceDa
 	}
 
 	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
-	pEntityList->API_modifyEntity(pReply, entityId, params);
+	pEntityList->API_modifyEntity(pReply, params);
 	return pReply->success;
 }
 extern "C" __declspec(dllexport) bool scene_getEntityData(InstanceData instanceData, EntityDataReply* pReply, uint64_t entityId)

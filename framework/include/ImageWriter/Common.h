@@ -65,13 +65,14 @@ struct EntityData {
     Transform transform;
     Color color;
     int zOrder = -1;
-
+    
     union {
         EllipseData ellipse;
         RectangleData rectangle;
         TriangleData triangle;
     };
 
+    uint64_t entityIdToModify = 0;
     uint32_t fieldsToModify = 0x0;
 };
 

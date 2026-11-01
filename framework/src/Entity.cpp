@@ -5,20 +5,17 @@
 #include <cstring>
 
 
-static bool validateZOrder(int& zOrder, int numEntities, std::string* pMessage, bool warnOnLessThanNegativeOne)
+static bool validateZOrder(int& zOrder, int numEntities, std::string* pMessage)
 {
 	// Error check on specified Z order
 	if (zOrder < -1) {
 
 		if (pMessage) {
-			std::string prefix = warnOnLessThanNegativeOne ? "Warning" : "Error";
-			*pMessage += prefix + ": Invalid Z order specified: " + std::to_string(zOrder) +
-				", must specify a value between -1 and the current number of entities (" + std::to_string(numEntities) + ")";
+			*pMessage += "Error : Invalid Z order specified: " + std::to_string(zOrder) +
+				", must specify a value between -1 and the highest available zOrder (" + std::to_string(numEntities) + ")";
 
 		}
-		if (!warnOnLessThanNegativeOne) {
-			return false;
-		}
+		return false;
 	}
 
 	// Find true Z order to use
@@ -27,7 +24,7 @@ static bool validateZOrder(int& zOrder, int numEntities, std::string* pMessage, 
 		correctZOrder = numEntities;
 		if (pMessage) {
 			*pMessage += "Warning: Specifying a Z order of " + std::to_string(zOrder) +
-				" which is greater than the number of entities (" + std::to_string(numEntities) +
+				" which is greater than the highest available zOrder (" + std::to_string(numEntities) +
 				"), assigning a Z order of " + std::to_string(correctZOrder) + " instead";
 		}
 	}
@@ -256,7 +253,7 @@ bool EntityList::addEntity(EntityData params, uint64_t* pNewEntityId, int* pNewZ
 
 	// Note: we can simply pass in pMessage since we're not appending to any 
 	// existing locally declared string
-	if (!validateZOrder(params.zOrder, m_Entities.size(), pMessage, false)) {
+	if (!validateZOrder(params.zOrder, m_Entities.size(), pMessage)) {
 		return false;
 	}
 
@@ -408,12 +405,14 @@ void EntityList::API_getEntityData(EntityDataReply* pReply, uint64_t entityId)
 	strcpy(pReply->message, message.c_str());
 }
 
-void EntityList::API_modifyEntity(PlainReply* pReply, uint64_t entityId, EntityData params)
+void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 {
 	std::unique_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
 	// tentatively set success string
 	std::string message = "";
+
+	uint64_t entityId = params.entityIdToModify;
 
 	auto mapIter = m_EntityIterFromId.find(entityId);
 
@@ -428,9 +427,15 @@ void EntityList::API_modifyEntity(PlainReply* pReply, uint64_t entityId, EntityD
 		IterT entityIter = mapIter->second;
 		Entity* pEntity = *entityIter;
 
+		// Handle Z order first
 		if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_Z_ORDER && params.zOrder != pEntity->m_zOrder) {
 
-			validateZOrder(params.zOrder, m_Entities.size() - 1 /*size after removal*/, &message, true);
+			pReply->success = validateZOrder(params.zOrder, m_Entities.size() - 1 /*size after removal*/, &message);
+			if (!pReply->success)
+			{
+				strcpy(pReply->message, message.c_str());
+				return;
+			}
 
 			m_Entities.erase(entityIter);
 
@@ -447,15 +452,21 @@ void EntityList::API_modifyEntity(PlainReply* pReply, uint64_t entityId, EntityD
 
 			// Update bookkeeping
 			m_EntityIterFromId[entityId] = entityIter;
+
 		}
 
+		// Handle rest of params
 		pReply->success = pEntity->modify(params, &message);
+		if (!pReply->success)
+		{
+			strcpy(pReply->message, message.c_str());
+			return;
+		}
 	}
 
 	if (message == "") {
-		message = "Entity with id " + std::to_string(entityId) + " modified without any messages";
+		message = "Entity " + std::to_string(entityId) + " modified successfully";
 	}
-
 	strcpy(pReply->message, message.c_str());
 }
 void EntityList::API_removeEntity(PlainReply* pReply, uint64_t id)

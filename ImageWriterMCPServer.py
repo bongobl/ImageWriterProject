@@ -12,7 +12,7 @@ import pythonPackage as iw
 import logging
 import ctypes
 from ctypes import *
-from typing import Annotated
+from typing import Annotated, Literal
 from pydantic import Field
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -118,10 +118,10 @@ def setCameraTransform(
 
 @mcp.tool()
 def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
-    """returns the rectangle representing the camera's world transform. Note that the "scale" parameter denotes the
+    """
+    returns the rectangle representing the camera's world transform. Note that the "scale" parameter denotes the
     half Y extent of the camera in world units where the half X extent can be obtained from multiplying that by the 
     returned widthFromHeight value
-  
     """
 
     return sendCommandToApp(iw.Command.GetCameraTransform, None, iw.TransformReply).toCameraMCPPayload()
@@ -138,9 +138,38 @@ def addEntity(
     Places a new entity within the world at specified transform and color
     """
     entityParams = iw.EntityData()
-    entityParams.fromMCPPayload(transform, color, zOrder, shape)
+    entityParams.fromAddEntityMCPPayload(transform, color, zOrder, shape)
     
     return sendCommandToApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
+
+@mcp.tool()
+def modifyEntity(
+    entityId: Annotated[int, Field(description = "The id of the entity to modify")],
+    shapeType: Annotated[Literal["ellipse", "rectangle", "triangle"], Field(description = "an optional new shape to set for the entity")] = None,
+    position: Annotated[iw.Vec2MCPPayload, Field(description = "an optional new position of the transform to set for the entity")] = None,
+    orientation: Annotated[float, Field(description = "an optional new orientation of the transform to set for the entity")] = None,
+    scale: Annotated[float, Field(description = "an optional new scale of the transform to set for the entity")] = None,
+    color: Annotated[iw.ColorMCPPayload, Field(description = "an optional new color to set for the entity")] = None,
+    zOrder: Annotated[int, Field(description = f"an optional new zOrder to set for the entity, {iw.Z_ORDER_DOC}")] = None,
+    halfExtents: Annotated[iw.Vec2MCPPayload, Field(description = "optional new half extents to set for an ellipse/rectangle entity")] = None,
+    trianglePoint1: Annotated[iw.Vec2MCPPayload, Field(description = "optional new 'point1' to set for a triangle entity")] = None,
+    trianglePoint2: Annotated[iw.Vec2MCPPayload, Field(description = "optional new 'point2' to set for a triangle entity")] = None,
+    trianglePoint3: Annotated[iw.Vec2MCPPayload, Field(description = "optional new 'point3' to set for a triangle entity")] = None,
+):
+    """
+    Use this function to modify various properties of existing entities given its id. All fields apart from 'entityId' are optional
+    meaning they remain the same if you don't provide values for them. The shape specific parameters {halfExtents, trianglePoint<N>}
+    will only be applied if the existing entity is of that shape, you will receive an error message if not. To change the shape entirely
+    with fresh parameters, use the 'shapeType' parameter, you must then provide its shape specific parameters.
+    """
+
+    entityParams = iw.EntityData()
+    reply = entityParams.fromModifyEntityMCPPayload(entityId, shapeType, position, orientation, scale, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3)
+    if not reply.success:
+        return reply
+
+    return sendCommandToApp(iw.Command.ModifyEntity, entityParams, iw.PlainReply).toMCPPayload()
+    #return iw.PlainReplyMCPPayload(success=True, message=f"{entityParams}")
 
 @mcp.tool()
 def getEntityData(

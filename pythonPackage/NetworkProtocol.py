@@ -13,10 +13,11 @@ class Command(IntEnum):
     SetCameraTransform = 1
     GetCameraTransform = 2
     AddEntity = 3
-    GetEntityData = 4
-    RemoveEntity = 5
-    RemoveAllEntities = 6
-    Disconnecting = 7
+    ModifyEntity = 4
+    GetEntityData = 5
+    RemoveEntity = 6
+    RemoveAllEntities = 7
+    Disconnecting = 8
 
 def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:
 

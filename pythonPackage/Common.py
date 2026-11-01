@@ -228,16 +228,19 @@ class EntityData(ctypes.Structure):
         ("color", Color),
         ("zOrder", ctypes.c_int),
         ("shapeDataUnion", ShapeDataUnion),
+        ("entityIdToModify", ctypes.c_uint64),
         ("fieldsToModify", ctypes.c_uint32),
     ]
     _anonymous_ = ("shapeDataUnion",)
 
-    def __init__(self, entityType = EntityType.NONE, transform = Transform(), color = Color(), zOrder = -1, ellipse = None, rectangle = None, triangle = None, fieldsToModify = 0x0):
+    def __init__(self, entityType = EntityType.NONE, transform = Transform(), color = Color(), zOrder = -1, ellipse = None, rectangle = None, triangle = None, entityIdToModify = 0, fieldsToModify = 0x0):
         
         self.entityType = entityType
         self.transform = transform
         self.color = color
         self.zOrder = zOrder
+        self.entityIdToModify = entityIdToModify
+        self.fieldsToModify = fieldsToModify
 
         match(entityType):
             case EntityType.ELLIPSE:   
@@ -265,9 +268,10 @@ class EntityData(ctypes.Structure):
             case _:
                 typeStr = "Unrecognized type value"
 
-        return f"(EntityData: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + f"), fieldsToModify = {self.fieldsToModify:x}"
+        return f"(EntityData: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + f"), entityIdToModify = {self.entityIdToModify}, fieldsToModify = 0x{self.fieldsToModify:x}"
 
-    def fromMCPPayload(self, transform, color, zOrder, shapeDataUnion):
+    # creation
+    def fromAddEntityMCPPayload(self, transform, color, zOrder, shapeDataUnion):
         self.transform.fromMCPPayload(transform)
         self.color.fromMCPPayload(color)
         self.zOrder = ctypes.c_int(zOrder)
@@ -282,6 +286,82 @@ class EntityData(ctypes.Structure):
             case TriangleDataMCPPayload():
                 self.entityType = EntityType.TRIANGLE
                 self.triangle.fromMCPPayload(shapeDataUnion)
+
+    # modification
+    def fromModifyEntityMCPPayload(self, entityId, shapeType, position, orientation, scale, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3):
+     
+        self.entityIdToModify = ctypes.c_uint64(entityId)
+
+        errorsMessages = []
+
+        if shapeType is not None:
+            self.fieldsToModify |= EntityDataModifiable.TYPE
+            match shapeType:
+                case "ellipse":
+                    if halfExtents is None:
+                        errorsMessages.append("'halfExtents' field must be provided to set entity shape to ellipse")
+                    if trianglePoint1 is not None or trianglePoint2 is not None or trianglePoint3 is not None:
+                        errorsMessages.append("None of the 'trianglePoint<N>' properties should be provided when setting entity shape to ellipse")
+
+                    self.entityType = EntityType.ELLIPSE
+                case "rectangle":
+                    if halfExtents is None:
+                        errorsMessages.append("'halfExtents' field must be provided to set entity shape to rectangle")
+                    if trianglePoint1 is not None or trianglePoint2 is not None or trianglePoint3 is not None:
+                        errorsMessages.append("None of the 'trianglePoint<N>' properties should be provided when setting entity shape to rectangle")
+
+                    self.entityType = EntityType.RECTANGLE
+                case "triangle":
+                    if trianglePoint1 is None or trianglePoint2 is None or trianglePoint3 is None:
+                        errorsMessages.append("All three 'trianglePoint<N>' properties must be provided to set entity shape to triangle")
+                    if halfExtents is not None:
+                        errorsMessages.append("'halfExtents' should not be provided when setting entity shape to triangle")
+
+                    self.entityType = EntityType.TRIANGLE
+
+        if len(errorsMessages) > 0:
+            return PlainReplyMCPPayload(success=False, message="\n".join(errorsMessages))
+
+        if position is not None:
+            self.fieldsToModify |= EntityDataModifiable.POSITION
+            self.transform.position.fromMCPPayload(position)
+
+        if orientation is not None:
+            self.fieldsToModify |= EntityDataModifiable.ORIENTATION
+            self.transform.orientation = ctypes.c_float(orientation)
+
+        if scale is not None:
+            self.fieldsToModify |= EntityDataModifiable.SCALE
+            self.transform.scale = ctypes.c_float(scale)
+
+        if color is not None:
+            self.fieldsToModify |= EntityDataModifiable.COLOR
+            self.color.fromMCPPayload(color)
+
+        if zOrder is not None:
+            self.fieldsToModify |= EntityDataModifiable.Z_ORDER
+            self.zOrder = ctypes.c_int(zOrder)
+
+        if halfExtents is not None:
+            self.fieldsToModify |= EntityDataModifiable.HALF_EXTENTS
+            self.ellipse.halfExtents.fromMCPPayload(halfExtents)
+
+        if trianglePoint1 is not None:
+            self.fieldsToModify |= EntityDataModifiable.TRIANGLE_POINT_1
+            self.triangle.point1.fromMCPPayload(trianglePoint1)
+
+        if trianglePoint2 is not None:
+            self.fieldsToModify |= EntityDataModifiable.TRIANGLE_POINT_2
+            self.triangle.point2.fromMCPPayload(trianglePoint2)
+
+        if trianglePoint3 is not None:
+            self.fieldsToModify |= EntityDataModifiable.TRIANGLE_POINT_3
+            self.triangle.point3.fromMCPPayload(trianglePoint3)
+
+        return PlainReplyMCPPayload(success=True, message="")
+
+         
+            
         
 
 # Replies ====================================================================================

@@ -24,7 +24,7 @@ def runNetworkService():
         # continually come back here to listen for new clients after previous ones disconnect
         while True:
 
-            print(f"Server: listening on {iw.HOST_IP}:{iw.PORT}...")
+            print(f"Server: listening on {iw.HOST_IP}:{iw.PORT}...\n")
 
             # listening state: wait here until a client connects
             if 'connToClient' in globals():
@@ -101,6 +101,22 @@ def runNetworkService():
                             
                             reply = iw.AddEntityReply()
                             frameworkFunctionSucceeded = framework.AddEntity(reply, entityParams)
+
+                        case iw.Command.ModifyEntity:
+
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(iw.EntityData))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+
+                            # deserialize params
+                            entityParams = iw.EntityData.from_buffer_copy(paramsBuffer)
+                            print(f"Modifying entity with id {entityParams.entityIdToModify} From client: {entityParams}")
+
+                            
+                            reply = iw.PlainReply()
+                            frameworkFunctionSucceeded = framework.ModifyEntity(reply, entityParams)
                             
                         case iw.Command.GetEntityData:
                             

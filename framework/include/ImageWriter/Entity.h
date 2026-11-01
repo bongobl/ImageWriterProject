@@ -83,7 +83,7 @@ public:
 
 	void API_addEntity(AddEntityReply* pReply, EntityData params);
 	void API_getEntityData(EntityDataReply* pReply, uint64_t entityId);
-	void API_modifyEntity(PlainReply* pReply, uint64_t entityId, EntityData params);
+	void API_modifyEntity(PlainReply* pReply, EntityData params);
 	void API_removeEntity(PlainReply* pReply, uint64_t entityId);
 
 private:

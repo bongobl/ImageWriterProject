@@ -118,7 +118,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 
 	if (!ImageWriter_Scene_ModifyEntity(
 		instance, 
-		&plainReply, 57, 
+		&plainReply,
 		{
 			.entityType = ENTITY_TYPE_ELLIPSE,
 			.transform = {
@@ -129,6 +129,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 			.ellipse = {
 				.halfExtents = { 1, 0.7f }
 			},
+			.entityIdToModify = 57,
 			.fieldsToModify = ENTITY_DATA_MODIFIABLE_TYPE | ENTITY_DATA_MODIFIABLE_COLOR | ENTITY_DATA_MODIFIABLE_POSITION | ENTITY_DATA_MODIFIABLE_Z_ORDER,
 		})
 	)
