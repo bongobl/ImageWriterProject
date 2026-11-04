@@ -7,8 +7,8 @@ MAX_REPLY_MESSAGE_LENGTH = 512
 
 ######## Vec2 ########
 class Vec2MCPPayload(BaseModel):
-    x: float = Field(..., description="(float), x spatial component")
-    y: float = Field(..., description="(float), y spatial component")
+    x: float = Field(..., description="x spatial component")
+    y: float = Field(..., description="y spatial component")
 
 class Vec2(ctypes.Structure):
     _fields_ = [
@@ -35,9 +35,9 @@ class Vec2(ctypes.Structure):
 
 ######## Transform ########
 class TransformMCPPayload(BaseModel):
-    position: Vec2MCPPayload = Field(..., description="(Vec2MCPPayload), position")
-    orientation: float = Field(..., description="(float), counter clockwise angle orientation in degrees")
-    scale: float = Field(..., description="(float), scale")
+    position: Vec2MCPPayload = Field(..., description="position")
+    orientation: float = Field(..., description="counter clockwise angle orientation in degrees")
+    scale: float = Field(..., description="scale")
 
 class Transform(ctypes.Structure):
 
@@ -67,12 +67,31 @@ class Transform(ctypes.Structure):
         self.orientation = payload.orientation
         self.scale = payload.scale 
 
+TransformApplyModeMCPPayload = Literal["absolute", "offset"]
+
+class TransformApplyModes(IntEnum):
+    POSITION_AS_OFFSET = 1 << 0x0
+    ORIENTATION_AS_OFFSET = 1 << 0x1
+    SCALE_AS_OFFSET = 1 << 0x2
+
+class ModifyPositionModel(BaseModel):
+    value: Vec2MCPPayload = Field(..., description="positional value used for modification")
+    applyMode: TransformApplyModeMCPPayload = Field(..., description="choose 'absolute' to override the current position and choose 'offset' to add to it")
+
+class ModifyOrientationModel(BaseModel):
+    value: float = Field(..., description="orientation value used for modification")
+    applyMode: TransformApplyModeMCPPayload = Field(..., description="choose 'absolute' to override the current orientation and choose 'offset' to add to it")
+
+class ModifyScaleModel(BaseModel):
+    value: float = Field(..., description="scale value used for modification")
+    applyMode: TransformApplyModeMCPPayload = Field(..., description="choose 'absolute' to override the current scale and choose 'offset' to apply this one to the current scale")
+
 ######## Color ########
 class ColorMCPPayload(BaseModel):
-    red: float = Field(..., ge=0.0, le=1.0, description="(float), red channel value")
-    green: float = Field(..., ge=0.0, le=1.0, description="(float), green channel value")
-    blue: float = Field(..., ge=0.0, le=1.0, description="(float), blue channel value")
-    alpha: float = Field(..., ge=0.0, le=1.0, description="(float), alpha channel value")
+    red: float = Field(..., ge=0.0, le=1.0, description="red channel value")
+    green: float = Field(..., ge=0.0, le=1.0, description="green channel value")
+    blue: float = Field(..., ge=0.0, le=1.0, description="blue channel value")
+    alpha: float = Field(..., ge=0.0, le=1.0, description="alpha channel value")
 
 class Color(ctypes.Structure):
 
@@ -106,6 +125,7 @@ class Color(ctypes.Structure):
         self.blue = payload.blue 
         self.alpha = payload.alpha 
 
+######## ScreenSpaceControls ########
 class ScreenSpaceControls(ctypes.Structure):
 
     _fields_ = [
@@ -120,6 +140,10 @@ class ScreenSpaceControls(ctypes.Structure):
         self.moveY = moveY
         self.rotate = rotate
         self.zoom = zoom
+
+######## Entities ########
+
+EntityTypeMCPPayload = Literal["ellipse", "rectangle", "triangle"]
 
 class EntityType(IntEnum):
     NONE = 0
@@ -230,10 +254,23 @@ class EntityData(ctypes.Structure):
         ("shapeDataUnion", ShapeDataUnion),
         ("entityIdToModify", ctypes.c_uint64),
         ("fieldsToModify", ctypes.c_uint32),
+        ("transformFieldApplyModes", ctypes.c_uint8),
     ]
     _anonymous_ = ("shapeDataUnion",)
 
-    def __init__(self, entityType = EntityType.NONE, transform = Transform(), color = Color(), zOrder = -1, ellipse = None, rectangle = None, triangle = None, entityIdToModify = 0, fieldsToModify = 0x0):
+    def __init__(
+        self, 
+        entityType = EntityType.NONE,
+        transform = Transform(),
+        color = Color(),
+        zOrder = -1,
+        ellipse = None,
+        rectangle = None,
+        triangle = None,
+        entityIdToModify = 0,
+        fieldsToModify = 0x0,
+        transformFieldApplyModes = False
+    ):
         
         self.entityType = entityType
         self.transform = transform
@@ -241,6 +278,7 @@ class EntityData(ctypes.Structure):
         self.zOrder = zOrder
         self.entityIdToModify = entityIdToModify
         self.fieldsToModify = fieldsToModify
+        self.transformFieldApplyModes = transformFieldApplyModes
 
         match(entityType):
             case EntityType.ELLIPSE:   
@@ -268,7 +306,7 @@ class EntityData(ctypes.Structure):
             case _:
                 typeStr = "Unrecognized type value"
 
-        return f"(EntityData: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + f"), entityIdToModify = {self.entityIdToModify}, fieldsToModify = 0x{self.fieldsToModify:x}"
+        return f"(EntityData: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + f"), entityIdToModify = {self.entityIdToModify}, fieldsToModify = 0x{self.fieldsToModify:x}, transformFieldApplyModes = 0x{self.transformFieldApplyModes:x}"
 
     # creation
     def fromAddEntityMCPPayload(self, transform, color, zOrder, shapeDataUnion):
@@ -288,7 +326,7 @@ class EntityData(ctypes.Structure):
                 self.triangle.fromMCPPayload(shapeDataUnion)
 
     # modification
-    def fromModifyEntityMCPPayload(self, entityId, shapeType, position, orientation, scale, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3):
+    def fromModifyEntityMCPPayload(self, entityId, shapeType, positionMod, orientationMod, scaleMod, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3):
      
         self.entityIdToModify = ctypes.c_uint64(entityId)
 
@@ -322,17 +360,20 @@ class EntityData(ctypes.Structure):
         if len(errorsMessages) > 0:
             return PlainReplyMCPPayload(success=False, message="\n".join(errorsMessages))
 
-        if position is not None:
+        if positionMod is not None:
             self.fieldsToModify |= EntityDataModifiable.POSITION
-            self.transform.position.fromMCPPayload(position)
+            self.transform.position.fromMCPPayload(positionMod.value)
+            self.transformFieldApplyModes |=  TransformApplyModes.POSITION_AS_OFFSET if (positionMod.applyMode == "offset") else 0x0
 
-        if orientation is not None:
+        if orientationMod is not None:
             self.fieldsToModify |= EntityDataModifiable.ORIENTATION
-            self.transform.orientation = ctypes.c_float(orientation)
+            self.transform.orientation = ctypes.c_float(orientationMod.value)
+            self.transformFieldApplyModes |=  TransformApplyModes.ORIENTATION_AS_OFFSET if (orientationMod.applyMode == "offset") else 0x0
 
-        if scale is not None:
+        if scaleMod is not None:
             self.fieldsToModify |= EntityDataModifiable.SCALE
-            self.transform.scale = ctypes.c_float(scale)
+            self.transform.scale = ctypes.c_float(scaleMod.value)
+            self.transformFieldApplyModes |=  TransformApplyModes.SCALE_AS_OFFSET if (scaleMod.applyMode == "offset") else 0x0
 
         if color is not None:
             self.fieldsToModify |= EntityDataModifiable.COLOR
@@ -472,14 +513,14 @@ class EntityDataReplyMCPPayload(PlainReplyMCPPayload):
     zOrder: int
 
 class EllipseDataReplyMCPPayload(EntityDataReplyMCPPayload):
-    shape: Literal["ellipse"] = "ellipse"
+    shape: TransformApplyModeMCPPayload = "ellipse"
     halfExtents: Vec2MCPPayload
 
 class RectangleDataReplyMCPPayload(EntityDataReplyMCPPayload):
-    shape: Literal["rectangle"] = "rectangle"
+    shape: TransformApplyModeMCPPayload = "rectangle"
     halfExtents: Vec2MCPPayload
 class TriangleDataReplyMCPPayload(EntityDataReplyMCPPayload):
-    shape: Literal["triangle"] = "triangle"
+    shape: TransformApplyModeMCPPayload = "triangle"
     point1: Vec2MCPPayload
     point2: Vec2MCPPayload
     point3: Vec2MCPPayload

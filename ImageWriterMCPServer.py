@@ -143,12 +143,12 @@ def addEntity(
     return sendCommandToApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
 
 @mcp.tool()
-def modifyEntity(
+def modifyEntity4(
     entityId: Annotated[int, Field(description = "The id of the entity to modify")],
-    shapeType: Annotated[Literal["ellipse", "rectangle", "triangle"], Field(description = "an optional new shape to set for the entity")] = None,
-    position: Annotated[iw.Vec2MCPPayload, Field(description = "an optional new position of the transform to set for the entity")] = None,
-    orientation: Annotated[float, Field(description = "an optional new orientation of the transform to set for the entity")] = None,
-    scale: Annotated[float, Field(description = "an optional new scale of the transform to set for the entity")] = None,
+    shapeType: Annotated[iw.EntityTypeMCPPayload, Field(description = "an optional new shape to set for the entity")] = None,
+    position: Annotated[iw.ModifyPositionModel, Field(description = "an optional new position of the transform to set for the entity")] = None,
+    orientation: Annotated[iw.ModifyOrientationModel, Field(description = "an optional new orientation of the transform to set for the entity")] = None,
+    scale: Annotated[iw.ModifyScaleModel, Field(description = "an optional new scale of the transform to set for the entity")] = None,
     color: Annotated[iw.ColorMCPPayload, Field(description = "an optional new color to set for the entity")] = None,
     zOrder: Annotated[int, Field(description = f"an optional new zOrder to set for the entity, {iw.Z_ORDER_DOC}")] = None,
     halfExtents: Annotated[iw.Vec2MCPPayload, Field(description = "optional new half extents to set for an ellipse/rectangle entity")] = None,

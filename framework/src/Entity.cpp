@@ -156,13 +156,16 @@ void Entity::modify(EntityData params)
 		
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_POSITION) {
-		m_Transform.position = params.transform.position;
+		bool asOffset = params.transformFieldApplyModes & TRANSFORM_APPLY_MODE_POSITION_AS_OFFSET;
+		m_Transform.position = asOffset ? (m_Transform.position + params.transform.position) : params.transform.position;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_ORIENTATION) {
-		m_Transform.orientation = params.transform.orientation;
+		bool asOffset = params.transformFieldApplyModes & TRANSFORM_APPLY_MODE_ORIENTATION_AS_OFFSET;
+		m_Transform.orientation = asOffset ? (m_Transform.orientation + params.transform.orientation) : params.transform.orientation;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_SCALE) {
-		m_Transform.scale = params.transform.scale;
+		bool asOffset = params.transformFieldApplyModes & TRANSFORM_APPLY_MODE_SCALE_AS_OFFSET;
+		m_Transform.scale = asOffset ? (m_Transform.scale * params.transform.scale) : params.transform.scale;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_COLOR) {
 		m_Color = params.color;

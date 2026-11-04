@@ -39,6 +39,14 @@ namespace sf {
 	}
 }
 
+inline const Vec2 operator+(const Vec2& a, const Vec2& b)
+{
+	return {
+		.x = a.x + b.x,
+		.y = a.y + b.y
+	};
+}
+
 inline const Vec2 operator*(const Transform& transform, const Vec2& orig)
 {
 	constexpr float deg_to_rad = 0.01745329251f;

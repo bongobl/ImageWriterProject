@@ -14,6 +14,12 @@ struct Transform {
     float scale = 1;
 };
 
+enum TransformApplyModes {
+    TRANSFORM_APPLY_MODE_POSITION_AS_OFFSET = 1 << 0x0,
+    TRANSFORM_APPLY_MODE_ORIENTATION_AS_OFFSET = 1 << 0x1,
+    TRANSFORM_APPLY_MODE_SCALE_AS_OFFSET = 1 << 0x2,
+};
+
 struct Color {
     float red = 0;
     float green = 0;
@@ -74,6 +80,7 @@ struct EntityData {
 
     uint64_t entityIdToModify = 0;
     uint32_t fieldsToModify = 0x0;
+    uint8_t transformFieldApplyModes = 0x0;
 };
 
 // Replies
