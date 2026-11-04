@@ -11,7 +11,7 @@ static bool validateZOrder(int& zOrder, int numEntities, std::string* pMessage)
 	if (zOrder < -1) {
 
 		if (pMessage) {
-			*pMessage += "Error : Invalid Z order specified: " + std::to_string(zOrder) +
+			*pMessage += "Error: Invalid Z order specified: " + std::to_string(zOrder) +
 				", must specify a value between -1 and the highest available zOrder (" + std::to_string(numEntities) + ")";
 
 		}
@@ -86,7 +86,50 @@ void Entity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& 
 	}
 }
 
-bool Entity::modify(EntityData params, std::string* pMessage)
+bool Entity::validateModifyParams(EntityData params, std::string* pMessage) const
+{
+	Type typeToApply = (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TYPE) ? (Type)params.entityType : m_Type;
+
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_HALF_EXTENTS) {
+
+		if (typeToApply != Type::Ellipse && typeToApply != Type::Rectangle) {
+			std::cerr << "Entity::modify(): setting 'halfExtents' on type that is not an ellipse or rectangle" << std::endl;
+			if (pMessage) {
+				*pMessage += "Error: Trying to set 'halfExtents' parameter on a non-ellipse/rectangle entity";
+			}
+			return false;
+		}
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_1) {
+		if (typeToApply != Type::Triangle) {
+			std::cerr << "Entity::modify(): setting 'point1' parameter on a type that is not a triangle" << std::endl;
+			if (pMessage) {
+				*pMessage += "Error: Trying to set 'point1' parameter on a non-triangle entity";
+			}
+			return false;
+		}
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_2) {
+		if (typeToApply != Type::Triangle) {
+			std::cerr << "Entity::modify(): setting 'point2' parameter on a type that is not a triangle" << std::endl;
+			if (pMessage) {
+				*pMessage += "Error: Trying to set 'point2' parameter on a non-triangle entity";
+			}
+			return false;
+		}
+	}
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_3) {
+		if (typeToApply != Type::Triangle) {
+			std::cerr << "Entity::modify(): setting 'point3' parameter on a type that is not a triangle" << std::endl;
+			if (pMessage) {
+				*pMessage += "Error: Trying to set 'point3' parameter on a non-triangle entity, ignoring... ";
+			}
+			return false;
+		}
+	}
+	return true;
+}
+void Entity::modify(EntityData params)
 {
 	std::unique_lock<std::shared_mutex> lock(m_Mutex);
 
@@ -95,7 +138,7 @@ bool Entity::modify(EntityData params, std::string* pMessage)
 		m_Type = (Type)params.entityType;
 			switch (params.entityType) {
 			case ENTITY_TYPE_NONE:
-				std::cerr << "Entity::applyCustomDrawingProperties(): Entity type was 'None' " << std::endl;
+				std::cerr << "Entity::modify(): Entity type was 'None' " << std::endl;
 				exit(1);
 			case ENTITY_TYPE_ELLIPSE:
 				ellipse = params.ellipse;
@@ -105,8 +148,9 @@ bool Entity::modify(EntityData params, std::string* pMessage)
 				break;
 			case ENTITY_TYPE_TRIANGLE:
 				triangle = params.triangle;
+				break;
 			default:
-				std::cerr << "Entity::applyCustomDrawingProperties(): Unknown type enum value of " << (unsigned int)m_Type << std::endl;
+				std::cerr << "Entity::modify(): Unknown type enum value of " << (unsigned int)m_Type << std::endl;
 				exit(1);
 		}
 		
@@ -127,52 +171,17 @@ bool Entity::modify(EntityData params, std::string* pMessage)
 		m_zOrder = params.zOrder;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_HALF_EXTENTS) {
-		
-		if (m_Type != Type::Ellipse && m_Type != Type::Rectangle) {
-			std::cerr << "Entity::modify(): setting 'halfExtents' on type that is not a rectangle" << std::endl;
-			if (pMessage) {
-				*pMessage += "Warning: Trying to set 'halfExtents' parameter on a non-ellipse/rectangle entity, ignoring... ";
-			}
-		}
-		else {
-			ellipse.halfExtents = params.ellipse.halfExtents;
-		}
+		ellipse.halfExtents = params.ellipse.halfExtents;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_1) {
-		if (m_Type != Type::Triangle) {
-			std::cerr << "Entity::modify(): setting 'point1' parameter on a type that is not a triangle" << std::endl;
-			if (pMessage) {
-				*pMessage += "Warning: Trying to set 'point1' parameter on a non-triangle entity, ignoring... ";
-			}
-		}
-		else {
-			triangle.point1 = params.triangle.point1;
-		}
+		triangle.point1 = params.triangle.point1;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_2) {
-		if (m_Type != Type::Triangle) {
-			std::cerr << "Entity::modify(): setting 'point2' parameter on a type that is not a triangle" << std::endl;
-			if (pMessage) {
-				*pMessage += "Warning: Trying to set 'point2' parameter on a non-triangle entity, ignoring... ";
-			}
-		}
-		else {
-			triangle.point2 = params.triangle.point2;
-		}
+		triangle.point2 = params.triangle.point2;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TRIANGLE_POINT_3) {
-		if (m_Type != Type::Triangle) {
-			std::cerr << "Entity::modify(): setting 'point3' parameter on a type that is not a triangle" << std::endl;
-			if (pMessage) {
-				*pMessage += "Warning: Trying to set 'point3' parameter on a non-triangle entity, ignoring... ";
-			}
-		}
-		else {
-			triangle.point3 = params.triangle.point3;
-		}
+		triangle.point3 = params.triangle.point3;
 	}
-
-	return true;
 }
 
 EntityData Entity::getData()
@@ -421,48 +430,51 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
 
 		message = "No entity with a given ID of " + std::to_string(entityId) + " found";
+		strcpy(pReply->message, message.c_str());
 		pReply->success = false;
+		return;
 	}
-	else {
-		IterT entityIter = mapIter->second;
-		Entity* pEntity = *entityIter;
+	
+	IterT entityIter = mapIter->second;
+	Entity* pEntity = *entityIter;
 
-		// Handle Z order first
-		if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_Z_ORDER && params.zOrder != pEntity->m_zOrder) {
+	// Validate entity modify params
+	pReply->success = pEntity->validateModifyParams(params, &message);
+	if (!pReply->success)
+	{
+		strcpy(pReply->message, message.c_str());
+		return;
+	}
 
-			pReply->success = validateZOrder(params.zOrder, m_Entities.size() - 1 /*size after removal*/, &message);
-			if (!pReply->success)
-			{
-				strcpy(pReply->message, message.c_str());
-				return;
-			}
+	// Validate and handle Z order in one shot
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_Z_ORDER && params.zOrder != pEntity->m_zOrder) {
 
-			m_Entities.erase(entityIter);
-
-			// Go to insersion spot
-			entityIter = m_Entities.begin();
-			for (int i = 0; i < params.zOrder; ++i) {
-				++entityIter;
-			}
-
-			entityIter = m_Entities.insert(entityIter, pEntity);
-
-			// Brute force way to align all entity Z-orders to their indices
-			realignAllEntityZOrders();
-
-			// Update bookkeeping
-			m_EntityIterFromId[entityId] = entityIter;
-
-		}
-
-		// Handle rest of params
-		pReply->success = pEntity->modify(params, &message);
+		pReply->success = validateZOrder(params.zOrder, m_Entities.size() - 1 /*size after removal*/, &message);
 		if (!pReply->success)
 		{
 			strcpy(pReply->message, message.c_str());
 			return;
 		}
+
+		m_Entities.erase(entityIter);
+
+		// Go to insersion spot
+		entityIter = m_Entities.begin();
+		for (int i = 0; i < params.zOrder; ++i) {
+			++entityIter;
+		}
+
+		entityIter = m_Entities.insert(entityIter, pEntity);
+
+		// Brute force way to align all entity Z-orders to their indices
+		realignAllEntityZOrders();
+
+		// Update bookkeeping
+		m_EntityIterFromId[entityId] = entityIter;
 	}
+
+	// Modify entity
+	pEntity->modify(params);
 
 	if (message == "") {
 		message = "Entity " + std::to_string(entityId) + " modified successfully";

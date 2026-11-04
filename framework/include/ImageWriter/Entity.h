@@ -37,7 +37,9 @@ struct Entity {
 	
 	Entity(uint64_t id, EntityData entityData);
 	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const;
-	bool modify(EntityData params, std::string* pMessage = nullptr);
+	bool validateModifyParams(EntityData params, std::string* pMessage) const;
+	void modify(EntityData params);
+	
 	EntityData getData();
 };
 
