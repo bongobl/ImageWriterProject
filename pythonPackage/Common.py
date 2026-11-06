@@ -2,7 +2,7 @@ import ctypes
 from ctypes import *
 from pydantic import BaseModel, Field
 from enum import IntEnum
-from typing import Literal, Union, Annotated
+from typing import Literal, Union, Annotated, Any
 MAX_REPLY_MESSAGE_LENGTH = 512
 
 ######## Vec2 ########
@@ -583,3 +583,24 @@ class EntityDataReply(ctypes.Structure):
                     success = False, 
                     message = "Unknown shape type received by the app",
                 )
+
+class NumEntitiesReply(ctypes.Structure):
+
+    _fields_ = [
+        ("success", ctypes.c_bool),
+        ("message", ctypes.c_char * MAX_REPLY_MESSAGE_LENGTH),
+        ("numEntities", ctypes.c_uint64),
+    ]
+
+    def __init__(self, success = False, message = b"UNINITIALIZED_MESSAGE", numEntities = 0):
+        self.success = success
+        self.message = message
+        self.numEntities = numEntities
+
+    def __str__(self):
+        return f"(NumEntitiesReply: success = {self.success}, message = {self.message.decode('utf-8')}, numEntities = {self.numEntities})"
+
+class SceneDataReplyModel(PlainReplyMCPPayload):
+    numEntities: int
+    entities: list[Any]
+    

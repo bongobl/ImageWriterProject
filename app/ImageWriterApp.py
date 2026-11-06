@@ -132,6 +132,72 @@ def runNetworkService():
                             reply = iw.EntityDataReply()
                             frameworkFunctionSucceeded = framework.GetEntityData(reply, entityId)
 
+                        case iw.Command.GetNumEntities:
+                            
+                            reply = iw.NumEntitiesReply(success = True, message = b"obtained number of entities", numEntities = 4)
+
+                        case iw.Command.GetAllEntityData:
+                            
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(ctypes.c_uint64))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+
+                            numEntities = ctypes.c_uint64.from_buffer_copy(paramsBuffer)
+
+                            print(f"Calling GetAllEntityData with {numEntities.value} entities")
+                            class AllEntitiesDataReply(ctypes.Structure):
+                                _fields_ = [
+                                    ("success", ctypes.c_bool),
+                                    ("message", ctypes.c_char * iw.MAX_REPLY_MESSAGE_LENGTH),
+                                    ("array", iw.EntityData * numEntities.value),
+                                ]
+
+                                def __str__(self):
+                                    return f"(AllEntitiesDataReply: success = {self.success}, message = {self.message.decode('utf-8')}, array = <Entity Data>)"
+
+                            # Note: continue to use numEntities.value to define AllEntitiesDataReply rather than reading it from runtime here
+                            reply = AllEntitiesDataReply(success=True, message = b"Successfully obtained all entities")
+                            reply.array[0] = iw.EntityData(
+                                    entityType = iw.EntityType.ELLIPSE,
+                                    transform = iw.Transform(position = iw.Vec2(x=3.6, y = 3.2), orientation = 4.6, scale = 8.32),
+                                    color = iw.Color(red = 0.2, green = 0.3, blue = 0.8, alpha = 1.0),
+                                    zOrder = 5,
+                                    ellipse = iw.EllipseData(halfExtents = iw.Vec2(2.7, 3.2)),
+                                    entityIdToModify = 27,
+                                )
+
+                            reply.array[1] = iw.EntityData(
+                                    entityType = iw.EntityType.RECTANGLE,
+                                    transform = iw.Transform(position = iw.Vec2(x=7.4, y = 1.3), orientation = 3.7, scale = 9.6),
+                                    color = iw.Color(red = 0.0, green = 0.4, blue = 0.3, alpha = 0.5),
+                                    zOrder = 45,
+                                    rectangle = iw.RectangleData(halfExtents = iw.Vec2(2.8, 6.4)),
+                                    entityIdToModify = 64,
+                                )
+
+                            reply.array[2] = iw.EntityData(
+                                    entityType = iw.EntityType.TRIANGLE,
+                                    transform = iw.Transform(position = iw.Vec2(x=10.5, y = 11.1), orientation = 9.5, scale = 13.8),
+                                    color = iw.Color(red = 0.3, green = 0.5, blue = 0.8, alpha = 0.2),
+                                    zOrder = 32,
+                                    triangle = iw.TriangleData(
+                                        point1 = iw.Vec2(2.9, 14.8), 
+                                        point2 = iw.Vec2(7.8, 2.7), 
+                                        point3 = iw.Vec2(8.8, 19.4),
+                                    ),
+                                    entityIdToModify = 375,
+                                )
+                            reply.array[3] = iw.EntityData(
+                                    entityType = iw.EntityType.ELLIPSE,
+                                    transform = iw.Transform(position = iw.Vec2(x=12.56, y = 87.43), orientation = 44.67, scale = 83.65),
+                                    color = iw.Color(red = 0.73, green = 0.84, blue = 0.92, alpha = 1.0),
+                                    zOrder = 12,
+                                    ellipse = iw.EllipseData(halfExtents = iw.Vec2(63.76, 93.27)),
+                                    entityIdToModify = 89,
+                                )
+
                         case iw.Command.RemoveEntity:
                             
                             status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(ctypes.c_uint64))

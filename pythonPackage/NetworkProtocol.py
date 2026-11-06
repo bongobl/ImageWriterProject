@@ -15,9 +15,11 @@ class Command(IntEnum):
     AddEntity = 3
     ModifyEntity = 4
     GetEntityData = 5
-    RemoveEntity = 6
-    RemoveAllEntities = 7
-    Disconnecting = 8
+    GetNumEntities = 6
+    GetAllEntityData = 7
+    RemoveEntity = 8
+    RemoveAllEntities = 9
+    Disconnecting = 10
 
 def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:
 

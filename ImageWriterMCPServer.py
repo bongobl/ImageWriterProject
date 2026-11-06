@@ -183,6 +183,67 @@ def getEntityData(
     return sendCommandToApp(iw.Command.GetEntityData, entityIdRaw, iw.EntityDataReply).toMCPPayload()
 
 @mcp.tool()
+def queryScene_PROTO():
+    
+    fetchNumEntitiesReply = sendCommandToApp(iw.Command.GetNumEntities, None, iw.NumEntitiesReply)
+
+    if not fetchNumEntitiesReply.success:
+        return iw.PlainReplyMCPPayload(success = False, message = fetchNumEntitiesReply.message.decode('utf-8'))
+
+    class AllEntitiesDataReply(ctypes.Structure):
+        _fields_ = [
+            ("success", ctypes.c_bool),
+            ("message", ctypes.c_char * iw.MAX_REPLY_MESSAGE_LENGTH),
+            ("array", iw.EntityData * fetchNumEntitiesReply.numEntities),
+        ]
+
+        def __str__(self):
+            return f"(AllEntitiesDataReply: success = {self.success}, message = {self.message.decode('utf-8')}, array = <Entity Data>)"
+
+    allEntitiesDataReply = sendCommandToApp(iw.Command.GetAllEntityData, ctypes.c_uint64(fetchNumEntitiesReply.numEntities), AllEntitiesDataReply)
+    
+    if not allEntitiesDataReply.success:
+        return iw.PlainReplyMCPPayload(success = False, message = allEntitiesDataReply.message.decode('utf-8'))
+
+    parsedEntities = []
+    for entityRaw in allEntitiesDataReply.array:
+        if entityRaw.entityType == iw.EntityType.ELLIPSE:
+            entityModel = {
+                "entityId": entityRaw.entityIdToModify, 
+                "shape": "ellipse",
+                "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
+                "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
+                "zOrder": entityRaw.zOrder,
+                "halfExtents": {"x": entityRaw.ellipse.halfExtents.x, "y": entityRaw.ellipse.halfExtents.y},
+            }
+            parsedEntities.append(entityModel)
+        elif entityRaw.entityType == iw.EntityType.RECTANGLE:
+            entityModel = {
+                "entityId": entityRaw.entityIdToModify, 
+                "shape": "rectangle",
+                "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
+                "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
+                "zOrder": entityRaw.zOrder,
+                "halfExtents": {"x": entityRaw.rectangle.halfExtents.x, "y": entityRaw.rectangle.halfExtents.y},
+            }
+            parsedEntities.append(entityModel)
+        elif entityRaw.entityType == iw.EntityType.TRIANGLE:
+            entityModel = {
+                "entityId": entityRaw.entityIdToModify, 
+                "shape": "triangle",
+                "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
+                "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
+                "zOrder": entityRaw.zOrder,
+                "point1": {"x": entityRaw.triangle.point1.x, "y": entityRaw.triangle.point1.y},
+                "point2": {"x": entityRaw.triangle.point2.x, "y": entityRaw.triangle.point2.y},
+                "point3": {"x": entityRaw.triangle.point3.x, "y": entityRaw.triangle.point3.y},
+            }
+            parsedEntities.append(entityModel)
+
+    ret = iw.SceneDataReplyModel(success = True, message= "All entities obtained successfully", numEntities = fetchNumEntitiesReply.numEntities, entities = parsedEntities)
+    return ret
+
+@mcp.tool()
 def removeEntity(
     entityId: Annotated[int, Field(description = "The id of the entity to remove")],
 ) -> iw.PlainReplyMCPPayload:
