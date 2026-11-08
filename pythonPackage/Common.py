@@ -601,6 +601,8 @@ class NumEntitiesReply(ctypes.Structure):
         return f"(NumEntitiesReply: success = {self.success}, message = {self.message.decode('utf-8')}, numEntities = {self.numEntities})"
 
 class SceneDataReplyModel(PlainReplyMCPPayload):
+    cameraTransform: TransformMCPPayload
+    cameraWidthFromHeight: float = Field(..., description="(float), aspect ratio of the camera view, ie the width / height")
     numEntities: int
     entities: list[Any]
     

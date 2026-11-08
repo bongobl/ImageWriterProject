@@ -75,4 +75,3 @@ inline const Transform inverse(const Transform& orig)
 		.scale = inverseScale
 	};
 }
-

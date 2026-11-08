@@ -1,6 +1,7 @@
 #pragma once
 #define MAX_REPLY_MESSAGE_LENGTH 512
 #include <stdint.h>
+
 struct Vec2 {
     float x = 0;
     float y = 0;
@@ -73,7 +74,7 @@ struct EntityData {
     int zOrder = -1;
     
     union {
-        EllipseData ellipse;
+        EllipseData ellipse = {};
         RectangleData rectangle;
         TriangleData triangle;
     };

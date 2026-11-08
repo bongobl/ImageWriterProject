@@ -182,6 +182,38 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	}
 
 	system("pause");
+	HSnapshot snapshot;
+	Transform cameraTransform;
+	float cameraWidthFromHeight;
+	uint64_t numEntities;
+	std::vector<EntityData> allEntitiesData;
+	if (!ImageWriter_Scene_MakeSnapshot(instance, &plainReply, &snapshot))
+	{
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+	}
+
+	system("pause");
+	if (!ImageWriter_Snapshot_GetNumEntities(snapshot, &plainReply, &numEntities))
+	{
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+	}
+
+	allEntitiesData.resize(numEntities);
+	system("pause");
+	
+	
+	if (!ImageWriter_Snapshot_ReadData(snapshot, &plainReply, &cameraTransform, &cameraWidthFromHeight, &numEntities, allEntitiesData.data()));
+	{
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+	}
+
+	system("pause");
+	if (!ImageWriter_Scene_DisposeSnapshot(&snapshot, &plainReply))
+	{
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+	}
+
+	system("pause");
 	if (!ImageWriter_Scene_RemoveAllEntities(instance, &plainReply))
 	{
 		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;

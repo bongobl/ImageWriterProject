@@ -58,46 +58,60 @@ def disconnectFromImageWriter():
     finally:
         connToServer.close()
 
-def sendCommandToApp(command: iw.Command, params, ReplyType: type):
+# TODO: rename since this is now generalized to only optionally send commands (can merely act as a receiver)
+def sendCommandToApp(
+    command: iw.Command, 
+    params, 
+    ReplyType: type, 
+    connectToApp = True, 
+    disconnectFromApp = True):
 
     logger.info(f"To server: {params}")
 
-    commandBuffer = bytes(command.value.to_bytes(iw.COMMAND_SIZE))
+    # connect to app
+    if connectToApp:
+        if not connectToImageWriterApp():
+            raise ToolError("sendCommandToApp(): Failed to connect to ImageWriter app")
 
+    # send data (command and optionally params) to app
+    if command is not None:
+        # send command
+        commandBuffer = bytes(command.value.to_bytes(iw.COMMAND_SIZE))
+        sendStatus, sendResultMessage = iw.sendMessage(buffer = commandBuffer, connection = connToServer)
+        if not sendStatus:
+            logger.error(f"Error sending command buffer to server: {sendResultMessage}\n\n")
+            disconnectFromImageWriter()
+            raise ToolError(f"sendCommandToApp(): Failed to send command buffer to ImageWriter app: {sendResultMessage}")
+
+    # send params if required
+    if params is not None:
+        paramsBuffer = bytes(params)
+        sendStatus, sendResultMessage = iw.sendMessage(buffer = paramsBuffer, connection = connToServer)
+
+        if not sendStatus:
+            logger.error(f"Error sending params buffer to server: {sendResultMessage}\n\n")
+            disconnectFromImageWriter()
+            raise ToolError(f"sendCommandToApp(): Failed to send params buffer to ImageWriter app: {sendResultMessage}")
+
+    # receive reply
+    if ReplyType is not None:
+        replyBuffer = bytearray()
     
-    if not connectToImageWriterApp():
-        raise ToolError("sendCommandToApp(): Failed to connect to ImageWriter app")
+        # wait here and receive message from client
+        success, errorMessage = iw.receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(ReplyType))
+        if not success:
+            # log error message and return to connecting state
+            logger.error(errorMessage)
+            disconnectFromImageWriter()
+            raise ToolError("sendCommandToApp(): Failed to receive reply from ImageWriter app")
+    
+        # deserialize client message and log
+        reply = ReplyType.from_buffer_copy(replyBuffer)
+        logger.info(f"From server: {reply}")
 
-    # send message to server
-    try:
-        connToServer.sendall(commandBuffer)
-
-        # if command has params, serialize and send
-        if params is not None:
-            paramsBuffer = bytes(params)
-            connToServer.sendall(paramsBuffer)
-
-    # will fail if server had disconnected at time of sending message
-    except ConnectionResetError as e:
-        logger.error(f"ConnectionResetError: {e}\n\n")
+    # disconnect from app
+    if disconnectFromApp:
         disconnectFromImageWriter()
-        raise ToolError("sendCommandToApp(): Failed to send command to ImageWriter app")
-
-    replyBuffer = bytearray()
-    
-    # wait here and receive message from client
-    success, errorMessage = iw.receiveMessage(buffer = replyBuffer, connection = connToServer, size = ctypes.sizeof(ReplyType))
-    if not success:
-        # log error message and return to connecting state
-        logger.error(errorMessage)
-        disconnectFromImageWriter()
-        raise ToolError("sendCommandToApp(): Failed to receive reply from ImageWriter app")
-    
-    # deserialize client message and log
-    reply = ReplyType.from_buffer_copy(replyBuffer)
-    logger.info(f"From server: {reply}")
-
-    disconnectFromImageWriter()
 
     return reply
 
@@ -185,26 +199,30 @@ def getEntityData(
 @mcp.tool()
 def queryScene_PROTO():
     
-    fetchNumEntitiesReply = sendCommandToApp(iw.Command.GetNumEntities, None, iw.NumEntitiesReply)
+    fetchNumEntitiesReply = sendCommandToApp(iw.Command.GetAllEntityData, None, iw.NumEntitiesReply, disconnectFromApp = False)
 
     if not fetchNumEntitiesReply.success:
         return iw.PlainReplyMCPPayload(success = False, message = fetchNumEntitiesReply.message.decode('utf-8'))
 
+    # TODO: rename since it holds all data in the scene
     class AllEntitiesDataReply(ctypes.Structure):
         _fields_ = [
             ("success", ctypes.c_bool),
             ("message", ctypes.c_char * iw.MAX_REPLY_MESSAGE_LENGTH),
+            ("cameraTransform", iw.Transform),
+            ("cameraWidthFromHeight", ctypes.c_float), # only used when getting camera transform
             ("array", iw.EntityData * fetchNumEntitiesReply.numEntities),
         ]
 
         def __str__(self):
             return f"(AllEntitiesDataReply: success = {self.success}, message = {self.message.decode('utf-8')}, array = <Entity Data>)"
 
-    allEntitiesDataReply = sendCommandToApp(iw.Command.GetAllEntityData, ctypes.c_uint64(fetchNumEntitiesReply.numEntities), AllEntitiesDataReply)
+    allEntitiesDataReply = sendCommandToApp(None, None, AllEntitiesDataReply, connectToApp = False)
     
     if not allEntitiesDataReply.success:
         return iw.PlainReplyMCPPayload(success = False, message = allEntitiesDataReply.message.decode('utf-8'))
 
+    # parse entity array
     parsedEntities = []
     for entityRaw in allEntitiesDataReply.array:
         if entityRaw.entityType == iw.EntityType.ELLIPSE:
@@ -240,7 +258,13 @@ def queryScene_PROTO():
             }
             parsedEntities.append(entityModel)
 
-    ret = iw.SceneDataReplyModel(success = True, message= "All entities obtained successfully", numEntities = fetchNumEntitiesReply.numEntities, entities = parsedEntities)
+    ret = iw.SceneDataReplyModel(
+        success = True, 
+        message= "All entities obtained successfully", 
+        cameraTransform = allEntitiesDataReply.cameraTransform.toMCPPayload(),
+        cameraWidthFromHeight = allEntitiesDataReply.cameraWidthFromHeight,
+        numEntities = fetchNumEntitiesReply.numEntities, 
+        entities = parsedEntities)
     return ret
 
 @mcp.tool()

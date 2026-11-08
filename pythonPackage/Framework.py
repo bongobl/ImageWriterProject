@@ -74,7 +74,21 @@ class Framework(ctypes.Structure):
 
         self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.argtypes = [Framework, ctypes.POINTER(PlainReply)]
         self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.restype = ctypes.c_bool
+        
+        # Snapshot
+        self.runtimeLib.ImageWriter_Scene_MakeSnapshot.argtypes = [Framework, ctypes.POINTER(PlainReply), ctypes.POINTER(Snapshot)]
+        self.runtimeLib.ImageWriter_Scene_MakeSnapshot.restype = ctypes.c_bool
 
+        self.runtimeLib.ImageWriter_Scene_DisposeSnapshot.argtypes = [ctypes.POINTER(Snapshot), ctypes.POINTER(PlainReply)]
+        self.runtimeLib.ImageWriter_Scene_DisposeSnapshot.restype = ctypes.c_bool
+
+        self.runtimeLib.ImageWriter_Snapshot_GetNumEntities.argtypes = [Snapshot, ctypes.POINTER(PlainReply), ctypes.POINTER(ctypes.c_uint64)]
+        self.runtimeLib.ImageWriter_Snapshot_GetNumEntities.restype = ctypes.c_bool
+
+        self.runtimeLib.ImageWriter_Snapshot_ReadData.argtypes = [Snapshot, ctypes.POINTER(PlainReply), ctypes.POINTER(Transform), 
+            ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(EntityData)]
+
+        self.runtimeLib.ImageWriter_Snapshot_ReadData.restype = ctypes.c_bool
 
     def Init(self, windowHandle, fnIsWindowOpen):
         if not self.runtimeLib.ImageWriter_Instance_Intialize(ctypes.byref(self)):
@@ -152,3 +166,21 @@ class Framework(ctypes.Structure):
 
     def RemoveAllEntities(self, outReply):
         return self.runtimeLib.ImageWriter_Scene_RemoveAllEntities(self, ctypes.byref(outReply))
+
+    # snapshot
+    def MakeSnapshot(self, outReply, outSnapshot):
+        return self.runtimeLib.ImageWriter_Scene_MakeSnapshot(self, ctypes.byref(outReply), ctypes.byref(outSnapshot))
+
+    def DisposeSnapshot(self, outReply, outSnapshot):
+        return self.runtimeLib.ImageWriter_Scene_DisposeSnapshot(ctypes.byref(outSnapshot), ctypes.byref(outReply))
+
+    def GetNumEntitiesFromSnapshot(self, outReply, snapshot, outNumEntities):
+        return self.runtimeLib.ImageWriter_Snapshot_GetNumEntities(snapshot, ctypes.byref(outReply), ctypes.byref(outNumEntities))
+
+    def GetSnapshotData(self, outReply, snapshot, outCameraTransform, outCameraWidthFromHeight, outNumEntities, outEntityData):
+        return self.runtimeLib.ImageWriter_Snapshot_ReadData(snapshot, ctypes.byref(outReply), ctypes.byref(outCameraTransform), ctypes.byref(outCameraWidthFromHeight), ctypes.byref(outNumEntities), outEntityData)
+
+class Snapshot(ctypes.Structure):
+    _fields_ = [
+        ("pData", ctypes.c_void_p),
+    ]

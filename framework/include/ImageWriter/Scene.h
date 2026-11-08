@@ -14,9 +14,9 @@ public:
 		sf::Glsl::Mat4 glsl_homogFromWorld = sf::Glsl::Mat4(sf::Transform::Identity);
 	};
 
-private:
-	Transform m_WorldFromCamera;
+	// keeping public so we can manually lock/unlock it when producing snapshot
 	mutable std::shared_mutex m_TransformMutex;
+	Transform m_WorldFromCamera;
 
 	ComputedState m_ComputedState;
 	mutable std::shared_mutex computedStatesMutex;

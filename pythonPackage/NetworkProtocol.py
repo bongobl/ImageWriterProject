@@ -15,11 +15,10 @@ class Command(IntEnum):
     AddEntity = 3
     ModifyEntity = 4
     GetEntityData = 5
-    GetNumEntities = 6
-    GetAllEntityData = 7
-    RemoveEntity = 8
-    RemoveAllEntities = 9
-    Disconnecting = 10
+    GetAllEntityData = 6
+    RemoveEntity = 7
+    RemoveAllEntities = 8
+    Disconnecting = 9
 
 def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> tuple[bool, str]:
 
@@ -39,5 +38,15 @@ def receiveMessage(buffer: bytearray, connection: socket.socket, size: int) -> t
     # return to listening state
     except (ConnectionResetError, ConnectionAbortedError) as e:
         return (False, f"receiveMessage: {e}")
+
+    return (True, "")
+
+def sendMessage(buffer: bytes, connection: socket.socket) -> tuple[bool, str]:
+
+    # send reply to client
+    try:
+        connection.sendall(buffer)
+    except ConnectionResetError as e:
+        return (False, f"sendMessage: {e}")
 
     return (True, "")

@@ -55,3 +55,11 @@ struct InstanceData
 
     void* pCoreData;
 };
+
+struct SnapshotData
+{
+    Transform cameraTransform;
+    float cameraWidthFromHeight;
+    uint64_t numEntities;
+    EntityData* pEntitiesData;
+};
