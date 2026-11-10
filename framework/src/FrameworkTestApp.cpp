@@ -202,7 +202,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	system("pause");
 	
 	
-	if (!ImageWriter_Snapshot_ReadData(snapshot, &plainReply, &cameraTransform, &cameraWidthFromHeight, &numEntities, allEntitiesData.data()));
+	if (!ImageWriter_Snapshot_ReadData(snapshot, &plainReply, &cameraTransform, &cameraWidthFromHeight, &numEntities, allEntitiesData.data()))
 	{
 		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 	}

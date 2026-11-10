@@ -1,6 +1,7 @@
 #pragma once
 #include <ImageWriter/API.h>
 #include <ImageWriter/Entity.h>
+#include <ImageWriter/CoreAndAPIShared.h>
 #include <SFML/Graphics.hpp>
 #include <shared_mutex>
 #include <mutex>
@@ -83,6 +84,7 @@ class Scene {
 
 	GridView m_GridView;
 
+	// TODO: rename so we don't have m_Entities.m_Entities
 	EntityList m_Entities;
 
 	Camera m_Camera;
@@ -101,4 +103,6 @@ public:
 
 	EntityList* getEntityList();
 	Camera* getCamera();
+
+	void makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply);
 };

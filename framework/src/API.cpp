@@ -138,6 +138,14 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         return false;
     }
 
+    PfnCore_Scene_MakeSnapshot pfnCore_Scene_MakeSnapshot = (PfnCore_Scene_MakeSnapshot)GetProcAddress(hDll, "scene_makeSnapshot");
+
+    if (pfnCore_Scene_MakeSnapshot == NULL) {
+        fprintf(stderr, "ImageWriter_Instance_Intialize: CoreEntry function scene_makeSnapshot could not load\n");
+        FreeLibrary(hDll);
+        return false;
+    }
+
     pInstance->pData = (InstanceData*)malloc(sizeof(InstanceData));
     InstanceData* pInstanceData = (InstanceData*)pInstance->pData;
 
@@ -160,6 +168,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Instance_Intialize(HImageWrite
         .pfnCore_Scene_GetEntityData = pfnCore_Scene_GetEntityData,
         .pfnCore_Scene_RemoveEntity = pfnCore_Scene_RemoveEntity,
         .pfnCore_Scene_RemoveAllEntities = pfnCore_Scene_removeAllEntities,
+        .pfnCore_Scene_MakeSnapshot = pfnCore_Scene_MakeSnapshot,
     };
 
     // initialize core
@@ -363,58 +372,8 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_MakeSnapshot(HImageWrite
 
     pSnapshot->pData = (SnapshotData*)malloc(sizeof(SnapshotData));
     SnapshotData* pSnapshotData = (SnapshotData*)pSnapshot->pData;
-
-    // Fill with camera data
-    TransformReply cameraTransformReply;
-    pInstanceData->pfnCore_Scene_GetCameraTransform(*pInstanceData, &cameraTransformReply);
-    pSnapshotData->cameraTransform = cameraTransformReply.transform;
-    pSnapshotData->cameraWidthFromHeight = cameraTransformReply.cameraWidthFromHeight;
-
-    // Fill with entity data
-    pSnapshotData->numEntities = 4;
-    pSnapshotData->pEntitiesData = (EntityData*)malloc(pSnapshotData->numEntities * sizeof(EntityData));
-
-    pSnapshotData->pEntitiesData[0] = {
-        .entityType = ENTITY_TYPE_ELLIPSE,
-        .transform = { .position = { .x = 4.6f, .y = 3.2f }, .orientation = 4.6f, .scale = 8.32f },
-        .color = { .red = 0.2f, .green = 0.3f, .blue = 0.8f, .alpha = 1.0f },
-        .zOrder = 5,
-        .ellipse = { .halfExtents = { 2.7, 3.2 } },
-        .entityIdToModify = 27,
-    };
-
-    pSnapshotData->pEntitiesData[1] = {
-        .entityType = ENTITY_TYPE_RECTANGLE,
-        .transform = { .position = { .x = 7.4f, .y = 1.3f }, .orientation = 3.7f, .scale = 9.6f },
-        .color = { .red = 0.0f, .green = 0.4f, .blue = 0.3f, .alpha = 0.5f },
-        .zOrder = 45,
-        .rectangle = { .halfExtents = { 2.8f, 6.4f } },
-        .entityIdToModify = 64,
-    };
-
-    pSnapshotData->pEntitiesData[2] = {
-        .entityType = ENTITY_TYPE_TRIANGLE,
-        .transform = { .position = { .x = 10.5f, .y = 11.1f }, .orientation = 9.5f, .scale = 13.8f },
-        .color = { .red = 0.3f, .green = 0.5f, .blue = 0.8f, .alpha = 0.2f },
-        .zOrder = 32,
-        .triangle = {
-            .point1 = { 3.9, 7.8 },
-            .point2 = { 1.8, 8.7 },
-            .point3 = { 9.8, 5.4 },
-        },
-        .entityIdToModify = 375,
-    };
-
-    pSnapshotData->pEntitiesData[3] = {
-        .entityType = ENTITY_TYPE_ELLIPSE,
-        .transform = { .position = { .x = 12.56f, .y = 90.83f }, .orientation = 44.67f, .scale = 83.65f },
-        .color = { .red = 0.73f, .green = 0.84f, .blue = 0.92f, .alpha = 1.0f },
-        .zOrder = 12,
-        .ellipse = { .halfExtents = { 83.76f, 93.27f } },
-        .entityIdToModify = 89,
-    };
-
-    return true;
+    *pSnapshotData = {};
+    return pInstanceData->pfnCore_Scene_MakeSnapshot(*pInstanceData, pReply, pSnapshotData);
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_DisposeSnapshot(HSnapshot* pSnapshot, PlainReply* pReply)
@@ -429,9 +388,15 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_DisposeSnapshot(HSnapsho
     
     SnapshotData* pSnapshotData = (SnapshotData*)pSnapshot->pData;
 
+    if (pSnapshotData->pEntitiesData != nullptr) {
+        free(pSnapshotData->pEntitiesData);
+    }
+
     free(pSnapshotData);
     pSnapshot->pData = nullptr;
 
+    pReply->success = true;
+    strcpy(pReply->message, "Snapshot disposed successfully");
     return true;
 }
 
@@ -446,6 +411,9 @@ extern "C" __declspec(dllexport) bool ImageWriter_Snapshot_GetNumEntities(HSnaps
 
     SnapshotData* pSnapshotData = (SnapshotData*)snapshot.pData;
     *pNumEntities = pSnapshotData->numEntities;
+
+    pReply->success = true;
+    strcpy(pReply->message, "Number of entities read successfully from snapshot");
     return true;
 }
 
@@ -466,5 +434,8 @@ extern "C" __declspec(dllexport) bool ImageWriter_Snapshot_ReadData(
     *pCameraWidthFromHeight = pSnapshotData->cameraWidthFromHeight;
     *pNumEntities = pSnapshotData->numEntities;
     memcpy(pEntitiesData, pSnapshotData->pEntitiesData, pSnapshotData->numEntities * sizeof(EntityData));
+
+    pReply->success = true;
+    strcpy(pReply->message, "Snapshot data read successfully");
     return true;
 }

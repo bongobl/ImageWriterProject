@@ -155,7 +155,7 @@ def runNetworkService():
 
                             numShapshotEntities = ctypes.c_uint64()
                             framework.GetNumEntitiesFromSnapshot(shapshotStatusReply, snapshot, numShapshotEntities)
-                            reply = iw.NumEntitiesReply(success = True, message = b"obtained number of entities", numEntities = numShapshotEntities)
+                            reply = iw.NumEntitiesReply(success = shapshotStatusReply.success, message = b"obtained number of entities", numEntities = numShapshotEntities)
 
                             # return num entites to mcp
                             if not sendReplyToApp(reply):
@@ -179,7 +179,8 @@ def runNetworkService():
 
                             reply = AllEntitiesDataReply(success=True, message = b"Successfully obtained all entities")
 
-                            cameraWidthFromHeight = ctypes.c_float()
+                            cameraWidthFromHeight = ctypes.c_float() # Note: declaring this here since passing in reply.cameraWidthFromHeight doesn't resolve to the underlying ctype
+
                             framework.GetSnapshotData(shapshotStatusReply, snapshot, reply.cameraTransform, cameraWidthFromHeight, numShapshotEntities, reply.array)
                             reply.cameraWidthFromHeight = cameraWidthFromHeight
 

@@ -7,6 +7,7 @@
 
 
 struct InstanceData;
+struct SnapshotData;
 
 // instance
 typedef bool (*PfnCore_Instance_Initialize)(InstanceData*);
@@ -28,6 +29,7 @@ typedef bool (*PfnCore_Scene_ModifyEntity)(InstanceData, PlainReply*, EntityData
 typedef bool (*PfnCore_Scene_GetEntityData)(InstanceData, EntityDataReply*, int64_t);
 typedef bool (*PfnCore_Scene_RemoveEntity)(InstanceData, PlainReply*, uint16_t);
 typedef bool (*PfnCore_Scene_RemoveAllEntities)(InstanceData, PlainReply*);
+typedef bool (*PfnCore_Scene_MakeSnapshot)(InstanceData, PlainReply*, SnapshotData*);
 
 
 
@@ -52,6 +54,7 @@ struct InstanceData
     PfnCore_Scene_GetEntityData pfnCore_Scene_GetEntityData;
     PfnCore_Scene_RemoveEntity pfnCore_Scene_RemoveEntity;
     PfnCore_Scene_RemoveAllEntities pfnCore_Scene_RemoveAllEntities;
+    PfnCore_Scene_MakeSnapshot pfnCore_Scene_MakeSnapshot;
 
     void* pCoreData;
 };
@@ -60,6 +63,6 @@ struct SnapshotData
 {
     Transform cameraTransform;
     float cameraWidthFromHeight;
-    uint64_t numEntities;
-    EntityData* pEntitiesData;
+    uint64_t numEntities = 0;
+    EntityData* pEntitiesData = nullptr;
 };

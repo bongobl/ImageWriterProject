@@ -199,7 +199,8 @@ EntityData Entity::getData()
 				.transform = m_Transform,
 				.color = m_Color,
 				.zOrder = m_zOrder,
-				.ellipse = ellipse
+				.ellipse = ellipse,
+				.entityIdToModify = m_Id
 			};
 
 		case Type::Rectangle:
@@ -208,7 +209,8 @@ EntityData Entity::getData()
 				.transform = m_Transform,
 				.color = m_Color,
 				.zOrder = m_zOrder,
-				.rectangle = rectangle
+				.rectangle = rectangle,
+				.entityIdToModify = m_Id
 			};
 		case Type::Triangle: {
 			return {
@@ -216,7 +218,8 @@ EntityData Entity::getData()
 				.transform = m_Transform,
 				.color = m_Color,
 				.zOrder = m_zOrder,
-				.triangle = triangle
+				.triangle = triangle,
+				.entityIdToModify = m_Id
 			};
 		}
 		default:

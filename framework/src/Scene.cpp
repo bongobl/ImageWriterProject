@@ -350,3 +350,35 @@ Camera* Scene::getCamera()
 {
 	return &m_Camera;
 }
+
+void Scene::makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply)
+{
+	// Lock camera and entities mutexes so that snapshot is atomic
+	std::scoped_lock lock(m_Camera.m_TransformMutex, m_Entities.m_EntitiesMutex);
+
+	std::string message = "";
+
+	// Camera data
+	pSnapshotData->cameraTransform = m_Camera.m_WorldFromCamera;
+	pSnapshotData->cameraWidthFromHeight = m_Camera.m_widthFromHeight;
+
+	// Entities data
+	const std::list<Entity*>& allEntities = m_Entities.m_Entities;
+	pSnapshotData->numEntities = allEntities.size();
+
+	if (pSnapshotData->numEntities > 0) {
+		pSnapshotData->pEntitiesData = (EntityData*)malloc(pSnapshotData->numEntities * sizeof(EntityData));
+
+		uint64_t index = 0;
+		for (auto iter = allEntities.begin(); iter != allEntities.end(); ++iter, ++index) {
+			pSnapshotData->pEntitiesData[index] = (*iter)->getData();
+		}
+	}
+	
+	if (message == "") {
+		message = "Snapshot captured successfully";
+	}
+
+	pReply->success = true;
+	strcpy(pReply->message, message.c_str());
+}

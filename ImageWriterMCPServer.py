@@ -157,7 +157,7 @@ def addEntity(
     return sendCommandToApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
 
 @mcp.tool()
-def modifyEntity4(
+def modifyEntity(
     entityId: Annotated[int, Field(description = "The id of the entity to modify")],
     shapeType: Annotated[iw.EntityTypeMCPPayload, Field(description = "an optional new shape to set for the entity")] = None,
     position: Annotated[iw.ModifyPositionModel, Field(description = "an optional new position of the transform to set for the entity")] = None,
@@ -197,8 +197,11 @@ def getEntityData(
     return sendCommandToApp(iw.Command.GetEntityData, entityIdRaw, iw.EntityDataReply).toMCPPayload()
 
 @mcp.tool()
-def queryScene_PROTO():
+def queryScene():
     
+    """
+    Return the scene's current state
+    """
     fetchNumEntitiesReply = sendCommandToApp(iw.Command.GetAllEntityData, None, iw.NumEntitiesReply, disconnectFromApp = False)
 
     if not fetchNumEntitiesReply.success:

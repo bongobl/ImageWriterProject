@@ -314,6 +314,32 @@ extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData insta
 	pEntityList->removeAllEntities();
 
 	pReply->success = true;
+
+	// TODO: move to entity class
 	strcpy(pReply->message, "All entities removed successfully");
 	return pReply->success = true;
+}
+
+extern "C" __declspec(dllexport) bool scene_makeSnapshot(InstanceData instanceData, PlainReply* pReply, SnapshotData* pSnapshot)
+{
+	if (!instanceData.pCoreData) {
+		std::cerr << "Core entry scene_makeSnapshot(): instanceData.pCoreData was null" << std::endl;
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework on scene_makeSnapshot()");
+		return false;
+	}
+
+	CoreData* pCoreData = static_cast<CoreData*>(instanceData.pCoreData);
+
+	std::shared_lock<std::shared_mutex> lock(pCoreData->m_SceneMutex);
+
+	if (!pCoreData->m_pScene) {
+		std::cerr << "Core entry scene_makeSnapshot(): pCoreData->m_pScene was null" << std::endl;
+		pReply->success = false;
+		strcpy(pReply->message, "Internal failure in framework: calling scene_makeSnapshot() on non-existent scene");
+		return false;
+	}
+
+	pCoreData->m_pScene->makeSnapshot(pSnapshot, pReply);
+	return pReply->success;
 }

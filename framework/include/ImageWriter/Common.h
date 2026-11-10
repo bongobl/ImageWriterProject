@@ -79,7 +79,7 @@ struct EntityData {
         TriangleData triangle;
     };
 
-    uint64_t entityIdToModify = 0;
+    uint64_t entityIdToModify = 0; // also used for scene lookup, TODO: rename to just entityId
     uint32_t fieldsToModify = 0x0;
     uint8_t transformFieldApplyModes = 0x0;
 };
