@@ -201,9 +201,7 @@ Scene::Scene(int64_t windowHandle, RenderConfig renderConfig) :
 	sf::RenderWindow& window = *m_pWindow;
 
 	// TODO: We also have a frame rate limiter in the app layer which gives us the delta time.
-	// We might be able to get away with keeping frame rate limiting + delta time calculations here in the core layer,
-	// and have the app call update inside a non-stalled loop. But we'll need to be mindful that
-	// this takes away game-clock control from the app.
+	// Leaning towards keeping it in the app and removing this call, need to investigate
 	window.setFramerateLimit(120);
 
 	// read window initial size
@@ -221,7 +219,7 @@ Scene::Scene(int64_t windowHandle, RenderConfig renderConfig) :
 }
 Scene::~Scene()
 {
-	m_Entities.removeAllEntities();
+	m_EntityList.removeAllEntities();
 	delete m_pWindow;
 	m_pWindow = nullptr;
 }
@@ -305,7 +303,7 @@ void Scene::render()
 	}
 
 	// draw rest of scene
-	m_Entities.drawShapes(*m_pWindow, m_Camera);
+	m_EntityList.drawShapes(*m_pWindow, m_Camera);
 
 	// Grid foreground mode
 	if (m_RenderConfig.gridViewMode == GRID_VIEW_MODE_FOREGROUND)
@@ -343,7 +341,7 @@ void Scene::updateScreenSpaceCameraControlRig(ScreenSpaceControls controls)
 
 EntityList* Scene::getEntityList()
 {
-	return &m_Entities;
+	return &m_EntityList;
 }
 
 Camera* Scene::getCamera()
@@ -354,7 +352,7 @@ Camera* Scene::getCamera()
 void Scene::makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply)
 {
 	// Lock camera and entities mutexes so that snapshot is atomic
-	std::scoped_lock lock(m_Camera.m_TransformMutex, m_Entities.m_EntitiesMutex);
+	std::scoped_lock lock(m_Camera.m_TransformMutex, m_EntityList.m_EntitiesMutex);
 
 	std::string message = "";
 
@@ -363,7 +361,7 @@ void Scene::makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply)
 	pSnapshotData->cameraWidthFromHeight = m_Camera.m_widthFromHeight;
 
 	// Entities data
-	const std::list<Entity*>& allEntities = m_Entities.m_Entities;
+	const std::list<Entity*>& allEntities = m_EntityList.m_Entities;
 	pSnapshotData->numEntities = allEntities.size();
 
 	if (pSnapshotData->numEntities > 0) {

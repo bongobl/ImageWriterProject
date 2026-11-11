@@ -12,7 +12,7 @@ typedef Framework HImageWriterInstance;
 
 struct Snapshot
 {
-    void* pData;
+    void* pData = nullptr;
 };
 
 typedef Snapshot HSnapshot;

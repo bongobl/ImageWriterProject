@@ -121,7 +121,7 @@ def runNetworkService():
 
                             # deserialize params
                             entityParams = iw.EntityData.from_buffer_copy(paramsBuffer)
-                            print(f"Modifying entity with id {entityParams.entityIdToModify} From client: {entityParams}")
+                            print(f"Modifying entity with id {entityParams.entityId} From client: {entityParams}")
 
                             
                             reply = iw.PlainReply()
@@ -147,48 +147,69 @@ def runNetworkService():
                             if not sendReplyToApp(reply):
                                 break;
 
-                        case iw.Command.GetAllEntityData:
+                        case iw.Command.GetSceneSnapshot:
                             
-                            shapshotStatusReply = iw.PlainReply()
+                            # capture atomic snapshot of scene at this moment
+                            frameworkReply = iw.PlainReply()
                             snapshot = iw.Snapshot()
-                            framework.MakeSnapshot(shapshotStatusReply, snapshot)
+                            framework.MakeSnapshot(frameworkReply, snapshot)
 
+                            # if the snapshot was not successfully produced, do nothing else
+                            # here and return to listening mode, client will have also received the
+                            # failure and will likely issue a disconnect command
+                            if not frameworkReply.success:
+                                reply = iw.NumEntitiesReply(success = frameworkReply.success, message = frameworkReply.message, numEntities = 0)
+                                if not sendReplyToApp(reply):
+                                    break;
+                                continue
+
+                            # send num entities back to client (so it can define SceneSnapshotReply accordingly)
                             numShapshotEntities = ctypes.c_uint64()
-                            framework.GetNumEntitiesFromSnapshot(shapshotStatusReply, snapshot, numShapshotEntities)
-                            reply = iw.NumEntitiesReply(success = shapshotStatusReply.success, message = b"obtained number of entities", numEntities = numShapshotEntities)
+                            framework.GetNumEntitiesFromSnapshot(frameworkReply, snapshot, numShapshotEntities)
+                            reply = iw.NumEntitiesReply(success = frameworkReply.success, message = frameworkReply.message, numEntities = numShapshotEntities)
 
-                            # return num entites to mcp
+                            # return num entites to client
                             if not sendReplyToApp(reply):
                                 break;
 
+                            # if the number of entities was not successfully queried, do nothing else
+                            # here and return to listening mode, client will have also received the
+                            # failure and will likely issue a disconnect command
+                            if not frameworkReply.success:
+                                continue
 
-                            print(f"Calling GetAllEntityData with {reply.numEntities} entities")
-                            class AllEntitiesDataReply(ctypes.Structure):
+                            # define SceneSnapshotReply given num entities
+                            print(f"Calling GetSceneSnapshot with {reply.numEntities} entities")
+                            class SceneSnapshotReply(ctypes.Structure):
                                 _fields_ = [
                                     ("success", ctypes.c_bool),
                                     ("message", ctypes.c_char * iw.MAX_REPLY_MESSAGE_LENGTH),
                                     ("cameraTransform", iw.Transform),
                                     ("cameraWidthFromHeight", ctypes.c_float), # only used when getting camera transform
-                                    ("array", iw.EntityData * reply.numEntities),
+                                    ("entitiesData", iw.EntityData * reply.numEntities),
                                 ]
 
                                 def __str__(self):
-                                    return f"(AllEntitiesDataReply: success = {self.success}, message = {self.message.decode('utf-8')}, array = <Entity Data>)"
+                                    return f"(SceneSnapshotReply: success = {self.success}, message = {self.message.decode('utf-8')}, entitiesData = <Entity Data>)"
 
                             
-
-                            reply = AllEntitiesDataReply(success=True, message = b"Successfully obtained all entities")
+                            # initialize snapshot reply
+                            reply = SceneSnapshotReply(success = False, message = b"UNINITIALIZED_MESSAGE")
 
                             cameraWidthFromHeight = ctypes.c_float() # Note: declaring this here since passing in reply.cameraWidthFromHeight doesn't resolve to the underlying ctype
 
-                            framework.GetSnapshotData(shapshotStatusReply, snapshot, reply.cameraTransform, cameraWidthFromHeight, numShapshotEntities, reply.array)
+                            # make framework call to get full snapshot, (can't pass in SceneSnapshotReply so just pass in plain frameworkReply and copy status after)
+                            framework.GetSnapshotData(frameworkReply, snapshot, reply.cameraTransform, cameraWidthFromHeight, numShapshotEntities, reply.entitiesData)
+                            reply.success = frameworkReply.success
+                            reply.message = frameworkReply.message
+
                             reply.cameraWidthFromHeight = cameraWidthFromHeight
 
-                            # return entity array to mcp
+                            # return snapshot to client
                             if not sendReplyToApp(reply):
                                 break;
 
-                            framework.DisposeSnapshot(shapshotStatusReply, snapshot)
+                            framework.DisposeSnapshot(frameworkReply, snapshot)
 
                         case iw.Command.RemoveEntity:
                             
@@ -237,10 +258,10 @@ def runNetworkService():
                             
 
 
-                    print(f"To client: {reply}")
+                    
 
 
-def sendReplyToApp(reply: bytes) -> bool:
+def sendReplyToApp(reply) -> bool:
     # serialize client message
     replyBuffer = bytes(reply)
 
@@ -252,6 +273,7 @@ def sendReplyToApp(reply: bytes) -> bool:
         print("Error sending message to client: " + sendResultMessage)
         return False
 
+    print(f"To client: {reply}")
     return True
 
 # main

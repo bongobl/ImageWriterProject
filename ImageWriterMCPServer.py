@@ -59,19 +59,19 @@ def disconnectFromImageWriter():
         connToServer.close()
 
 # TODO: rename since this is now generalized to only optionally send commands (can merely act as a receiver)
-def sendCommandToApp(
+def communicateWithApp(
     command: iw.Command, 
     params, 
     ReplyType: type, 
-    connectToApp = True, 
-    disconnectFromApp = True):
+    connectAtStart = True, 
+    disconnectAtEnd = True):
 
     logger.info(f"To server: {params}")
 
     # connect to app
-    if connectToApp:
+    if connectAtStart:
         if not connectToImageWriterApp():
-            raise ToolError("sendCommandToApp(): Failed to connect to ImageWriter app")
+            raise ToolError("communicateWithApp(): Failed to connect to ImageWriter app")
 
     # send data (command and optionally params) to app
     if command is not None:
@@ -81,7 +81,7 @@ def sendCommandToApp(
         if not sendStatus:
             logger.error(f"Error sending command buffer to server: {sendResultMessage}\n\n")
             disconnectFromImageWriter()
-            raise ToolError(f"sendCommandToApp(): Failed to send command buffer to ImageWriter app: {sendResultMessage}")
+            raise ToolError(f"communicateWithApp(): Failed to send command buffer to ImageWriter app: {sendResultMessage}")
 
     # send params if required
     if params is not None:
@@ -91,7 +91,7 @@ def sendCommandToApp(
         if not sendStatus:
             logger.error(f"Error sending params buffer to server: {sendResultMessage}\n\n")
             disconnectFromImageWriter()
-            raise ToolError(f"sendCommandToApp(): Failed to send params buffer to ImageWriter app: {sendResultMessage}")
+            raise ToolError(f"communicateWithApp(): Failed to send params buffer to ImageWriter app: {sendResultMessage}")
 
     # receive reply
     if ReplyType is not None:
@@ -103,14 +103,14 @@ def sendCommandToApp(
             # log error message and return to connecting state
             logger.error(errorMessage)
             disconnectFromImageWriter()
-            raise ToolError("sendCommandToApp(): Failed to receive reply from ImageWriter app")
+            raise ToolError("communicateWithApp(): Failed to receive reply from ImageWriter app")
     
         # deserialize client message and log
         reply = ReplyType.from_buffer_copy(replyBuffer)
         logger.info(f"From server: {reply}")
 
     # disconnect from app
-    if disconnectFromApp:
+    if disconnectAtEnd:
         disconnectFromImageWriter()
 
     return reply
@@ -128,7 +128,7 @@ def setCameraTransform(
 
     logger.info(f"To server: {transformRaw}")
 
-    return sendCommandToApp(iw.Command.SetCameraTransform, transformRaw, iw.PlainReply).toMCPPayload()
+    return communicateWithApp(iw.Command.SetCameraTransform, transformRaw, iw.PlainReply).toMCPPayload()
 
 @mcp.tool()
 def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
@@ -138,7 +138,7 @@ def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
     returned widthFromHeight value
     """
 
-    return sendCommandToApp(iw.Command.GetCameraTransform, None, iw.TransformReply).toCameraMCPPayload()
+    return communicateWithApp(iw.Command.GetCameraTransform, None, iw.TransformReply).toCameraMCPPayload()
 
 @mcp.tool()
 def addEntity(
@@ -154,7 +154,7 @@ def addEntity(
     entityParams = iw.EntityData()
     entityParams.fromAddEntityMCPPayload(transform, color, zOrder, shape)
     
-    return sendCommandToApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
+    return communicateWithApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
 
 @mcp.tool()
 def modifyEntity(
@@ -182,7 +182,7 @@ def modifyEntity(
     if not reply.success:
         return reply
 
-    return sendCommandToApp(iw.Command.ModifyEntity, entityParams, iw.PlainReply).toMCPPayload()
+    return communicateWithApp(iw.Command.ModifyEntity, entityParams, iw.PlainReply).toMCPPayload()
     #return iw.PlainReplyMCPPayload(success=True, message=f"{entityParams}")
 
 @mcp.tool()
@@ -194,43 +194,47 @@ def getEntityData(
     """
 
     entityIdRaw = ctypes.c_uint64(entityId)
-    return sendCommandToApp(iw.Command.GetEntityData, entityIdRaw, iw.EntityDataReply).toMCPPayload()
+    return communicateWithApp(iw.Command.GetEntityData, entityIdRaw, iw.EntityDataReply).toMCPPayload()
 
 @mcp.tool()
 def queryScene():
     
     """
-    Return the scene's current state
+    Return the scene's current state containing the camera transform and data on all entities
     """
-    fetchNumEntitiesReply = sendCommandToApp(iw.Command.GetAllEntityData, None, iw.NumEntitiesReply, disconnectFromApp = False)
+
+    # tell app to make a snapshot of the scene, it will immediately return to us the number of entities
+    fetchNumEntitiesReply = communicateWithApp(iw.Command.GetSceneSnapshot, None, iw.NumEntitiesReply, disconnectAtEnd = False)
 
     if not fetchNumEntitiesReply.success:
+        disconnectFromImageWriter() # prev call to communicateWithApp did not disconnect so we must call it manually here
         return iw.PlainReplyMCPPayload(success = False, message = fetchNumEntitiesReply.message.decode('utf-8'))
 
-    # TODO: rename since it holds all data in the scene
-    class AllEntitiesDataReply(ctypes.Structure):
+    # use numEntities to define snapshot payload that it will send us next
+    class SceneSnapshotReply(ctypes.Structure):
         _fields_ = [
             ("success", ctypes.c_bool),
             ("message", ctypes.c_char * iw.MAX_REPLY_MESSAGE_LENGTH),
             ("cameraTransform", iw.Transform),
             ("cameraWidthFromHeight", ctypes.c_float), # only used when getting camera transform
-            ("array", iw.EntityData * fetchNumEntitiesReply.numEntities),
+            ("entitiesData", iw.EntityData * fetchNumEntitiesReply.numEntities),
         ]
 
         def __str__(self):
-            return f"(AllEntitiesDataReply: success = {self.success}, message = {self.message.decode('utf-8')}, array = <Entity Data>)"
+            return f"(SceneSnapshotReply: success = {self.success}, message = {self.message.decode('utf-8')}, entitiesData = <Entity Data>)"
 
-    allEntitiesDataReply = sendCommandToApp(None, None, AllEntitiesDataReply, connectToApp = False)
+    # receive snapshot payload from app
+    sceneSnapshotReply = communicateWithApp(None, None, SceneSnapshotReply, connectAtStart = False)
     
-    if not allEntitiesDataReply.success:
-        return iw.PlainReplyMCPPayload(success = False, message = allEntitiesDataReply.message.decode('utf-8'))
+    if not sceneSnapshotReply.success:
+        return iw.PlainReplyMCPPayload(success = False, message = sceneSnapshotReply.message.decode('utf-8'))
 
-    # parse entity array
+    # produce json representation of entity array
     parsedEntities = []
-    for entityRaw in allEntitiesDataReply.array:
+    for entityRaw in sceneSnapshotReply.entitiesData:
         if entityRaw.entityType == iw.EntityType.ELLIPSE:
             entityModel = {
-                "entityId": entityRaw.entityIdToModify, 
+                "entityId": entityRaw.entityId, 
                 "shape": "ellipse",
                 "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
                 "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
@@ -240,7 +244,7 @@ def queryScene():
             parsedEntities.append(entityModel)
         elif entityRaw.entityType == iw.EntityType.RECTANGLE:
             entityModel = {
-                "entityId": entityRaw.entityIdToModify, 
+                "entityId": entityRaw.entityId, 
                 "shape": "rectangle",
                 "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
                 "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
@@ -250,7 +254,7 @@ def queryScene():
             parsedEntities.append(entityModel)
         elif entityRaw.entityType == iw.EntityType.TRIANGLE:
             entityModel = {
-                "entityId": entityRaw.entityIdToModify, 
+                "entityId": entityRaw.entityId, 
                 "shape": "triangle",
                 "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
                 "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
@@ -261,14 +265,17 @@ def queryScene():
             }
             parsedEntities.append(entityModel)
 
-    ret = iw.SceneDataReplyModel(
+    # construct final json model for harness
+    snapshotModel = iw.SceneDataReplyModel(
         success = True, 
-        message= "All entities obtained successfully", 
-        cameraTransform = allEntitiesDataReply.cameraTransform.toMCPPayload(),
-        cameraWidthFromHeight = allEntitiesDataReply.cameraWidthFromHeight,
+        message = "Scene queried successfully", 
+        cameraTransform = sceneSnapshotReply.cameraTransform.toMCPPayload(),
+        cameraWidthFromHeight = sceneSnapshotReply.cameraWidthFromHeight,
         numEntities = fetchNumEntitiesReply.numEntities, 
-        entities = parsedEntities)
-    return ret
+        entities = parsedEntities
+    )
+
+    return snapshotModel
 
 @mcp.tool()
 def removeEntity(
@@ -279,13 +286,13 @@ def removeEntity(
     """
 
     entityIdRaw = ctypes.c_uint64(entityId)
-    return sendCommandToApp(iw.Command.RemoveEntity, entityIdRaw, iw.PlainReply).toMCPPayload()
+    return communicateWithApp(iw.Command.RemoveEntity, entityIdRaw, iw.PlainReply).toMCPPayload()
 
 @mcp.tool()
 def removeAllEntities() -> iw.PlainReplyMCPPayload:
     """clears the world of all spawned entities"""
 
-    return sendCommandToApp(iw.Command.RemoveAllEntities, None, iw.PlainReply).toMCPPayload()
+    return communicateWithApp(iw.Command.RemoveAllEntities, None, iw.PlainReply).toMCPPayload()
 
 if __name__ == "__main__":
 

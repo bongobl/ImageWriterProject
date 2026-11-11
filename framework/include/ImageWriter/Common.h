@@ -7,8 +7,6 @@ struct Vec2 {
     float y = 0;
 };
 
-// TODO: don't let scale go below or equal to 0, 
-// rename angle to orientation and flop order with scale
 struct Transform {
     Vec2 position = { 0,0 };
     float orientation = 0;
@@ -79,9 +77,9 @@ struct EntityData {
         TriangleData triangle;
     };
 
-    uint64_t entityIdToModify = 0; // also used for scene lookup, TODO: rename to just entityId
-    uint32_t fieldsToModify = 0x0;
-    uint8_t transformFieldApplyModes = 0x0;
+    uint64_t entityId = 0;
+    uint32_t fieldsToModify = 0x0; // stores EntityDataModifiable
+    uint8_t transformFieldApplyModes = 0x0; // stores TransformApplyModes
 };
 
 // Replies

@@ -84,8 +84,7 @@ class Scene {
 
 	GridView m_GridView;
 
-	// TODO: rename so we don't have m_Entities.m_Entities
-	EntityList m_Entities;
+	EntityList m_EntityList;
 
 	Camera m_Camera;
 

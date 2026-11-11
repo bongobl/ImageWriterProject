@@ -15,7 +15,7 @@ class Command(IntEnum):
     AddEntity = 3
     ModifyEntity = 4
     GetEntityData = 5
-    GetAllEntityData = 6
+    GetSceneSnapshot = 6
     RemoveEntity = 7
     RemoveAllEntities = 8
     Disconnecting = 9

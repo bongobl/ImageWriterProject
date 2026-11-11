@@ -200,7 +200,7 @@ EntityData Entity::getData()
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.ellipse = ellipse,
-				.entityIdToModify = m_Id
+				.entityId = m_Id
 			};
 
 		case Type::Rectangle:
@@ -210,7 +210,7 @@ EntityData Entity::getData()
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.rectangle = rectangle,
-				.entityIdToModify = m_Id
+				.entityId = m_Id
 			};
 		case Type::Triangle: {
 			return {
@@ -219,7 +219,7 @@ EntityData Entity::getData()
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.triangle = triangle,
-				.entityIdToModify = m_Id
+				.entityId = m_Id
 			};
 		}
 		default:
@@ -427,7 +427,7 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 	// tentatively set success string
 	std::string message = "";
 
-	uint64_t entityId = params.entityIdToModify;
+	uint64_t entityId = params.entityId;
 
 	auto mapIter = m_EntityIterFromId.find(entityId);
 

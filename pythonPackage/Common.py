@@ -252,9 +252,9 @@ class EntityData(ctypes.Structure):
         ("color", Color),
         ("zOrder", ctypes.c_int),
         ("shapeDataUnion", ShapeDataUnion),
-        ("entityIdToModify", ctypes.c_uint64),
-        ("fieldsToModify", ctypes.c_uint32),
-        ("transformFieldApplyModes", ctypes.c_uint8),
+        ("entityId", ctypes.c_uint64),
+        ("fieldsToModify", ctypes.c_uint32), # stores EntityDataModifiable
+        ("transformFieldApplyModes", ctypes.c_uint8), # stores TransformApplyModes
     ]
     _anonymous_ = ("shapeDataUnion",)
 
@@ -267,7 +267,7 @@ class EntityData(ctypes.Structure):
         ellipse = None,
         rectangle = None,
         triangle = None,
-        entityIdToModify = 0,
+        entityId = 0,
         fieldsToModify = 0x0,
         transformFieldApplyModes = False
     ):
@@ -276,7 +276,7 @@ class EntityData(ctypes.Structure):
         self.transform = transform
         self.color = color
         self.zOrder = zOrder
-        self.entityIdToModify = entityIdToModify
+        self.entityId = entityId
         self.fieldsToModify = fieldsToModify
         self.transformFieldApplyModes = transformFieldApplyModes
 
@@ -306,7 +306,7 @@ class EntityData(ctypes.Structure):
             case _:
                 typeStr = "Unrecognized type value"
 
-        return f"(EntityData: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + f"), entityIdToModify = {self.entityIdToModify}, fieldsToModify = 0x{self.fieldsToModify:x}, transformFieldApplyModes = 0x{self.transformFieldApplyModes:x}"
+        return f"(EntityData: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + f"), entityId = {self.entityId}, fieldsToModify = 0x{self.fieldsToModify:x}, transformFieldApplyModes = 0x{self.transformFieldApplyModes:x}"
 
     # creation
     def fromAddEntityMCPPayload(self, transform, color, zOrder, shapeDataUnion):
@@ -328,7 +328,7 @@ class EntityData(ctypes.Structure):
     # modification
     def fromModifyEntityMCPPayload(self, entityId, shapeType, positionMod, orientationMod, scaleMod, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3):
      
-        self.entityIdToModify = ctypes.c_uint64(entityId)
+        self.entityId = ctypes.c_uint64(entityId)
 
         errorsMessages = []
 

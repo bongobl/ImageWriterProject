@@ -315,7 +315,6 @@ extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData insta
 
 	pReply->success = true;
 
-	// TODO: move to entity class
 	strcpy(pReply->message, "All entities removed successfully");
 	return pReply->success = true;
 }

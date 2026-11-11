@@ -373,7 +373,15 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_MakeSnapshot(HImageWrite
     pSnapshot->pData = (SnapshotData*)malloc(sizeof(SnapshotData));
     SnapshotData* pSnapshotData = (SnapshotData*)pSnapshot->pData;
     *pSnapshotData = {};
-    return pInstanceData->pfnCore_Scene_MakeSnapshot(*pInstanceData, pReply, pSnapshotData);
+
+    bool result = pInstanceData->pfnCore_Scene_MakeSnapshot(*pInstanceData, pReply, pSnapshotData);
+    if (!result) {
+        // Note: no need to free pSnapshotData->pEntitiesData, if it failed in Core then it's Core's job to clean up its allocations
+        free(pSnapshotData);
+        pSnapshot->pData = nullptr;
+    }
+    
+    return result;
 }
 
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_DisposeSnapshot(HSnapshot* pSnapshot, PlainReply* pReply)
@@ -388,11 +396,14 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_DisposeSnapshot(HSnapsho
     
     SnapshotData* pSnapshotData = (SnapshotData*)pSnapshot->pData;
 
-    if (pSnapshotData->pEntitiesData != nullptr) {
-        free(pSnapshotData->pEntitiesData);
-    }
+    if (pSnapshotData) {
+        if (pSnapshotData->pEntitiesData != nullptr) {
+            free(pSnapshotData->pEntitiesData);
+        }
 
-    free(pSnapshotData);
+        free(pSnapshotData);
+    }
+    
     pSnapshot->pData = nullptr;
 
     pReply->success = true;

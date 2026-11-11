@@ -83,7 +83,7 @@ def createSomeSampleShapes():
             color = iw.Color(red = 1, green = 0, blue = 0, alpha = 1),
             zOrder = 47,
             ellipse = iw.EllipseData(halfExtents = iw.Vec2(1, 0.7)),
-            entityIdToModify = 57,
+            entityId = 57,
             fieldsToModify = iw.EntityDataModifiable.TYPE | iw.EntityDataModifiable.COLOR | iw.EntityDataModifiable.POSITION | iw.EntityDataModifiable.Z_ORDER,
         )
     ):

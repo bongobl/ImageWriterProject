@@ -129,7 +129,7 @@ void runImageWriterFlow(HImageWriterInstance instance)
 			.ellipse = {
 				.halfExtents = { 1, 0.7f }
 			},
-			.entityIdToModify = 57,
+			.entityId = 57,
 			.fieldsToModify = ENTITY_DATA_MODIFIABLE_TYPE | ENTITY_DATA_MODIFIABLE_COLOR | ENTITY_DATA_MODIFIABLE_POSITION | ENTITY_DATA_MODIFIABLE_Z_ORDER,
 		})
 	)
@@ -181,15 +181,18 @@ void runImageWriterFlow(HImageWriterInstance instance)
 		}
 	}
 
-	system("pause");
+	
 	HSnapshot snapshot;
 	Transform cameraTransform;
 	float cameraWidthFromHeight;
 	uint64_t numEntities;
 	std::vector<EntityData> allEntitiesData;
+
+	system("pause");
 	if (!ImageWriter_Scene_MakeSnapshot(instance, &plainReply, &snapshot))
 	{
 		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+		return;
 	}
 
 	system("pause");
@@ -199,9 +202,8 @@ void runImageWriterFlow(HImageWriterInstance instance)
 	}
 
 	allEntitiesData.resize(numEntities);
+
 	system("pause");
-	
-	
 	if (!ImageWriter_Snapshot_ReadData(snapshot, &plainReply, &cameraTransform, &cameraWidthFromHeight, &numEntities, allEntitiesData.data()))
 	{
 		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
