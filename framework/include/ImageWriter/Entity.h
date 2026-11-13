@@ -29,13 +29,17 @@ struct Entity {
 
 	mutable std::shared_mutex m_Mutex;
 
+	Entity* m_pParent;
+	std::list<Entity*> m_Children;
+
 	union {
 		EllipseData ellipse;
 		RectangleData rectangle;
 		TriangleData triangle;
 	};
 	
-	Entity(uint64_t id, EntityData entityData);
+	Entity(uint64_t id, EntityData entityData, Entity* pParent);
+	Entity(const Entity& other) = delete;
 	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const;
 	bool validateModifyParams(EntityData params, std::string* pMessage) const;
 	void modify(EntityData params);
@@ -54,14 +58,22 @@ struct EntityGeometry : public sf::VertexArray {
 		renderWindow.draw(*this, &vertexShader);
 	};
 };
+
+// TODO: rename to scene root
 struct EntityList {
 
 	// Managing
 	using ListT = std::list<Entity*>;
 	using IterT = ListT::iterator;
 	uint64_t m_NextEntityId;
+
+	// entity iterators from id map
 	std::unordered_map<uint64_t, IterT> m_EntityIterFromId;
+	mutable std::shared_mutex m_EntityIterFromIdMutex;
+
+	// Entity root
 	std::list<Entity*> m_Entities;
+	mutable std::shared_mutex m_EntitiesMutex;
 
 	// Rendering
 	EntityGeometry m_EllipseVerts;
@@ -69,14 +81,31 @@ struct EntityList {
 	EntityGeometry m_TriangleVerts;
 	sf::Shader m_VertexShader;
 	
-	mutable std::shared_mutex m_EntitiesMutex;
+	
 public:
 
 	EntityList();
 	~EntityList();
 
-	bool addEntity(EntityData params, uint64_t* pNewEntityId = nullptr, int* pNewZOrder = nullptr, std::string* pMessage = nullptr);
-	bool removeEntity(uint64_t id, std::string* pMessage = nullptr);
+	bool createSpaceForNewEntity(
+		std::list<Entity*>& currSiblings, 
+		std::shared_mutex& currSiblingsMutex, int& zOrder, IterT& iter,
+		std::string* pMessage = nullptr);
+
+	bool removeSpaceForEntity(
+		std::list<Entity*>& currSiblings,
+		std::shared_mutex& currSiblingsMutex,
+		IterT& entityIter,
+		std::string* pMessage = nullptr);
+
+	bool changeEntityZOrder(
+		std::list<Entity*>& currSiblings,
+		std::shared_mutex& currSiblingsMutex,
+		IterT& entityIter,
+		int& zOrder,
+		std::string* pMessage = nullptr);
+
+
 	void dummyUpdateShapes(float deltaTime);
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
 	void removeAllEntities();
@@ -84,12 +113,13 @@ public:
 	EntityGeometry* getGeometryForEntity(Entity::Type type);
 
 	void API_addEntity(AddEntityReply* pReply, EntityData params);
+	void API_removeEntity(PlainReply* pReply, uint64_t entityId);
 	void API_getEntityData(EntityDataReply* pReply, uint64_t entityId);
 	void API_modifyEntity(PlainReply* pReply, EntityData params);
-	void API_removeEntity(PlainReply* pReply, uint64_t entityId);
+	
 
 private:
 
 	// Brute force Z order setting
-	void realignAllEntityZOrders();
+	void realignAllEntityZOrders(std::list<Entity*>& currSiblings);
 };
