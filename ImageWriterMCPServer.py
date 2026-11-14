@@ -141,18 +141,19 @@ def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
     return communicateWithApp(iw.Command.GetCameraTransform, None, iw.TransformReply).toCameraMCPPayload()
 
 @mcp.tool()
-def addEntity(
-    transform: Annotated[iw.TransformMCPPayload, Field(description = f"specifies how to place this new entity.")],
+def addEntity1(
+    transform: Annotated[iw.TransformModelForEntityAdding, Field(description = f"the transform of this new entity")],
     color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape")],
     zOrder: Annotated[int, Field(description = f"the Z order, {iw.Z_ORDER_DOC}")],
-    shape: Annotated[iw.ShapeDataUnionMCPPayload, Field(description = iw.SHAPE_DATA_UNION_DOC)]
+    shape: Annotated[iw.ShapeDataUnionMCPPayload, Field(description = iw.SHAPE_DATA_UNION_DOC)],
+    parentEntityId: Annotated[int, Field(description = f"the id of the entity that will be this new one's parent in the scene graph entity hierarchy, omit it for the entity to get added to the top level of the hierarchy")] = None,
 ):
 
     """
-    Places a new entity within the world at specified transform and color
+    Places a new entity within the world
     """
     entityParams = iw.EntityData()
-    entityParams.fromAddEntityMCPPayload(transform, color, zOrder, shape)
+    entityParams.fromAddEntityMCPPayload(transform, color, zOrder, shape, parentEntityId)
     
     return communicateWithApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
 
@@ -239,6 +240,7 @@ def queryScene():
                 "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
                 "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
                 "zOrder": entityRaw.zOrder,
+                "parentEntityId": entityRaw.parentEntityId,
                 "halfExtents": {"x": entityRaw.ellipse.halfExtents.x, "y": entityRaw.ellipse.halfExtents.y},
             }
             parsedEntities.append(entityModel)
@@ -249,6 +251,7 @@ def queryScene():
                 "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
                 "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
                 "zOrder": entityRaw.zOrder,
+                "parentEntityId": entityRaw.parentEntityId,
                 "halfExtents": {"x": entityRaw.rectangle.halfExtents.x, "y": entityRaw.rectangle.halfExtents.y},
             }
             parsedEntities.append(entityModel)
@@ -259,6 +262,7 @@ def queryScene():
                 "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
                 "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
                 "zOrder": entityRaw.zOrder,
+                "parentEntityId": entityRaw.parentEntityId,
                 "point1": {"x": entityRaw.triangle.point1.x, "y": entityRaw.triangle.point1.y},
                 "point2": {"x": entityRaw.triangle.point2.x, "y": entityRaw.triangle.point2.y},
                 "point3": {"x": entityRaw.triangle.point3.x, "y": entityRaw.triangle.point3.y},

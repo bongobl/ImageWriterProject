@@ -33,9 +33,49 @@ static bool validateZOrder(int& zOrder, int numEntities, std::string* pMessage)
 	return true;
 }
 
+Entity::DrawUtils::DrawUtils() :
+	m_EllipseVerts(sf::PrimitiveType::TriangleFan, 100),
+	m_RectangleVerts(sf::PrimitiveType::TriangleStrip, 4),
+	m_TriangleVerts(sf::PrimitiveType::Triangles, 3)
+{
+
+	m_RectangleVerts[0].position = sf::Vector2f(1, 1);
+	m_RectangleVerts[1].position = sf::Vector2f(-1, 1);
+	m_RectangleVerts[2].position = sf::Vector2f(1, -1);
+	m_RectangleVerts[3].position = sf::Vector2f(-1, -1);
+
+
+	constexpr float TWO_PI = 3.14159265358979f * 2;
+
+	int numSlices = m_EllipseVerts.getVertexCount() - 2;
+	float sliceSize = (float)TWO_PI / numSlices;
+
+	m_EllipseVerts[0].position = sf::Vector2f(0, 0);
+	for (int i = 1; i < m_EllipseVerts.getVertexCount(); ++i) {
+		float angle = (i - 1) * sliceSize;
+		m_EllipseVerts[i].position = sf::Vector2f(cos(angle), sin(angle));
+	}
+
+	if (!m_VertexShader.loadFromFile("entityShader.vert", sf::Shader::Type::Vertex)) {
+		std::cerr << "Vertex shader not found" << std::endl;
+		exit(1);
+	}
+}
+
+EntityGeometry* Entity::DrawUtils::getGeometryForEntity(Entity::Type type)
+{
+	switch (type) {
+	case Entity::Type::Ellipse:
+		return &m_EllipseVerts;
+	case Entity::Type::Rectangle:
+		return &m_RectangleVerts;
+	case Entity::Type::Triangle:
+		return &m_TriangleVerts;
+	}
+	return nullptr;
+}
 Entity::Entity(uint64_t id, EntityData entityData, Entity* pParent) :
 	m_Type((Type)entityData.entityType),
-	m_Transform(entityData.transform),
 	m_Color(entityData.color),
 	m_Id(id),
 	m_zOrder(entityData.zOrder),
@@ -57,6 +97,20 @@ Entity::Entity(uint64_t id, EntityData entityData, Entity* pParent) :
 		default:
 			std::cerr << "Entity(): Unknown type enum value of " << entityData.entityType << std::endl;
 			exit(1);
+	}
+
+	if (entityData.transformSpace == TRANSFORM_SPACE_LOCAL) {
+		m_Transform = entityData.transform;
+		syncTransforms(true);
+	}
+	else if (entityData.transformSpace == TRANSFORM_SPACE_WORLD)
+	{
+		m_WorldTransform = entityData.transform;
+		syncTransforms(false);
+	}
+	else {
+		// the caller should guard against this case
+		exit(1);
 	}
 }
 
@@ -156,18 +210,28 @@ void Entity::modify(EntityData params)
 		}
 		
 	}
+
+	// transform modifiers
+	bool localTransformModified = false;
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_POSITION) {
 		bool asOffset = params.transformFieldApplyModes & TRANSFORM_APPLY_MODE_POSITION_AS_OFFSET;
 		m_Transform.position = asOffset ? (m_Transform.position + params.transform.position) : params.transform.position;
+		localTransformModified = true;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_ORIENTATION) {
 		bool asOffset = params.transformFieldApplyModes & TRANSFORM_APPLY_MODE_ORIENTATION_AS_OFFSET;
 		m_Transform.orientation = asOffset ? (m_Transform.orientation + params.transform.orientation) : params.transform.orientation;
+		localTransformModified = true;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_SCALE) {
 		bool asOffset = params.transformFieldApplyModes & TRANSFORM_APPLY_MODE_SCALE_AS_OFFSET;
 		m_Transform.scale = asOffset ? (m_Transform.scale * params.transform.scale) : params.transform.scale;
+		localTransformModified = true;
 	}
+	if (localTransformModified) {
+		syncTransforms(true);
+	}
+
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_COLOR) {
 		m_Color = params.color;
 	}
@@ -188,8 +252,21 @@ void Entity::modify(EntityData params)
 	}
 }
 
+void Entity::updateDummy(float deltaTime)
+{
+	std::unique_lock<std::shared_mutex> lock(m_Mutex);
+	m_Transform.orientation += sf::radians(deltaTime).asDegrees();
+	syncTransforms(true);
+
+	for (auto iter = m_Children.begin(); iter != m_Children.end(); ++iter) {
+		Entity* pCurrEntity = *iter;
+
+		pCurrEntity->updateDummy(deltaTime);
+	}
+}
 EntityData Entity::getData()
 {
+	uint64_t parentId = m_pParent ? m_pParent->m_Id : ENTITY_ROOT_ID;
 	switch (m_Type) {
 		case Type::None:
 			std::cerr << "Entity::getData(): Entity type was 'None' " << std::endl;
@@ -201,7 +278,8 @@ EntityData Entity::getData()
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.ellipse = ellipse,
-				.entityId = m_Id
+				.entityId = m_Id,
+				.parentEntityId = parentId
 			};
 
 		case Type::Rectangle:
@@ -211,7 +289,8 @@ EntityData Entity::getData()
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.rectangle = rectangle,
-				.entityId = m_Id
+				.entityId = m_Id,
+				.parentEntityId = parentId
 			};
 		case Type::Triangle: {
 			return {
@@ -220,7 +299,8 @@ EntityData Entity::getData()
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.triangle = triangle,
-				.entityId = m_Id
+				.entityId = m_Id,
+				.parentEntityId = parentId
 			};
 		}
 		default:
@@ -229,33 +309,48 @@ EntityData Entity::getData()
 	}
 }
 
-EntityList::EntityList() :
-	m_EllipseVerts(sf::PrimitiveType::TriangleFan, 100),
-	m_RectangleVerts(sf::PrimitiveType::TriangleStrip, 4),
-	m_TriangleVerts(sf::PrimitiveType::Triangles, 3),
-	m_NextEntityId(0x0)
+void Entity::draw(sf::RenderWindow& window, DrawUtils& drawUtils) const
 {
-	m_RectangleVerts[0].position = sf::Vector2f(1, 1);
-	m_RectangleVerts[1].position = sf::Vector2f(-1, 1);
-	m_RectangleVerts[2].position = sf::Vector2f(1, -1);
-	m_RectangleVerts[3].position = sf::Vector2f(-1, -1);
+	drawUtils.m_VertexShader.setUniform("worldFromModel", sf::Glsl::Mat4(sf::fromCore(m_WorldTransform)));
+	drawUtils.m_VertexShader.setUniform("color", sf::Glsl::Vec4(sf::fromCore(m_Color)));
 
+	EntityGeometry* pEntityGeometry = drawUtils.getGeometryForEntity(m_Type);
+	applyCustomDrawingProperties(*pEntityGeometry, drawUtils.m_VertexShader);
+	pEntityGeometry->draw(window, drawUtils.m_VertexShader);
 
-	constexpr float TWO_PI = 3.14159265358979f * 2;
+	// Note this doesn't respect Z order of parent among siblings
+	for (auto iter = m_Children.begin(); iter != m_Children.end(); ++iter) {
+		Entity* pCurrChildEntity = *iter;
+		pCurrChildEntity->draw(window, drawUtils);
+	}
+}
 
-	int numSlices = m_EllipseVerts.getVertexCount() - 2;
-	float sliceSize = (float)TWO_PI / numSlices;
-
-	m_EllipseVerts[0].position = sf::Vector2f(0, 0);
-	for (int i = 1; i < m_EllipseVerts.getVertexCount(); ++i) {
-		float angle = (i - 1) * sliceSize;
-		m_EllipseVerts[i].position = sf::Vector2f(cos(angle), sin(angle));
+// Private helpers
+void Entity::syncTransforms(bool syncWorldToLocal)
+{
+	if (syncWorldToLocal) {
+		// if m_Transform was just modified and we need to update m_WorldTransform
+		m_WorldTransform = m_pParent ? m_pParent->m_WorldTransform * m_Transform : m_Transform;
+	}
+	else {
+		// if m_WorldTransform was just modified and we need to update m_Transform
+		m_Transform = m_pParent ? inverse(m_pParent->m_WorldTransform) * m_WorldTransform : m_WorldTransform;
 	}
 
-	if (!m_VertexShader.loadFromFile("entityShader.vert", sf::Shader::Type::Vertex)) {
-		std::cerr << "Vertex shader not found" << std::endl;
-		exit(1);
+	// update the world transforms of children
+	for (auto iter = m_Children.begin(); iter != m_Children.end(); ++iter) {
+		Entity* pCurrEntity = *iter;
+
+		// changing 'this' entity's transform will only ever change its childrens' world transforms
+		// so we always sync their world to their local
+		pCurrEntity->syncTransforms(true);	
 	}
+}
+
+EntityList::EntityList() :
+	m_NextEntityId(ENTITY_ROOT_ID + 1)
+{
+	
 }
 
 EntityList::~EntityList()
@@ -263,8 +358,9 @@ EntityList::~EntityList()
 	removeAllEntities();
 }
 
-bool EntityList::createSpaceForNewEntity(
-	std::list<Entity*>& currSiblings,
+bool EntityList::addEntityToList(
+	Entity* pNewEntity,
+	ListT& currSiblings,
 	std::shared_mutex& currSiblingsMutex, int& zOrder, IterT& iter,
 	std::string* pMessage)
 {
@@ -282,7 +378,7 @@ bool EntityList::createSpaceForNewEntity(
 		++iter;
 	}
 
-	iter = currSiblings.insert(iter, nullptr);
+	iter = currSiblings.insert(iter, pNewEntity);
 
 	// Brute force way to align all entity Z-orders to their indices
 	realignAllEntityZOrders(currSiblings);
@@ -290,8 +386,8 @@ bool EntityList::createSpaceForNewEntity(
 	return true;
 }
 
-bool EntityList::removeSpaceForEntity(
-	std::list<Entity*>& currSiblings,
+bool EntityList::removeEntityFromList(
+	ListT& currSiblings,
 	std::shared_mutex& currSiblingsMutex, 
 	IterT& entityIter,
 	std::string* pMessage)
@@ -307,8 +403,8 @@ bool EntityList::removeSpaceForEntity(
 	return true;
 }
 
-bool EntityList::changeEntityZOrder(
-	std::list<Entity*>& currSiblings,
+bool EntityList::changeEntityZOrderInList(
+	ListT& currSiblings,
 	std::shared_mutex& currSiblingsMutex,
 	IterT& entityIter,
 	int& zOrder,
@@ -342,8 +438,8 @@ void EntityList::dummyUpdateShapes(float deltaTime) {
 
 	for (auto iter = m_Entities.begin(); iter != m_Entities.end(); ++iter) {
 		Entity* pCurrEntity = *iter;
-		std::unique_lock<std::shared_mutex> lock(pCurrEntity->m_Mutex);
-		pCurrEntity->m_Transform.orientation += sf::radians(deltaTime).asDegrees();
+
+		pCurrEntity->updateDummy(deltaTime);
 	}
 }
 
@@ -351,17 +447,14 @@ void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
 
 	std::shared_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
-	m_VertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
+	// homogFromWorld is the same for all entities
+	m_DrawUtils.m_VertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
 
 	for (auto iter = m_Entities.begin(); iter != m_Entities.end(); ++iter) {
 		const Entity* pCurrEntity = *iter;
 
-		m_VertexShader.setUniform("worldFromModel", sf::Glsl::Mat4(sf::fromCore(pCurrEntity->m_Transform)));
-		m_VertexShader.setUniform("color", sf::Glsl::Vec4(sf::fromCore(pCurrEntity->m_Color)));
-
-		EntityGeometry* pEntityGeometry = getGeometryForEntity(pCurrEntity->m_Type);
-		pCurrEntity->applyCustomDrawingProperties(*pEntityGeometry, m_VertexShader);
-		pEntityGeometry->draw(window, m_VertexShader);
+		pCurrEntity->draw(window, m_DrawUtils);
+		
 	}
 }
 
@@ -376,19 +469,6 @@ void EntityList::removeAllEntities() {
 	m_EntityIterFromId.clear();
 }
 
-EntityGeometry* EntityList::getGeometryForEntity(Entity::Type type)
-{
-	switch (type) {
-	case Entity::Type::Ellipse:
-		return &m_EllipseVerts;
-	case Entity::Type::Rectangle:
-		return &m_RectangleVerts;
-	case Entity::Type::Triangle:
-		return &m_TriangleVerts;
-	}
-	return nullptr;
-}
-
 void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 {
 
@@ -396,17 +476,40 @@ void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 
 	std::string message = "";
 
+	Entity* pParentEntity = nullptr;
+	ListT* pEntityList = &m_Entities;
+	std::shared_mutex* pEntityListMutex = &m_EntitiesMutex;
+
+	if (params.parentEntityId != ENTITY_ROOT_ID) {
+
+		auto mapIter = m_EntityIterFromId.find(params.parentEntityId);
+
+		// If not found in map
+		if (mapIter == m_EntityIterFromId.end()) {
+			std::cerr << "Parent entity id " << params.parentEntityId << " not found in m_EntityIterFromId map" << std::endl;
+
+			message = "No entity with a given ID of " + std::to_string(params.parentEntityId) + " found";
+			strcpy(pReply->message, message.c_str());
+			pReply->success = false;
+			return;
+		}
+
+		pParentEntity = *mapIter->second;
+		pEntityList = &pParentEntity->m_Children;
+		pEntityListMutex = &pParentEntity->m_Mutex;
+	}
+
+
 	IterT listIter;
-	pReply->success = createSpaceForNewEntity(m_Entities, m_EntitiesMutex, params.zOrder, listIter, &message);
+	Entity* newEntity = new Entity(m_NextEntityId, params, pParentEntity);
+	pReply->success = addEntityToList(newEntity, *pEntityList, *pEntityListMutex, params.zOrder, listIter, &message);
 
 	if (!pReply->success) {
 
+		delete newEntity;
 		strcpy(pReply->message, message.c_str());
 		return;
 	}
-
-	// create new entity at location
-	*listIter = new Entity(m_NextEntityId, params, nullptr /*parent*/);
 
 	// Update bookkeeping and output params
 	m_EntityIterFromId[m_NextEntityId] = listIter;
@@ -446,7 +549,7 @@ void EntityList::API_removeEntity(PlainReply* pReply, uint64_t entityId)
 	IterT entityIter = mapIter->second;
 	Entity* pPluckedEntity = *entityIter;
 
-	pReply->success = removeSpaceForEntity(m_Entities, m_EntitiesMutex, entityIter, &message);
+	pReply->success = removeEntityFromList(m_Entities, m_EntitiesMutex, entityIter, &message);
 
 	// delete entity
 	delete pPluckedEntity;
@@ -528,7 +631,7 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 	// Validate and handle Z order in one shot
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_Z_ORDER && params.zOrder != pEntity->m_zOrder) {
 
-		pReply->success = changeEntityZOrder(m_Entities, m_EntitiesMutex, currLocation, params.zOrder, &message);
+		pReply->success = changeEntityZOrderInList(m_Entities, m_EntitiesMutex, currLocation, params.zOrder, &message);
 
 		if (!pReply->success)
 		{

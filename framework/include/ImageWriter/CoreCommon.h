@@ -59,6 +59,22 @@ inline const Vec2 operator*(const Transform& transform, const Vec2& orig)
 	};
 }
 
+inline const Transform operator*(const Transform& A, const Transform& B) 
+{
+	constexpr float deg_to_rad = 0.01745329251f;
+	float cosine = cos(A.orientation * deg_to_rad);
+	float sine = sin(A.orientation * deg_to_rad);
+
+	return {
+		.position = {
+			.x = A.position.x + (cosine * B.position.x - sine * B.position.y) * A.scale,
+			.y = A.position.y + (sine * B.position.x + cosine * B.position.y) * A.scale
+		},
+		.orientation = A.orientation + B.orientation,
+		.scale = A.scale * B.scale
+	};
+}
+
 inline const Transform inverse(const Transform& orig)
 {
 	constexpr float deg_to_rad = 0.01745329251f;

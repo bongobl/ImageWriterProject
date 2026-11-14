@@ -1,5 +1,7 @@
 #pragma once
 #define MAX_REPLY_MESSAGE_LENGTH 512
+#define ENTITY_ROOT_ID 0x0
+
 #include <stdint.h>
 
 struct Vec2 {
@@ -14,9 +16,16 @@ struct Transform {
 };
 
 enum TransformApplyModes {
+    TRANSFORM_APPLY_MODE_NONE = 0x0,
     TRANSFORM_APPLY_MODE_POSITION_AS_OFFSET = 1 << 0x0,
     TRANSFORM_APPLY_MODE_ORIENTATION_AS_OFFSET = 1 << 0x1,
     TRANSFORM_APPLY_MODE_SCALE_AS_OFFSET = 1 << 0x2,
+};
+
+enum TransformSpace {
+    TRANSFORM_SPACE_SELF = 0,
+    TRANSFORM_SPACE_LOCAL = 1,
+    TRANSFORM_SPACE_WORLD = 2,
 };
 
 struct Color {
@@ -53,6 +62,7 @@ struct TriangleData {
 };
 
 enum EntityDataModifiable {
+    ENTITY_DATA_MODIFIABLE_NONE = 0x0,
     ENTITY_DATA_MODIFIABLE_TYPE = 1 << 0x0,
     ENTITY_DATA_MODIFIABLE_POSITION = 1 << 0x1,
     ENTITY_DATA_MODIFIABLE_ORIENTATION = 1 << 0x2,
@@ -77,9 +87,11 @@ struct EntityData {
         TriangleData triangle;
     };
 
-    uint64_t entityId = 0;
-    uint32_t fieldsToModify = 0x0; // stores EntityDataModifiable
-    uint8_t transformFieldApplyModes = 0x0; // stores TransformApplyModes
+    uint64_t entityId = ENTITY_ROOT_ID;
+    uint64_t parentEntityId = ENTITY_ROOT_ID;
+    uint32_t fieldsToModify = ENTITY_DATA_MODIFIABLE_NONE; // stores EntityDataModifiable
+    uint8_t transformFieldApplyModes = TRANSFORM_APPLY_MODE_NONE; // stores TransformApplyModes
+    uint8_t transformSpace = TRANSFORM_SPACE_LOCAL;  // stores TransformSpace
 };
 
 // Replies

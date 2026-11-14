@@ -279,13 +279,6 @@ def sendReplyToApp(reply) -> bool:
 # main
 if __name__ == "__main__":
 
-    #original_val = ctypes.c_uint64(352)
-    #buffer = bytes(original_val)
-    #returnedVal = ctypes.c_uint64.from_buffer_copy(buffer)
-    #print(original_val)
-    #print(returnedVal)
-    #exit(0)
-
     # create UI
     window = iw.Window(name = "ImageWriter App", windowSize="1920x1480")   
 

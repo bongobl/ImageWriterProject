@@ -2,9 +2,9 @@ import pygame, threading, time, ctypes, tkinter as tk
 from ctypes import *
 import ImageWriterPackage as iw
 
-def createSomeSampleShapes():
+def runShapesLatticeTest():
 
-    imageWriter = window.framework;
+    imageWriter = window.framework
 
     input("Press Enter")
 
@@ -121,6 +121,57 @@ def createSomeSampleShapes():
         print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
 
 
+def runShapesLatticeTest():
+    
+    imageWriter = window.framework
+
+    addEntityReply = iw.AddEntityReply()
+
+    if not imageWriter.AddEntity(
+        addEntityReply,
+        iw.EntityData(
+            entityType = iw.EntityType.ELLIPSE, 
+            transform = iw.Transform(position = iw.Vec2(x = 2.5, y = 1), orientation = 0, scale = 1),
+            color = iw.Color(red = 1, green = 0, blue = 0, alpha = 1),
+            ellipse = iw.EllipseData(halfExtents = iw.Vec2(3, 2))
+        )
+    ):
+        print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+    ellipseId = addEntityReply.entityId
+
+    input("Press Enter")
+    if not imageWriter.AddEntity(
+        addEntityReply,
+        iw.EntityData(
+            entityType = iw.EntityType.RECTANGLE, 
+            transform = iw.Transform(position = iw.Vec2(x = -20, y = -4), orientation = 0, scale = 1),
+            color = iw.Color(red = 1, green = 0, blue = 1, alpha = 1),
+            rectangle = iw.RectangleData(halfExtents = iw.Vec2(2, 1.5)),
+            parentEntityId = ellipseId,
+            transformSpace = iw.TransformSpace.WORLD
+        )
+    ):
+        print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+    rectEntityId = addEntityReply.entityId;
+
+    input("Press Enter")
+    if not imageWriter.AddEntity(
+        addEntityReply,
+        iw.EntityData(
+            entityType = iw.EntityType.TRIANGLE, 
+            transform = iw.Transform(position = iw.Vec2(x = 8, y = -5), orientation = 0, scale = 1),
+            color = iw.Color(red = 0.5, green = 1, blue = 0.5, alpha = 1),
+            zOrder = -1,
+            triangle = iw.TriangleData(
+                point1 = iw.Vec2(-1, 0.7), 
+                point2 = iw.Vec2(-1, -0.7), 
+                point3 = iw.Vec2(1, 0)
+            ),
+            parentEntityId = rectEntityId
+        )
+    ):
+        print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+
 
 if __name__ == "__main__":
 
@@ -128,7 +179,7 @@ if __name__ == "__main__":
     # create UI
     window = iw.Window(name = "My Test App", windowSize="1920x1480")    
     
-    apiThread = threading.Thread(target = createSomeSampleShapes)
+    apiThread = threading.Thread(target = runShapesLatticeTest)
     apiThread.start()
 
     # run UI

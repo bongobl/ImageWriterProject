@@ -288,7 +288,7 @@ void Scene::updateState(float deltaTime)
 
 	m_Camera.updateComputedState(windowInitialExtents.y);
 	// Test just to make sure window updates every frame
-	//m_EntityList.dummyUpdateShapes(deltaTime);
+	m_EntityList.dummyUpdateShapes(deltaTime);
 }
 void Scene::render()
 {
@@ -301,7 +301,7 @@ void Scene::render()
 	{
 		m_GridView.draw(*m_pWindow, m_Camera);
 	}
-
+	
 	// draw rest of scene
 	m_EntityList.drawShapes(*m_pWindow, m_Camera);
 
@@ -361,15 +361,15 @@ void Scene::makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply)
 	pSnapshotData->cameraWidthFromHeight = m_Camera.m_widthFromHeight;
 
 	// Entities data
-	const std::list<Entity*>& allEntities = m_EntityList.m_Entities;
-	pSnapshotData->numEntities = allEntities.size();
+	const EntityList::MapT& entityIterFromId = m_EntityList.m_EntityIterFromId;
+	pSnapshotData->numEntities = entityIterFromId.size();
 
 	if (pSnapshotData->numEntities > 0) {
 		pSnapshotData->pEntitiesData = (EntityData*)malloc(pSnapshotData->numEntities * sizeof(EntityData));
 
 		uint64_t index = 0;
-		for (auto iter = allEntities.begin(); iter != allEntities.end(); ++iter, ++index) {
-			pSnapshotData->pEntitiesData[index] = (*iter)->getData();
+		for (auto iter = entityIterFromId.begin(); iter != entityIterFromId.end(); ++iter, ++index) {
+			pSnapshotData->pEntitiesData[index] = (*iter->second)->getData();
 		}
 	}
 	

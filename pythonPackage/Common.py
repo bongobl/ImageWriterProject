@@ -3,7 +3,10 @@ from ctypes import *
 from pydantic import BaseModel, Field
 from enum import IntEnum
 from typing import Literal, Union, Annotated, Any
+
+
 MAX_REPLY_MESSAGE_LENGTH = 512
+ENTITY_ROOT_ID = 0x0
 
 ######## Vec2 ########
 class Vec2MCPPayload(BaseModel):
@@ -67,24 +70,42 @@ class Transform(ctypes.Structure):
         self.orientation = payload.orientation
         self.scale = payload.scale 
 
-TransformApplyModeMCPPayload = Literal["absolute", "offset"]
+TransformApplyModeModel = Literal["absolute", "offset"]
 
 class TransformApplyModes(IntEnum):
+    NONE = 0x0
     POSITION_AS_OFFSET = 1 << 0x0
     ORIENTATION_AS_OFFSET = 1 << 0x1
     SCALE_AS_OFFSET = 1 << 0x2
 
 class ModifyPositionModel(BaseModel):
     value: Vec2MCPPayload = Field(..., description="positional value used for modification")
-    applyMode: TransformApplyModeMCPPayload = Field(..., description="choose 'absolute' to override the current position and choose 'offset' to add to it")
+    applyMode: TransformApplyModeModel = Field(..., description="choose 'absolute' to override the current position, choose 'offset' to add to it")
 
 class ModifyOrientationModel(BaseModel):
     value: float = Field(..., description="orientation value used for modification")
-    applyMode: TransformApplyModeMCPPayload = Field(..., description="choose 'absolute' to override the current orientation and choose 'offset' to add to it")
+    applyMode: TransformApplyModeModel = Field(..., description="choose 'absolute' to override the current orientation, choose 'offset' to add to it")
 
 class ModifyScaleModel(BaseModel):
     value: float = Field(..., description="scale value used for modification")
-    applyMode: TransformApplyModeMCPPayload = Field(..., description="choose 'absolute' to override the current scale and choose 'offset' to apply this one to the current scale")
+    applyMode: TransformApplyModeModel = Field(..., description="choose 'absolute' to override the current scale, choose 'offset' to apply this one to the current scale")
+
+
+TransformSpaceModelForEntityAdding = Literal["local", "world"]
+TransformSpaceModelForModifying = Literal["self", "local", "world"]
+
+class TransformSpace(IntEnum):
+    SELF = 0
+    LOCAL = 1
+    WORLD = 2
+
+class TransformModelForEntityAdding(BaseModel):
+    value: TransformMCPPayload = Field(..., description = "the transform value itself")
+    space: TransformSpaceModelForEntityAdding = Field(..., description=
+        "choose 'local' for this transform to be applied in the space of the entity's parent"
+        "choose 'world' to apply it in world space, if no parent is specified, the transform"
+        "will get applied in world space regardless of the space requested"
+    )
 
 ######## Color ########
 class ColorMCPPayload(BaseModel):
@@ -227,6 +248,7 @@ ShapeDataUnionMCPPayload = Annotated[
 ]
 
 class EntityDataModifiable(IntEnum):
+    NONE = 0
     TYPE = 1 << 0x0
     POSITION = 1 << 0x1
     ORIENTATION = 1 << 0x2
@@ -253,8 +275,10 @@ class EntityData(ctypes.Structure):
         ("zOrder", ctypes.c_int),
         ("shapeDataUnion", ShapeDataUnion),
         ("entityId", ctypes.c_uint64),
+        ("parentEntityId", ctypes.c_uint64),
         ("fieldsToModify", ctypes.c_uint32), # stores EntityDataModifiable
         ("transformFieldApplyModes", ctypes.c_uint8), # stores TransformApplyModes
+        ("transformSpace", ctypes.c_uint8), # stores TransformSpace
     ]
     _anonymous_ = ("shapeDataUnion",)
 
@@ -267,18 +291,17 @@ class EntityData(ctypes.Structure):
         ellipse = None,
         rectangle = None,
         triangle = None,
-        entityId = 0,
-        fieldsToModify = 0x0,
-        transformFieldApplyModes = False
+        entityId = ENTITY_ROOT_ID,
+        parentEntityId = ENTITY_ROOT_ID,
+        fieldsToModify = EntityDataModifiable.NONE,
+        transformFieldApplyModes = TransformApplyModes.NONE,
+        transformSpace = TransformSpace.LOCAL
     ):
         
         self.entityType = entityType
         self.transform = transform
         self.color = color
         self.zOrder = zOrder
-        self.entityId = entityId
-        self.fieldsToModify = fieldsToModify
-        self.transformFieldApplyModes = transformFieldApplyModes
 
         match(entityType):
             case EntityType.ELLIPSE:   
@@ -288,7 +311,12 @@ class EntityData(ctypes.Structure):
             case EntityType.TRIANGLE:   
                 self.triangle = triangle
 
+
+        self.entityId = entityId
+        self.parentEntityId = parentEntityId
         self.fieldsToModify = fieldsToModify
+        self.transformFieldApplyModes = transformFieldApplyModes
+        self.transformSpace = transformSpace
 
 
     def __str__(self):
@@ -306,11 +334,21 @@ class EntityData(ctypes.Structure):
             case _:
                 typeStr = "Unrecognized type value"
 
-        return f"(EntityData: transform = {self.transform}, color = {self.color}, zOrder = {self.zOrder}, entity type = " + typeStr + f"), entityId = {self.entityId}, fieldsToModify = 0x{self.fieldsToModify:x}, transformFieldApplyModes = 0x{self.transformFieldApplyModes:x}"
+        return (
+            f"(EntityData: transform = {self.transform}, "
+            f"color = {self.color}, "
+            f"zOrder = {self.zOrder}"
+            "entity type = " + typeStr + "), "
+            f"entityId = {self.entityId}, "
+            f"parentEntityId = {self.parentEntityId}, "
+            f"fieldsToModify = 0x{self.fieldsToModify:x}, "
+            f"transformFieldApplyModes = 0x{self.transformFieldApplyModes:x}, "
+            f"transformSpace = 0x{self.transformSpace:x})"
+        )
 
     # creation
-    def fromAddEntityMCPPayload(self, transform, color, zOrder, shapeDataUnion):
-        self.transform.fromMCPPayload(transform)
+    def fromAddEntityMCPPayload(self, transformMod, color, zOrder, shapeDataUnion, parentEntityId):
+        self.transform.fromMCPPayload(transformMod.value)
         self.color.fromMCPPayload(color)
         self.zOrder = ctypes.c_int(zOrder)
         
@@ -324,6 +362,9 @@ class EntityData(ctypes.Structure):
             case TriangleDataMCPPayload():
                 self.entityType = EntityType.TRIANGLE
                 self.triangle.fromMCPPayload(shapeDataUnion)
+
+        self.parentEntityId = ctypes.c_uint64(parentEntityId) if parentEntityId is not None else ENTITY_ROOT_ID
+        self.transformSpace = TransformSpace.LOCAL if (transformMod.space == "local") else TransformSpace.WORLD
 
     # modification
     def fromModifyEntityMCPPayload(self, entityId, shapeType, positionMod, orientationMod, scaleMod, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3):
@@ -363,17 +404,17 @@ class EntityData(ctypes.Structure):
         if positionMod is not None:
             self.fieldsToModify |= EntityDataModifiable.POSITION
             self.transform.position.fromMCPPayload(positionMod.value)
-            self.transformFieldApplyModes |=  TransformApplyModes.POSITION_AS_OFFSET if (positionMod.applyMode == "offset") else 0x0
+            self.transformFieldApplyModes |=  TransformApplyModes.POSITION_AS_OFFSET if (positionMod.applyMode == "offset") else TransformApplyModes.NONE
 
         if orientationMod is not None:
             self.fieldsToModify |= EntityDataModifiable.ORIENTATION
             self.transform.orientation = ctypes.c_float(orientationMod.value)
-            self.transformFieldApplyModes |=  TransformApplyModes.ORIENTATION_AS_OFFSET if (orientationMod.applyMode == "offset") else 0x0
+            self.transformFieldApplyModes |=  TransformApplyModes.ORIENTATION_AS_OFFSET if (orientationMod.applyMode == "offset") else TransformApplyModes.NONE
 
         if scaleMod is not None:
             self.fieldsToModify |= EntityDataModifiable.SCALE
             self.transform.scale = ctypes.c_float(scaleMod.value)
-            self.transformFieldApplyModes |=  TransformApplyModes.SCALE_AS_OFFSET if (scaleMod.applyMode == "offset") else 0x0
+            self.transformFieldApplyModes |=  TransformApplyModes.SCALE_AS_OFFSET if (scaleMod.applyMode == "offset") else TransformApplyModes.NONE
 
         if color is not None:
             self.fieldsToModify |= EntityDataModifiable.COLOR
@@ -511,16 +552,17 @@ class EntityDataReplyMCPPayload(PlainReplyMCPPayload):
     transform: TransformMCPPayload
     color: ColorMCPPayload
     zOrder: int
+    parentEntityId: int
 
 class EllipseDataReplyMCPPayload(EntityDataReplyMCPPayload):
-    shape: TransformApplyModeMCPPayload = "ellipse"
+    shape: EntityTypeMCPPayload = "ellipse"
     halfExtents: Vec2MCPPayload
 
 class RectangleDataReplyMCPPayload(EntityDataReplyMCPPayload):
-    shape: TransformApplyModeMCPPayload = "rectangle"
+    shape: EntityTypeMCPPayload = "rectangle"
     halfExtents: Vec2MCPPayload
 class TriangleDataReplyMCPPayload(EntityDataReplyMCPPayload):
-    shape: TransformApplyModeMCPPayload = "triangle"
+    shape: EntityTypeMCPPayload = "triangle"
     point1: Vec2MCPPayload
     point2: Vec2MCPPayload
     point3: Vec2MCPPayload
@@ -556,6 +598,7 @@ class EntityDataReply(ctypes.Structure):
                     transform = self.entityData.transform.toMCPPayload(),
                     color = self.entityData.color.toMCPPayload(),
                     zOrder = int(self.entityData.zOrder),
+                    parentEntityId = self.entityData.parentEntityId,
                     halfExtents = self.entityData.ellipse.halfExtents.toMCPPayload()
                 )
             case EntityType.RECTANGLE:
@@ -565,6 +608,7 @@ class EntityDataReply(ctypes.Structure):
                     transform = self.entityData.transform.toMCPPayload(),
                     color = self.entityData.color.toMCPPayload(),
                     zOrder = int(self.entityData.zOrder),
+                    parentEntityId = self.entityData.parentEntityId,
                     halfExtents = self.entityData.rectangle.halfExtents.toMCPPayload()
                 )
             case EntityType.TRIANGLE:
@@ -574,6 +618,7 @@ class EntityDataReply(ctypes.Structure):
                     transform = self.entityData.transform.toMCPPayload(),
                     color = self.entityData.color.toMCPPayload(),
                     zOrder = int(self.entityData.zOrder),
+                    parentEntityId = self.entityData.parentEntityId,
                     point1 = self.entityData.triangle.point1.toMCPPayload(),
                     point2 = self.entityData.triangle.point2.toMCPPayload(),
                     point3 = self.entityData.triangle.point3.toMCPPayload(),

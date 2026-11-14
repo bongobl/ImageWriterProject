@@ -4,7 +4,7 @@
 #include <thread>
 #include <chrono>
 
-void runImageWriterFlow(HImageWriterInstance instance)
+void runShapesLatticeTest(HImageWriterInstance instance)
 {
 
 	TransformReply transformReply;
@@ -187,6 +187,94 @@ void runImageWriterFlow(HImageWriterInstance instance)
 		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 	}
 }
+
+void runEntityParentingTest(HImageWriterInstance instance)
+{
+	AddEntityReply addEntityReply;
+
+	if (!ImageWriter_Scene_AddEntity(
+		instance,
+		&addEntityReply,
+		{
+			.entityType = ENTITY_TYPE_ELLIPSE,
+			.transform = {
+				.position = {
+					.x = 2.5f,
+					.y = 1
+				},
+				.orientation = 0,
+				.scale = 1
+			},
+			.color = { .red = 1, .green = 0, .blue = 0, .alpha = 1 },
+			.ellipse = {
+				.halfExtents = { 3, 2 }
+			},
+			.transformSpace = TRANSFORM_SPACE_WORLD
+		})
+		)
+
+	{
+		std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+	}
+	uint64_t ellipseId = addEntityReply.entityId;
+
+	system("pause");
+	if (!ImageWriter_Scene_AddEntity(
+		instance,
+		&addEntityReply,
+		{
+			.entityType = ENTITY_TYPE_RECTANGLE,
+			.transform = {
+				.position = {
+					.x = -20,
+					.y = -4
+				},
+				.orientation = 0,
+				.scale = 1
+			},
+			.color = { .red = 1, .green = 0, .blue = 1, .alpha = 1 },
+			.ellipse = {
+				.halfExtents = { 2, 1.5f }
+			},
+			.parentEntityId = ellipseId,
+			.transformSpace = TRANSFORM_SPACE_WORLD
+		})
+		)
+
+	{
+		std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+	}
+	uint64_t rectEntityId = addEntityReply.entityId;
+
+	system("pause");
+	if (!ImageWriter_Scene_AddEntity(
+		instance,
+		&addEntityReply,
+		{
+			.entityType = ENTITY_TYPE_TRIANGLE,
+			.transform = {
+				.position = {
+					.x = 8,
+					.y = -5
+				},
+				.orientation = 0,
+				.scale = 1
+			},
+			.color = { .red = 0.5f, .green = 1, .blue = 0.5f, .alpha = 1 },
+			.triangle = {
+				.point1 = { -1, 0.7f },
+				.point2 = { -1, -0.7f },
+				.point3 = { 1, 0 }
+			},
+			.parentEntityId = rectEntityId
+		})
+		)
+
+	{
+		std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+	}
+}
+
 int main(void)
 {
 	HImageWriterInstance instance = {};
@@ -198,7 +286,7 @@ int main(void)
 	// Create an isolated window with a handle value of 0
 	int windowHwnd = 0;
 	ImageWriter_Scene_Init(instance, windowHwnd, { .gridViewMode = GRID_VIEW_MODE_BACKGROUND });
-	std::thread imageWriterThread(runImageWriterFlow, instance);
+	std::thread imageWriterThread(runEntityParentingTest, instance);
 
 
 	auto prevTime = std::chrono::steady_clock::now();

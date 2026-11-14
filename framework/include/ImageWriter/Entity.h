@@ -2,12 +2,24 @@
 #include <ImageWriter/Common.h>
 #include <SFML/Graphics.hpp>
 #include <list>
-#include <unordered_map>
+#include <map>
 #include <shared_mutex>
 #include <mutex>
 #include <cstdint>
 class Camera;
 class EntityGeometry;
+
+struct EntityGeometry : public sf::VertexArray {
+	mutable std::shared_mutex m_Mutex;
+
+	template<typename... Params>
+	EntityGeometry(Params... params) : sf::VertexArray(std::forward<Params>(params)...) {};
+
+	void draw(sf::RenderWindow& renderWindow, sf::Shader& vertexShader) const {
+		std::shared_lock<std::shared_mutex> lock(m_Mutex);
+		renderWindow.draw(*this, &vertexShader);
+	};
+};
 
 // Note: Must mirror API level EntityType
 enum class Core_Internal_EntityType
@@ -21,11 +33,29 @@ struct Entity {
 
 	using Type = Core_Internal_EntityType;
 
+	struct DrawUtils {
+
+		EntityGeometry m_EllipseVerts;
+		EntityGeometry m_RectangleVerts;
+		EntityGeometry m_TriangleVerts;
+
+		sf::Shader m_VertexShader;
+
+		DrawUtils();
+		EntityGeometry* getGeometryForEntity(Entity::Type type);
+	};
+
 	Type m_Type;
+private:
+	// Local (parent from self)
 	Transform m_Transform;
+	Transform m_WorldTransform;
+public:
+
 	Color m_Color;
 	uint64_t m_Id;
 	int m_zOrder;
+
 
 	mutable std::shared_mutex m_Mutex;
 
@@ -44,19 +74,14 @@ struct Entity {
 	bool validateModifyParams(EntityData params, std::string* pMessage) const;
 	void modify(EntityData params);
 	
+	void updateDummy(float deltaTime);
+
 	EntityData getData();
-};
 
-struct EntityGeometry : public sf::VertexArray {
-	mutable std::shared_mutex m_Mutex;
+	void draw(sf::RenderWindow& window, DrawUtils& drawUtils) const;
 
-	template<typename... Params>
-	EntityGeometry(Params... params) : sf::VertexArray(std::forward<Params>(params)...) {};
-
-	void draw(sf::RenderWindow& renderWindow, sf::Shader& vertexShader) const {
-		std::shared_lock<std::shared_mutex> lock(m_Mutex);
-		renderWindow.draw(*this, &vertexShader);
-	};
+private:
+	void syncTransforms(bool syncWorldToLocal);
 };
 
 // TODO: rename to scene root
@@ -65,41 +90,39 @@ struct EntityList {
 	// Managing
 	using ListT = std::list<Entity*>;
 	using IterT = ListT::iterator;
+	using MapT = std::map<uint64_t, IterT>;
 	uint64_t m_NextEntityId;
 
 	// entity iterators from id map
-	std::unordered_map<uint64_t, IterT> m_EntityIterFromId;
+	MapT m_EntityIterFromId;
 	mutable std::shared_mutex m_EntityIterFromIdMutex;
 
 	// Entity root
-	std::list<Entity*> m_Entities;
+	ListT m_Entities;
 	mutable std::shared_mutex m_EntitiesMutex;
 
 	// Rendering
-	EntityGeometry m_EllipseVerts;
-	EntityGeometry m_RectangleVerts;
-	EntityGeometry m_TriangleVerts;
-	sf::Shader m_VertexShader;
-	
+	Entity::DrawUtils m_DrawUtils;
 	
 public:
 
 	EntityList();
 	~EntityList();
 
-	bool createSpaceForNewEntity(
-		std::list<Entity*>& currSiblings, 
+	bool addEntityToList(
+		Entity* pNewEntity,
+		ListT& currSiblings,
 		std::shared_mutex& currSiblingsMutex, int& zOrder, IterT& iter,
 		std::string* pMessage = nullptr);
 
-	bool removeSpaceForEntity(
-		std::list<Entity*>& currSiblings,
+	bool removeEntityFromList(
+		ListT& currSiblings,
 		std::shared_mutex& currSiblingsMutex,
 		IterT& entityIter,
 		std::string* pMessage = nullptr);
 
-	bool changeEntityZOrder(
-		std::list<Entity*>& currSiblings,
+	bool changeEntityZOrderInList(
+		ListT& currSiblings,
 		std::shared_mutex& currSiblingsMutex,
 		IterT& entityIter,
 		int& zOrder,
@@ -110,7 +133,6 @@ public:
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
 	void removeAllEntities();
 
-	EntityGeometry* getGeometryForEntity(Entity::Type type);
 
 	void API_addEntity(AddEntityReply* pReply, EntityData params);
 	void API_removeEntity(PlainReply* pReply, uint64_t entityId);
