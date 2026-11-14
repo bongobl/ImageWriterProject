@@ -9,6 +9,18 @@
 class Camera;
 class EntityGeometry;
 
+struct EntityGeometry : public sf::VertexArray {
+	mutable std::shared_mutex m_Mutex;
+
+	template<typename... Params>
+	EntityGeometry(Params... params) : sf::VertexArray(std::forward<Params>(params)...) {};
+
+	void draw(sf::RenderWindow& renderWindow, sf::Shader& vertexShader) const {
+		std::shared_lock<std::shared_mutex> lock(m_Mutex);
+		renderWindow.draw(*this, &vertexShader);
+	};
+};
+
 // Note: Must mirror API level EntityType
 enum class Core_Internal_EntityType
 {
@@ -20,6 +32,18 @@ enum class Core_Internal_EntityType
 struct Entity {
 
 	using Type = Core_Internal_EntityType;
+
+	struct DrawUtils {
+
+		EntityGeometry m_EllipseVerts;
+		EntityGeometry m_RectangleVerts;
+		EntityGeometry m_TriangleVerts;
+
+		sf::Shader m_VertexShader;
+
+		DrawUtils();
+		EntityGeometry* getGeometryForEntity(Entity::Type type);
+	};
 
 	Type m_Type;
 	Transform m_Transform;
@@ -45,18 +69,8 @@ struct Entity {
 	void modify(EntityData params);
 	
 	EntityData getData();
-};
 
-struct EntityGeometry : public sf::VertexArray {
-	mutable std::shared_mutex m_Mutex;
-
-	template<typename... Params>
-	EntityGeometry(Params... params) : sf::VertexArray(std::forward<Params>(params)...) {};
-
-	void draw(sf::RenderWindow& renderWindow, sf::Shader& vertexShader) const {
-		std::shared_lock<std::shared_mutex> lock(m_Mutex);
-		renderWindow.draw(*this, &vertexShader);
-	};
+	void draw(sf::RenderWindow& window, DrawUtils& drawUtils, Transform worldFromParent) const;
 };
 
 // TODO: rename to scene root
@@ -76,11 +90,7 @@ struct EntityList {
 	mutable std::shared_mutex m_EntitiesMutex;
 
 	// Rendering
-	EntityGeometry m_EllipseVerts;
-	EntityGeometry m_RectangleVerts;
-	EntityGeometry m_TriangleVerts;
-	sf::Shader m_VertexShader;
-	
+	Entity::DrawUtils m_DrawUtils;
 	
 public:
 
@@ -110,7 +120,6 @@ public:
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
 	void removeAllEntities();
 
-	EntityGeometry* getGeometryForEntity(Entity::Type type);
 
 	void API_addEntity(AddEntityReply* pReply, EntityData params);
 	void API_removeEntity(PlainReply* pReply, uint64_t entityId);

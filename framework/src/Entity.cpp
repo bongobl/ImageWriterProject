@@ -33,6 +33,47 @@ static bool validateZOrder(int& zOrder, int numEntities, std::string* pMessage)
 	return true;
 }
 
+Entity::DrawUtils::DrawUtils() :
+	m_EllipseVerts(sf::PrimitiveType::TriangleFan, 100),
+	m_RectangleVerts(sf::PrimitiveType::TriangleStrip, 4),
+	m_TriangleVerts(sf::PrimitiveType::Triangles, 3)
+{
+
+	m_RectangleVerts[0].position = sf::Vector2f(1, 1);
+	m_RectangleVerts[1].position = sf::Vector2f(-1, 1);
+	m_RectangleVerts[2].position = sf::Vector2f(1, -1);
+	m_RectangleVerts[3].position = sf::Vector2f(-1, -1);
+
+
+	constexpr float TWO_PI = 3.14159265358979f * 2;
+
+	int numSlices = m_EllipseVerts.getVertexCount() - 2;
+	float sliceSize = (float)TWO_PI / numSlices;
+
+	m_EllipseVerts[0].position = sf::Vector2f(0, 0);
+	for (int i = 1; i < m_EllipseVerts.getVertexCount(); ++i) {
+		float angle = (i - 1) * sliceSize;
+		m_EllipseVerts[i].position = sf::Vector2f(cos(angle), sin(angle));
+	}
+
+	if (!m_VertexShader.loadFromFile("entityShader.vert", sf::Shader::Type::Vertex)) {
+		std::cerr << "Vertex shader not found" << std::endl;
+		exit(1);
+	}
+}
+
+EntityGeometry* Entity::DrawUtils::getGeometryForEntity(Entity::Type type)
+{
+	switch (type) {
+	case Entity::Type::Ellipse:
+		return &m_EllipseVerts;
+	case Entity::Type::Rectangle:
+		return &m_RectangleVerts;
+	case Entity::Type::Triangle:
+		return &m_TriangleVerts;
+	}
+	return nullptr;
+}
 Entity::Entity(uint64_t id, EntityData entityData, Entity* pParent) :
 	m_Type((Type)entityData.entityType),
 	m_Transform(entityData.transform),
@@ -229,33 +270,26 @@ EntityData Entity::getData()
 	}
 }
 
+void Entity::draw(sf::RenderWindow& window, DrawUtils& drawUtils, Transform worldFromParent) const
+{
+	Transform worldFromSelf = worldFromParent * m_Transform;
+	drawUtils.m_VertexShader.setUniform("worldFromModel", sf::Glsl::Mat4(sf::fromCore(worldFromSelf)));
+	drawUtils.m_VertexShader.setUniform("color", sf::Glsl::Vec4(sf::fromCore(m_Color)));
+
+	EntityGeometry* pEntityGeometry = drawUtils.getGeometryForEntity(m_Type);
+	applyCustomDrawingProperties(*pEntityGeometry, drawUtils.m_VertexShader);
+	pEntityGeometry->draw(window, drawUtils.m_VertexShader);
+
+	// Note this doesn't respect Z order of parent among siblings
+	for (auto iter = m_Children.begin(); iter != m_Children.end(); ++iter) {
+		Entity* pCurrChildEntity = *iter;
+		pCurrChildEntity->draw(window, drawUtils, worldFromSelf);
+	}
+}
 EntityList::EntityList() :
-	m_EllipseVerts(sf::PrimitiveType::TriangleFan, 100),
-	m_RectangleVerts(sf::PrimitiveType::TriangleStrip, 4),
-	m_TriangleVerts(sf::PrimitiveType::Triangles, 3),
 	m_NextEntityId(0x0)
 {
-	m_RectangleVerts[0].position = sf::Vector2f(1, 1);
-	m_RectangleVerts[1].position = sf::Vector2f(-1, 1);
-	m_RectangleVerts[2].position = sf::Vector2f(1, -1);
-	m_RectangleVerts[3].position = sf::Vector2f(-1, -1);
-
-
-	constexpr float TWO_PI = 3.14159265358979f * 2;
-
-	int numSlices = m_EllipseVerts.getVertexCount() - 2;
-	float sliceSize = (float)TWO_PI / numSlices;
-
-	m_EllipseVerts[0].position = sf::Vector2f(0, 0);
-	for (int i = 1; i < m_EllipseVerts.getVertexCount(); ++i) {
-		float angle = (i - 1) * sliceSize;
-		m_EllipseVerts[i].position = sf::Vector2f(cos(angle), sin(angle));
-	}
-
-	if (!m_VertexShader.loadFromFile("entityShader.vert", sf::Shader::Type::Vertex)) {
-		std::cerr << "Vertex shader not found" << std::endl;
-		exit(1);
-	}
+	
 }
 
 EntityList::~EntityList()
@@ -351,17 +385,14 @@ void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
 
 	std::shared_lock<std::shared_mutex> lock(m_EntitiesMutex);
 
-	m_VertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
+	// homogFromWorld is the same for all entities
+	m_DrawUtils.m_VertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
 
 	for (auto iter = m_Entities.begin(); iter != m_Entities.end(); ++iter) {
 		const Entity* pCurrEntity = *iter;
 
-		m_VertexShader.setUniform("worldFromModel", sf::Glsl::Mat4(sf::fromCore(pCurrEntity->m_Transform)));
-		m_VertexShader.setUniform("color", sf::Glsl::Vec4(sf::fromCore(pCurrEntity->m_Color)));
-
-		EntityGeometry* pEntityGeometry = getGeometryForEntity(pCurrEntity->m_Type);
-		pCurrEntity->applyCustomDrawingProperties(*pEntityGeometry, m_VertexShader);
-		pEntityGeometry->draw(window, m_VertexShader);
+		pCurrEntity->draw(window, m_DrawUtils, { /*identity*/ });
+		
 	}
 }
 
@@ -374,19 +405,6 @@ void EntityList::removeAllEntities() {
 	}
 	m_Entities.clear();
 	m_EntityIterFromId.clear();
-}
-
-EntityGeometry* EntityList::getGeometryForEntity(Entity::Type type)
-{
-	switch (type) {
-	case Entity::Type::Ellipse:
-		return &m_EllipseVerts;
-	case Entity::Type::Rectangle:
-		return &m_RectangleVerts;
-	case Entity::Type::Triangle:
-		return &m_TriangleVerts;
-	}
-	return nullptr;
 }
 
 void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
