@@ -65,6 +65,11 @@ Entity::DrawUtils::DrawUtils() :
 EntityGeometry* Entity::DrawUtils::getGeometryForEntity(Entity::Type type)
 {
 	switch (type) {
+	case Entity::Type::Undefined:
+		std::cerr << "Entity::getGeometryForEntity(): Entity type was 'Undefined' " << std::endl;
+		exit(1);
+	case Entity::Type::Null:
+		return nullptr;
 	case Entity::Type::Ellipse:
 		return &m_EllipseVerts;
 	case Entity::Type::Rectangle:
@@ -72,6 +77,8 @@ EntityGeometry* Entity::DrawUtils::getGeometryForEntity(Entity::Type type)
 	case Entity::Type::Triangle:
 		return &m_TriangleVerts;
 	}
+	std::cerr << "Entity::getGeometryForEntity(): Unknown type enum value of " << (unsigned int)type << std::endl;
+	exit(1);
 	return nullptr;
 }
 Entity::Entity(uint64_t id, EntityData entityData, Entity* pParent) :
@@ -82,9 +89,11 @@ Entity::Entity(uint64_t id, EntityData entityData, Entity* pParent) :
 	m_pParent(pParent)
 {
 	switch (m_Type) {
-		case Type::None:
-			std::cerr << "Entity(): Entity type was 'None' " << std::endl;
+		case Type::Undefined:
+			std::cerr << "Entity(): Entity type was 'Undefined' " << std::endl;
 			exit(1);
+		case Type::Null:
+			break;
 		case Type::Ellipse:
 			ellipse = entityData.ellipse;
 			break;
@@ -117,9 +126,11 @@ Entity::Entity(uint64_t id, EntityData entityData, Entity* pParent) :
 void Entity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const
 {
 	switch (m_Type) {
-		case Type::None:
-			std::cerr << "Entity::applyCustomDrawingProperties(): Entity type was 'None' " << std::endl;
+		case Type::Undefined:
+			std::cerr << "Entity::applyCustomDrawingProperties(): Entity type was 'Undefined' " << std::endl;
 			exit(1);
+		case Type::Null:
+			break;
 		case Type::Ellipse:
 			vertexShader.setUniform("scaleOffset", sf::fromCore(ellipse.halfExtents));
 			break;
@@ -191,17 +202,19 @@ void Entity::modify(EntityData params)
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_TYPE) {
 
 		m_Type = (Type)params.entityType;
-			switch (params.entityType) {
-			case ENTITY_TYPE_NONE:
-				std::cerr << "Entity::modify(): Entity type was 'None' " << std::endl;
+		switch (m_Type) {
+			case Type::Undefined:
+				std::cerr << "Entity::modify(): can't modify entity type to be 'Undefined' " << std::endl;
 				exit(1);
-			case ENTITY_TYPE_ELLIPSE:
+			case Type::Null:
+				break;
+			case Type::Ellipse:
 				ellipse = params.ellipse;
 				break;
-			case ENTITY_TYPE_RECTANGLE:
+			case Type::Rectangle:
 				rectangle = params.rectangle;
 				break;
-			case ENTITY_TYPE_TRIANGLE:
+			case Type::Triangle:
 				triangle = params.triangle;
 				break;
 			default:
@@ -268,9 +281,18 @@ EntityData Entity::getData()
 {
 	uint64_t parentId = m_pParent ? m_pParent->m_Id : ENTITY_ROOT_ID;
 	switch (m_Type) {
-		case Type::None:
+		case Type::Undefined:
 			std::cerr << "Entity::getData(): Entity type was 'None' " << std::endl;
 			exit(1);
+		case Type::Null:
+			return {
+				.entityType = ENTITY_TYPE_NULL,
+				.transform = m_Transform,
+				.color = m_Color,
+				.zOrder = m_zOrder,
+				.entityId = m_Id,
+				.parentEntityId = parentId
+			};
 		case Type::Ellipse:
 			return {
 				.entityType = ENTITY_TYPE_ELLIPSE,
@@ -314,10 +336,15 @@ void Entity::draw(sf::RenderWindow& window, DrawUtils& drawUtils) const
 	drawUtils.m_VertexShader.setUniform("worldFromModel", sf::Glsl::Mat4(sf::fromCore(m_WorldTransform)));
 	drawUtils.m_VertexShader.setUniform("color", sf::Glsl::Vec4(sf::fromCore(m_Color)));
 
+	// draw current
 	EntityGeometry* pEntityGeometry = drawUtils.getGeometryForEntity(m_Type);
-	applyCustomDrawingProperties(*pEntityGeometry, drawUtils.m_VertexShader);
-	pEntityGeometry->draw(window, drawUtils.m_VertexShader);
 
+	// draw if there is geometry to draw
+	if (pEntityGeometry) {
+		applyCustomDrawingProperties(*pEntityGeometry, drawUtils.m_VertexShader);
+		pEntityGeometry->draw(window, drawUtils.m_VertexShader);
+	}
+	
 	// Note this doesn't respect Z order of parent among siblings
 	for (auto iter = m_Children.begin(); iter != m_Children.end(); ++iter) {
 		Entity* pCurrChildEntity = *iter;

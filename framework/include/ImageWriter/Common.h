@@ -43,10 +43,11 @@ struct ScreenSpaceControls {
 };
 
 enum EntityType {
-    ENTITY_TYPE_NONE = 0,
-    ENTITY_TYPE_ELLIPSE = 1,
-    ENTITY_TYPE_RECTANGLE = 2,
-    ENTITY_TYPE_TRIANGLE = 3,
+    ENTITY_TYPE_UNDEFINED = 0,
+    ENTITY_TYPE_NULL = 1,
+    ENTITY_TYPE_ELLIPSE = 2,
+    ENTITY_TYPE_RECTANGLE = 3,
+    ENTITY_TYPE_TRIANGLE = 4,
 };
 
 struct EllipseData {
@@ -76,7 +77,7 @@ enum EntityDataModifiable {
 };
 
 struct EntityData {
-    int entityType = ENTITY_TYPE_NONE;
+    int entityType = ENTITY_TYPE_UNDEFINED;
     Transform transform;
     Color color;
     int zOrder = -1;

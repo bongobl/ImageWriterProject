@@ -141,7 +141,7 @@ def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
     return communicateWithApp(iw.Command.GetCameraTransform, None, iw.TransformReply).toCameraMCPPayload()
 
 @mcp.tool()
-def addEntity1(
+def addEntity2(
     transform: Annotated[iw.TransformModelForEntityAdding, Field(description = f"the transform of this new entity")],
     color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape")],
     zOrder: Annotated[int, Field(description = f"the Z order, {iw.Z_ORDER_DOC}")],
@@ -233,7 +233,17 @@ def queryScene():
     # produce json representation of entity array
     parsedEntities = []
     for entityRaw in sceneSnapshotReply.entitiesData:
-        if entityRaw.entityType == iw.EntityType.ELLIPSE:
+        if entityRaw.entityType == iw.EntityType.NULL:
+            entityModel = {
+                "entityId": entityRaw.entityId, 
+                "shape": "null",
+                "transform": {"position": {"x": entityRaw.transform.position.x, "y": entityRaw.transform.position.y}, "orientation": entityRaw.transform.orientation, "scale": entityRaw.transform.scale},
+                "color": {"red": entityRaw.color.red, "green": entityRaw.color.green, "blue": entityRaw.color.blue, "alpha": entityRaw.color.alpha},
+                "zOrder": entityRaw.zOrder,
+                "parentEntityId": entityRaw.parentEntityId,
+            }
+            parsedEntities.append(entityModel)
+        elif entityRaw.entityType == iw.EntityType.ELLIPSE:
             entityModel = {
                 "entityId": entityRaw.entityId, 
                 "shape": "ellipse",
@@ -268,6 +278,8 @@ def queryScene():
                 "point3": {"x": entityRaw.triangle.point3.x, "y": entityRaw.triangle.point3.y},
             }
             parsedEntities.append(entityModel)
+        else:
+            raise ToolError(f"queryScene(): Received an unknown entity type value {entityRaw.entityType} ")
 
     # construct final json model for harness
     snapshotModel = iw.SceneDataReplyModel(

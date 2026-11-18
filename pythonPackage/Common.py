@@ -164,13 +164,18 @@ class ScreenSpaceControls(ctypes.Structure):
 
 ######## Entities ########
 
-EntityTypeMCPPayload = Literal["ellipse", "rectangle", "triangle"]
+EntityTypeMCPPayload = Literal["null", "ellipse", "rectangle", "triangle"]
 
 class EntityType(IntEnum):
-    NONE = 0
-    ELLIPSE = 1
-    RECTANGLE = 2
-    TRIANGLE = 3
+    UNDEFINED = 0
+    NULL = 1
+    ELLIPSE = 2
+    RECTANGLE = 3
+    TRIANGLE = 4
+
+# Null
+class NullEntityDataMCPPayload(BaseModel):
+    kind: Literal["null"] = "null"
 
 # Ellipse
 class EllipseDataMCPPayload(BaseModel):
@@ -238,12 +243,13 @@ Z_ORDER_DOC = (
 )
 
 SHAPE_DATA_UNION_DOC = """Geometry for the entity. A discriminated union selected by the required string field 'kind'. (Vec2 = { x: float, y: float }.)
+- kind='null'   -> { kind }   // call for null objects
 - kind='ellipse'   -> { kind, halfExtents: Vec2 }   // radii along local x and y
 - kind='rectangle' -> { kind, halfExtents: Vec2 }   // half-width and half-height
 - kind='triangle'  -> { kind, point1: Vec2, point2: Vec2, point3: Vec2 }  // three vertices in local space"""
 
 ShapeDataUnionMCPPayload = Annotated[
-    Union[EllipseDataMCPPayload, RectangleDataMCPPayload, TriangleDataMCPPayload],
+    Union[NullEntityDataMCPPayload, EllipseDataMCPPayload, RectangleDataMCPPayload, TriangleDataMCPPayload],
     Field(discriminator="kind"),
 ]
 
@@ -284,7 +290,7 @@ class EntityData(ctypes.Structure):
 
     def __init__(
         self, 
-        entityType = EntityType.NONE,
+        entityType = EntityType.UNDEFINED,
         transform = Transform(),
         color = Color(),
         zOrder = -1,
@@ -323,8 +329,10 @@ class EntityData(ctypes.Structure):
 
         typeStr = ""
         match self.entityType:
-            case EntityType.NONE:
-                typeStr = "NONE"
+            case EntityType.UNDEFINED:
+                typeStr = "UNDEFINED"
+            case EntityType.NULL:
+                typeStr = "Null Entity"
             case EntityType.ELLIPSE:
                 typeStr = f"{self.ellipse}";
             case EntityType.RECTANGLE:
@@ -337,7 +345,7 @@ class EntityData(ctypes.Structure):
         return (
             f"(EntityData: transform = {self.transform}, "
             f"color = {self.color}, "
-            f"zOrder = {self.zOrder}"
+            f"zOrder = {self.zOrder}, "
             "entity type = " + typeStr + "), "
             f"entityId = {self.entityId}, "
             f"parentEntityId = {self.parentEntityId}, "
@@ -353,6 +361,8 @@ class EntityData(ctypes.Structure):
         self.zOrder = ctypes.c_int(zOrder)
         
         match shapeDataUnion:
+            case NullEntityDataMCPPayload():
+                self.entityType = EntityType.NULL
             case EllipseDataMCPPayload():
                 self.entityType = EntityType.ELLIPSE
                 self.ellipse.fromMCPPayload(shapeDataUnion)
@@ -376,6 +386,10 @@ class EntityData(ctypes.Structure):
         if shapeType is not None:
             self.fieldsToModify |= EntityDataModifiable.TYPE
             match shapeType:
+                case "null":
+                    if trianglePoint1 is not None or trianglePoint2 is not None or trianglePoint3 is not None or halfExtents is not None:
+                        errorsMessages.append("None of the 'trianglePoint<N>' or 'halfExtents' properties should be provided when setting entity shape to null")
+                    self.entityType = EntityType.NULL
                 case "ellipse":
                     if halfExtents is None:
                         errorsMessages.append("'halfExtents' field must be provided to set entity shape to ellipse")
@@ -554,6 +568,9 @@ class EntityDataReplyMCPPayload(PlainReplyMCPPayload):
     zOrder: int
     parentEntityId: int
 
+class NullEntityDataReplyMCPPayload(EntityDataReplyMCPPayload):
+    shape: EntityTypeMCPPayload = "null"
+
 class EllipseDataReplyMCPPayload(EntityDataReplyMCPPayload):
     shape: EntityTypeMCPPayload = "ellipse"
     halfExtents: Vec2MCPPayload
@@ -586,10 +603,19 @@ class EntityDataReply(ctypes.Structure):
     def toMCPPayload(self):
             
         match self.entityData.entityType:
-            case EntityType.NONE:
+            case EntityType.UNDEFINED:
                 return PlainReplyMCPPayload(
                     success = self.success, 
                     message = self.message.decode('utf-8'),
+                )
+            case EntityType.NULL:
+                return NullEntityDataReplyMCPPayload(
+                    success = self.success,
+                    message = self.message.decode('utf-8'),
+                    transform = self.entityData.transform.toMCPPayload(),
+                    color = self.entityData.color.toMCPPayload(),
+                    zOrder = int(self.entityData.zOrder),
+                    parentEntityId = self.entityData.parentEntityId
                 )
             case EntityType.ELLIPSE:
                 return EllipseDataReplyMCPPayload(

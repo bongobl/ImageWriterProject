@@ -16,6 +16,7 @@ struct EntityGeometry : public sf::VertexArray {
 	EntityGeometry(Params... params) : sf::VertexArray(std::forward<Params>(params)...) {};
 
 	void draw(sf::RenderWindow& renderWindow, sf::Shader& vertexShader) const {
+
 		std::shared_lock<std::shared_mutex> lock(m_Mutex);
 		renderWindow.draw(*this, &vertexShader);
 	};
@@ -24,7 +25,8 @@ struct EntityGeometry : public sf::VertexArray {
 // Note: Must mirror API level EntityType
 enum class Core_Internal_EntityType
 {
-	None = ENTITY_TYPE_NONE,
+	Undefined = ENTITY_TYPE_UNDEFINED,
+	Null = ENTITY_TYPE_NULL,
 	Ellipse = ENTITY_TYPE_ELLIPSE,
 	Rectangle = ENTITY_TYPE_RECTANGLE,
 	Triangle = ENTITY_TYPE_TRIANGLE
