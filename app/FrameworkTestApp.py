@@ -126,6 +126,7 @@ def runShapesLatticeTest():
     imageWriter = window.framework
 
     addEntityReply = iw.AddEntityReply()
+    plainReply = iw.PlainReply();
 
     if not imageWriter.AddEntity(
         addEntityReply,
@@ -152,7 +153,7 @@ def runShapesLatticeTest():
         )
     ):
         print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
-    rectEntityId = addEntityReply.entityId;
+    rectId = addEntityReply.entityId;
 
     input("Press Enter")
     if not imageWriter.AddEntity(
@@ -167,10 +168,16 @@ def runShapesLatticeTest():
                 point2 = iw.Vec2(-1, -0.7), 
                 point3 = iw.Vec2(1, 0)
             ),
-            parentEntityId = rectEntityId
+            parentEntityId = rectId
         )
     ):
         print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+
+    triangleId = addEntityReply.entityId;
+
+    input("Press Enter")
+    if not imageWriter.RemoveEntity(plainReply, ellipseId):
+        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
 
 
 if __name__ == "__main__":

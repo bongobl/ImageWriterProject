@@ -219,7 +219,6 @@ Scene::Scene(int64_t windowHandle, RenderConfig renderConfig) :
 }
 Scene::~Scene()
 {
-	m_EntityList.removeAllEntities();
 	delete m_pWindow;
 	m_pWindow = nullptr;
 }
@@ -352,7 +351,7 @@ Camera* Scene::getCamera()
 void Scene::makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply)
 {
 	// Lock camera and entities mutexes so that snapshot is atomic
-	std::scoped_lock lock(m_Camera.m_TransformMutex, m_EntityList.m_EntitiesMutex);
+	std::scoped_lock lock(m_Camera.m_TransformMutex, m_EntityList.m_RootEntity.m_Mutex);
 
 	std::string message = "";
 

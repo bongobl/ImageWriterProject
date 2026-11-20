@@ -6,7 +6,7 @@ from typing import Literal, Union, Annotated, Any
 
 
 MAX_REPLY_MESSAGE_LENGTH = 512
-ENTITY_ROOT_ID = 0x0
+ROOT_ENTITY_ID = 0x0
 
 ######## Vec2 ########
 class Vec2MCPPayload(BaseModel):
@@ -297,8 +297,8 @@ class EntityData(ctypes.Structure):
         ellipse = None,
         rectangle = None,
         triangle = None,
-        entityId = ENTITY_ROOT_ID,
-        parentEntityId = ENTITY_ROOT_ID,
+        entityId = ROOT_ENTITY_ID,
+        parentEntityId = ROOT_ENTITY_ID,
         fieldsToModify = EntityDataModifiable.NONE,
         transformFieldApplyModes = TransformApplyModes.NONE,
         transformSpace = TransformSpace.LOCAL
@@ -373,7 +373,7 @@ class EntityData(ctypes.Structure):
                 self.entityType = EntityType.TRIANGLE
                 self.triangle.fromMCPPayload(shapeDataUnion)
 
-        self.parentEntityId = ctypes.c_uint64(parentEntityId) if parentEntityId is not None else ENTITY_ROOT_ID
+        self.parentEntityId = ctypes.c_uint64(parentEntityId) if parentEntityId is not None else ROOT_ENTITY_ID
         self.transformSpace = TransformSpace.LOCAL if (transformMod.space == "local") else TransformSpace.WORLD
 
     # modification

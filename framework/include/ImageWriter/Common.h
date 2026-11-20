@@ -1,6 +1,6 @@
 #pragma once
 #define MAX_REPLY_MESSAGE_LENGTH 512
-#define ENTITY_ROOT_ID 0x0
+#define ROOT_ENTITY_ID 0x0
 
 #include <stdint.h>
 
@@ -88,8 +88,8 @@ struct EntityData {
         TriangleData triangle;
     };
 
-    uint64_t entityId = ENTITY_ROOT_ID;
-    uint64_t parentEntityId = ENTITY_ROOT_ID;
+    uint64_t entityId = ROOT_ENTITY_ID;
+    uint64_t parentEntityId = ROOT_ENTITY_ID;
     uint32_t fieldsToModify = ENTITY_DATA_MODIFIABLE_NONE; // stores EntityDataModifiable
     uint8_t transformFieldApplyModes = TRANSFORM_APPLY_MODE_NONE; // stores TransformApplyModes
     uint8_t transformSpace = TRANSFORM_SPACE_LOCAL;  // stores TransformSpace

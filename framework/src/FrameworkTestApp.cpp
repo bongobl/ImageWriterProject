@@ -191,6 +191,7 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 void runEntityParentingTest(HImageWriterInstance instance)
 {
 	AddEntityReply addEntityReply;
+	PlainReply plainReply;
 
 	if (!ImageWriter_Scene_AddEntity(
 		instance,
@@ -244,7 +245,7 @@ void runEntityParentingTest(HImageWriterInstance instance)
 	{
 		std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
 	}
-	uint64_t rectEntityId = addEntityReply.entityId;
+	uint64_t rectId = addEntityReply.entityId;
 
 	system("pause");
 	if (!ImageWriter_Scene_AddEntity(
@@ -266,12 +267,20 @@ void runEntityParentingTest(HImageWriterInstance instance)
 				.point2 = { -1, -0.7f },
 				.point3 = { 1, 0 }
 			},
-			.parentEntityId = rectEntityId
+			.parentEntityId = rectId
 		})
 		)
 
 	{
 		std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+	}
+
+	uint64_t triangleId = addEntityReply.entityId;
+
+	system("pause");
+	if (!ImageWriter_Scene_RemoveEntity(instance, &plainReply, ellipseId))
+	{
+		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
 	}
 }
 

@@ -311,7 +311,7 @@ extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData insta
 	}
 
 	EntityList* pEntityList = pCoreData->m_pScene->getEntityList();
-	pEntityList->removeAllEntities();
+	pEntityList->deleteAllEntities();
 
 	pReply->success = true;
 

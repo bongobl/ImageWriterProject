@@ -8,6 +8,7 @@
 #include <cstdint>
 class Camera;
 class EntityGeometry;
+struct Entity;
 
 struct EntityGeometry : public sf::VertexArray {
 	mutable std::shared_mutex m_Mutex;
@@ -100,8 +101,7 @@ struct EntityList {
 	mutable std::shared_mutex m_EntityIterFromIdMutex;
 
 	// Entity root
-	ListT m_Entities;
-	mutable std::shared_mutex m_EntitiesMutex;
+	Entity m_RootEntity;
 
 	// Rendering
 	Entity::DrawUtils m_DrawUtils;
@@ -111,21 +111,16 @@ public:
 	EntityList();
 	~EntityList();
 
-	bool addEntityToList(
-		Entity* pNewEntity,
-		ListT& currSiblings,
-		std::shared_mutex& currSiblingsMutex, int& zOrder, IterT& iter,
+	bool addChildToParent(
+		Entity* pChild, Entity* pParent, int& zOrder, 
+		IterT& iter, std::string* pMessage = nullptr);
+
+	bool removeEntityFromParent(
+		Entity* pParent, IterT entityIter,
 		std::string* pMessage = nullptr);
 
-	bool removeEntityFromList(
-		ListT& currSiblings,
-		std::shared_mutex& currSiblingsMutex,
-		IterT& entityIter,
-		std::string* pMessage = nullptr);
-
-	bool changeEntityZOrderInList(
-		ListT& currSiblings,
-		std::shared_mutex& currSiblingsMutex,
+	bool changeEntityZOrderInParent(
+		Entity* pParent,
 		IterT& entityIter,
 		int& zOrder,
 		std::string* pMessage = nullptr);
@@ -133,7 +128,7 @@ public:
 
 	void dummyUpdateShapes(float deltaTime);
 	void drawShapes(sf::RenderWindow& window, const Camera& camera);
-	void removeAllEntities();
+	void deleteAllEntities();
 
 
 	void API_addEntity(AddEntityReply* pReply, EntityData params);
@@ -143,6 +138,10 @@ public:
 	
 
 private:
+
+	bool getEntityIter(IterT& entityIter, uint64_t entityId);
+
+	void deleteEntity(Entity* pEntity);
 
 	// Brute force Z order setting
 	void realignAllEntityZOrders(std::list<Entity*>& currSiblings);
