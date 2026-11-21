@@ -265,6 +265,7 @@ class EntityDataModifiable(IntEnum):
     TRIANGLE_POINT_1 = 1 << 0x7
     TRIANGLE_POINT_2 = 1 << 0x8
     TRIANGLE_POINT_3 = 1 << 0x9
+    PARENT = 1 << 0x10
 
 class ShapeDataUnion(ctypes.Union):
     _fields_ = [

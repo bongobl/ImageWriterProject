@@ -53,7 +53,7 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 			)
 				
 			{
-				std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+				std::cerr << "ImageWriter: " << addEntityReply.message << std::endl;
 			}
 		}
 	}
@@ -67,11 +67,11 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 		std::cerr << "Found entity: pos = (" << entity26Position.x << ", " << entity26Position.y << ")" << std::endl;
 	}
 	else {
-		std::cerr << "ImageWriter error: " << entityDataReply.message << std::endl;
+		std::cerr << "ImageWriter: " << entityDataReply.message << std::endl;
 	}
 	if (!ImageWriter_Scene_RemoveEntity(instance, &plainReply, 26))
 	{
-		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+		std::cerr << "ImageWriter: " << plainReply.message << std::endl;
 	}
 	if (!ImageWriter_Scene_GetEntityData(instance, &entityDataReply, 26))
 	{
@@ -81,7 +81,7 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 	system("pause");
 	if(!ImageWriter_Scene_RemoveAllEntities(instance, &plainReply))
 	{
-		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+		std::cerr << "ImageWriter: " << plainReply.message << std::endl;
 	}
 
 	// Rectangles
@@ -109,7 +109,7 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 			)
 
 			{
-				std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+				std::cerr << "ImageWriter: " << addEntityReply.message << std::endl;
 			}
 		}
 	}
@@ -134,19 +134,19 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 		})
 	)
 	{
-		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+		std::cerr << "ImageWriter: " << plainReply.message << std::endl;
 	}
 
 	system("pause");
 	if (!ImageWriter_Scene_RemoveEntity(instance, &plainReply, 57))
 	{
-		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+		std::cerr << "ImageWriter: " << plainReply.message << std::endl;
 	}
 
 	system("pause");
 	if (!ImageWriter_Scene_RemoveAllEntities(instance, &plainReply))
 	{
-		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+		std::cerr << "ImageWriter: " << plainReply.message << std::endl;
 	}
 
 	// Triangles
@@ -176,7 +176,7 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 			)
 
 			{
-				std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+				std::cerr << "ImageWriter: " << addEntityReply.message << std::endl;
 			}
 		}
 	}
@@ -184,7 +184,7 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 	system("pause");
 	if (!ImageWriter_Scene_RemoveAllEntities(instance, &plainReply))
 	{
-		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+		std::cerr << "ImageWriter: " << plainReply.message << std::endl;
 	}
 }
 
@@ -215,7 +215,7 @@ void runEntityParentingTest(HImageWriterInstance instance)
 		)
 
 	{
-		std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+		std::cerr << "ImageWriter: " << addEntityReply.message << std::endl;
 	}
 	uint64_t ellipseId = addEntityReply.entityId;
 
@@ -243,7 +243,7 @@ void runEntityParentingTest(HImageWriterInstance instance)
 		)
 
 	{
-		std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+		std::cerr << "ImageWriter: " << addEntityReply.message << std::endl;
 	}
 	uint64_t rectId = addEntityReply.entityId;
 
@@ -272,15 +272,23 @@ void runEntityParentingTest(HImageWriterInstance instance)
 		)
 
 	{
-		std::cerr << "ImageWriter error: " << addEntityReply.message << std::endl;
+		std::cerr << "ImageWriter: " << addEntityReply.message << std::endl;
 	}
 
 	uint64_t triangleId = addEntityReply.entityId;
 
 	system("pause");
-	if (!ImageWriter_Scene_RemoveEntity(instance, &plainReply, ellipseId))
+	if (!ImageWriter_Scene_ModifyEntity(
+		instance,
+		&plainReply,
+		{
+			.entityId = triangleId,
+			.parentEntityId = ellipseId,
+			.fieldsToModify = ENTITY_DATA_MODIFIABLE_PARENT,
+		})
+		)
 	{
-		std::cerr << "ImageWriter error: " << plainReply.message << std::endl;
+		std::cerr << "ImageWriter: " << plainReply.message << std::endl;
 	}
 }
 

@@ -10,7 +10,7 @@ def runShapesLatticeTest():
 
     transformReply = iw.TransformReply();
     if not imageWriter.GetCameraTransform(transformReply):
-        print(f"ImageWriter error: {transformReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {transformReply.message.decode('utf-8')}")
     else:
         print(f"ImageWriter success: {transformReply.message.decode('utf-8')}")
         print(f"camera scaleX = {transformReply.transform.scale * transformReply.cameraWidthFromHeight}, scaleY = {transformReply.transform.scale}")
@@ -38,7 +38,7 @@ def runShapesLatticeTest():
                     ellipse = iw.EllipseData(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
-                print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+                print(f"ImageWriter: {addEntityReply.message.decode('utf-8')}")
     
     plainReply = iw.PlainReply();
     entityDataReply = iw.EntityDataReply()
@@ -47,17 +47,17 @@ def runShapesLatticeTest():
         entity26Pos = entityDataReply.entityData.transform.position;
         print(f"Found entity: pos = ({entity26Pos.x}, {entity26Pos.y})")
     else:
-        print(f"ImageWriter error: {entityDataReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {entityDataReply.message.decode('utf-8')}")
 
     if not imageWriter.RemoveEntity(plainReply, 26):
-        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {plainReply.message.decode('utf-8')}")
 
     if not imageWriter.GetEntityData(entityDataReply, 26):
         print(f"Corrent not-found entity: {entityDataReply.message.decode('utf-8')}")
 
     input("Press Enter")
     if not imageWriter.RemoveAllEntities(plainReply):
-        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {plainReply.message.decode('utf-8')}")
 
     input("Press Enter")
     for i in range(dimY):
@@ -72,7 +72,7 @@ def runShapesLatticeTest():
                     rectangle = iw.RectangleData(halfExtents = iw.Vec2(0.5, 0.35))
                 )
             ):
-                print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+                print(f"ImageWriter: {addEntityReply.message.decode('utf-8')}")
     
     input("Press Enter")
     if not imageWriter.ModifyEntity(
@@ -87,15 +87,15 @@ def runShapesLatticeTest():
             fieldsToModify = iw.EntityDataModifiable.TYPE | iw.EntityDataModifiable.COLOR | iw.EntityDataModifiable.POSITION | iw.EntityDataModifiable.Z_ORDER,
         )
     ):
-        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {plainReply.message.decode('utf-8')}")
 
     input("Press Enter")
     if not imageWriter.RemoveEntity(plainReply, 57):
-        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {plainReply.message.decode('utf-8')}")
 
     input("Press Enter")
     if not imageWriter.RemoveAllEntities(plainReply):
-        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {plainReply.message.decode('utf-8')}")
 
     input("Press Enter")
     for i in range(dimY):
@@ -114,14 +114,14 @@ def runShapesLatticeTest():
                     )
                 )
             ):
-                print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+                print(f"ImageWriter: {addEntityReply.message.decode('utf-8')}")
     
     input("Press Enter")
     if not imageWriter.RemoveAllEntities(plainReply):
-        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {plainReply.message.decode('utf-8')}")
 
 
-def runShapesLatticeTest():
+def runEntityParentingTest():
     
     imageWriter = window.framework
 
@@ -137,7 +137,7 @@ def runShapesLatticeTest():
             ellipse = iw.EllipseData(halfExtents = iw.Vec2(3, 2))
         )
     ):
-        print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {addEntityReply.message.decode('utf-8')}")
     ellipseId = addEntityReply.entityId
 
     input("Press Enter")
@@ -152,7 +152,7 @@ def runShapesLatticeTest():
             transformSpace = iw.TransformSpace.WORLD
         )
     ):
-        print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {addEntityReply.message.decode('utf-8')}")
     rectId = addEntityReply.entityId;
 
     input("Press Enter")
@@ -171,13 +171,20 @@ def runShapesLatticeTest():
             parentEntityId = rectId
         )
     ):
-        print(f"ImageWriter error: {addEntityReply.message.decode('utf-8')}")
+        print(f"ImageWriter: {addEntityReply.message.decode('utf-8')}")
 
     triangleId = addEntityReply.entityId;
 
     input("Press Enter")
-    if not imageWriter.RemoveEntity(plainReply, ellipseId):
-        print(f"ImageWriter error: {plainReply.message.decode('utf-8')}")
+    if not imageWriter.ModifyEntity(
+        plainReply,
+        iw.EntityData(
+            entityId = triangleId,
+            parentEntityId = ellipseId,
+            fieldsToModify = iw.EntityDataModifiable.PARENT,
+        )
+    ):
+        print(f"ImageWriter: {plainReply.message.decode('utf-8')}")
 
 
 if __name__ == "__main__":
@@ -186,7 +193,7 @@ if __name__ == "__main__":
     # create UI
     window = iw.Window(name = "My Test App", windowSize="1920x1480")    
     
-    apiThread = threading.Thread(target = runShapesLatticeTest)
+    apiThread = threading.Thread(target = runEntityParentingTest)
     apiThread.start()
 
     # run UI

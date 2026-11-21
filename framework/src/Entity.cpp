@@ -193,6 +193,14 @@ bool Entity::validateModifyParams(EntityData params, std::string* pMessage) cons
 			return false;
 		}
 	}
+
+	if (params.entityId == params.parentEntityId) {
+		std::cerr << "Entity::modify(): can't parent entity with id " << params.entityId  << " to itself" << std::endl;
+		if (pMessage) {
+			*pMessage += "Error: Can not parent entity with id " + std::to_string(params.entityId) + " to itself";
+		}
+		return false;
+	}
 	return true;
 }
 void Entity::modify(EntityData params)
@@ -356,21 +364,26 @@ void Entity::draw(sf::RenderWindow& window, DrawUtils& drawUtils) const
 }
 
 // Private helpers
-void Entity::syncTransforms(bool syncWorldToLocal)
+void Entity::syncTransforms(bool preserveLocal)
 {
-	if (syncWorldToLocal) {
+	if (m_Id == ROOT_ENTITY_ID) {
+		return;
+	}
+
+	if (preserveLocal) {
 		// if m_Transform was just modified and we need to update m_WorldTransform
-		m_WorldTransform = m_pParent ? m_pParent->m_WorldTransform * m_Transform : m_Transform;
+		m_WorldTransform = m_pParent->m_WorldTransform * m_Transform;
 	}
 	else {
 		// if m_WorldTransform was just modified and we need to update m_Transform
-		m_Transform = m_pParent ? inverse(m_pParent->m_WorldTransform) * m_WorldTransform : m_WorldTransform;
+		m_Transform = inverse(m_pParent->m_WorldTransform) * m_WorldTransform;
 	}
 
 	// update the world transforms of children
 	for (auto iter = m_Children.begin(); iter != m_Children.end(); ++iter) {
 		Entity* pCurrEntity = *iter;
 
+		//std::unique_lock<std::shared_mutex> lock(pCurrEntity->m_Mutex);
 		// changing 'this' entity's transform will only ever change its childrens' world transforms
 		// so we always sync their world to their local
 		pCurrEntity->syncTransforms(true);	
@@ -510,7 +523,6 @@ void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 		pParentEntity = *parentIter;
 	}
 
-
 	IterT listIter;
 	Entity* newEntity = new Entity(m_NextEntityId, params, pParentEntity);
 	pReply->success = addChildToParent(newEntity, pParentEntity, params.zOrder, listIter, &message);
@@ -574,24 +586,24 @@ void EntityList::API_getEntityData(EntityDataReply* pReply, uint64_t entityId)
 
 	std::string message = "";
 
-	auto mapIter = m_EntityIterFromId.find(entityId);
 
-	// If not found in map
-	if (mapIter == m_EntityIterFromId.end()) {
+	IterT entityIter;
+	if (!getEntityIter(entityIter, entityId)) {
 		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
 
-		message += "No entity with a given ID of " + std::to_string(entityId) + " found";
+		message = "No entity with a given ID of " + std::to_string(entityId) + " found";
+		strcpy(pReply->message, message.c_str());
 		pReply->success = false;
+		return;
 	}
-	else {
-		IterT entityIter = mapIter->second;
-		Entity* pEntity = *entityIter;
 
-		// lock parent's list of children in shared mode
-		std::shared_lock<std::shared_mutex> entitiesLock(pEntity->m_pParent->m_Mutex);
-		pReply->entityData = pEntity->getData();
-		pReply->success = true;
-	}
+	Entity* pEntity = *entityIter;
+
+	// lock parent's list of children in shared mode
+	std::shared_lock<std::shared_mutex> entitiesLock(pEntity->m_pParent->m_Mutex);
+	pReply->entityData = pEntity->getData();
+	pReply->success = true;
+
 
 	if (message == "") {
 		message = "Entity with id " + std::to_string(entityId) + " found";
@@ -631,6 +643,30 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 	{
 		strcpy(pReply->message, message.c_str());
 		return;
+	}
+
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_PARENT && params.parentEntityId != pEntity->m_pParent->m_Id) {
+
+		IterT newParentIter;
+		if (!getEntityIter(newParentIter, params.parentEntityId)) {
+			std::cerr << "Parent entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
+
+			message = "No parent entity with a given ID of " + std::to_string(entityId) + " found";
+			strcpy(pReply->message, message.c_str());
+			pReply->success = false;
+			return;
+		}
+		Entity* pNewParentEntity = *newParentIter;
+
+		std::unique_lock<std::shared_mutex> lock(pEntity->m_Mutex);
+
+		removeEntityFromParent(pEntity->m_pParent, currLocation, &message);
+		pEntity->m_pParent = pNewParentEntity;
+
+		addChildToParent(pEntity, pNewParentEntity, params.zOrder, currLocation, &message);
+
+		// FOR NOW: hardcode true or false
+		pEntity->syncTransforms(false);
 	}
 
 	// Validate and handle Z order in one shot

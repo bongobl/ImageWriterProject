@@ -83,8 +83,7 @@ public:
 
 	void draw(sf::RenderWindow& window, DrawUtils& drawUtils) const;
 
-private:
-	void syncTransforms(bool syncWorldToLocal);
+	void syncTransforms(bool preserveLocal);
 };
 
 // TODO: rename to scene root
