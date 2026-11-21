@@ -83,8 +83,8 @@ public:
 
 	void draw(sf::RenderWindow& window, DrawUtils& drawUtils) const;
 
-private:
-	void syncTransforms(bool syncWorldToLocal);
+	bool isDecendantOf(Entity* pElder);
+	void syncTransforms(bool preserveLocal);
 };
 
 // TODO: rename to scene root
@@ -139,7 +139,7 @@ public:
 
 private:
 
-	bool getEntityIter(IterT& entityIter, uint64_t entityId);
+	IterT* getEntityIter(uint64_t entityId);
 
 	void deleteEntity(Entity* pEntity);
 

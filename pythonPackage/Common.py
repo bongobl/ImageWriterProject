@@ -265,6 +265,7 @@ class EntityDataModifiable(IntEnum):
     TRIANGLE_POINT_1 = 1 << 0x7
     TRIANGLE_POINT_2 = 1 << 0x8
     TRIANGLE_POINT_3 = 1 << 0x9
+    PARENT = 1 << 0x10
 
 class ShapeDataUnion(ctypes.Union):
     _fields_ = [
@@ -377,7 +378,7 @@ class EntityData(ctypes.Structure):
         self.transformSpace = TransformSpace.LOCAL if (transformMod.space == "local") else TransformSpace.WORLD
 
     # modification
-    def fromModifyEntityMCPPayload(self, entityId, shapeType, positionMod, orientationMod, scaleMod, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3):
+    def fromModifyEntityMCPPayload(self, entityId, shapeType, positionMod, orientationMod, scaleMod, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3, parentEntityId):
      
         self.entityId = ctypes.c_uint64(entityId)
 
@@ -453,6 +454,10 @@ class EntityData(ctypes.Structure):
         if trianglePoint3 is not None:
             self.fieldsToModify |= EntityDataModifiable.TRIANGLE_POINT_3
             self.triangle.point3.fromMCPPayload(trianglePoint3)
+
+        if parentEntityId is not None:
+            self.fieldsToModify |= EntityDataModifiable.PARENT
+            self.parentEntityId = ctypes.c_uint64(parentEntityId)
 
         return PlainReplyMCPPayload(success=True, message="")
 

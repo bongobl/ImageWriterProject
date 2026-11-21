@@ -193,6 +193,14 @@ bool Entity::validateModifyParams(EntityData params, std::string* pMessage) cons
 			return false;
 		}
 	}
+
+	if (params.entityId == params.parentEntityId) {
+		std::cerr << "Entity::modify(): can't parent entity with id " << params.entityId  << " to itself" << std::endl;
+		if (pMessage) {
+			*pMessage += "Error: Can not parent entity with id " + std::to_string(params.entityId) + " to itself";
+		}
+		return false;
+	}
 	return true;
 }
 void Entity::modify(EntityData params)
@@ -355,22 +363,37 @@ void Entity::draw(sf::RenderWindow& window, DrawUtils& drawUtils) const
 	}
 }
 
-// Private helpers
-void Entity::syncTransforms(bool syncWorldToLocal)
+bool Entity::isDecendantOf(Entity* pElder)
 {
-	if (syncWorldToLocal) {
+	Entity* pCurr = this;
+	while (pCurr->m_pParent != nullptr) {
+		if (pCurr->m_pParent == pElder) {
+			return true;
+		}
+		pCurr = pCurr->m_pParent;
+	}
+	return false;
+}
+void Entity::syncTransforms(bool preserveLocal)
+{
+	if (m_Id == ROOT_ENTITY_ID) {
+		return;
+	}
+
+	if (preserveLocal) {
 		// if m_Transform was just modified and we need to update m_WorldTransform
-		m_WorldTransform = m_pParent ? m_pParent->m_WorldTransform * m_Transform : m_Transform;
+		m_WorldTransform = m_pParent->m_WorldTransform * m_Transform;
 	}
 	else {
 		// if m_WorldTransform was just modified and we need to update m_Transform
-		m_Transform = m_pParent ? inverse(m_pParent->m_WorldTransform) * m_WorldTransform : m_WorldTransform;
+		m_Transform = inverse(m_pParent->m_WorldTransform) * m_WorldTransform;
 	}
 
 	// update the world transforms of children
 	for (auto iter = m_Children.begin(); iter != m_Children.end(); ++iter) {
 		Entity* pCurrEntity = *iter;
 
+		//std::unique_lock<std::shared_mutex> lock(pCurrEntity->m_Mutex);
 		// changing 'this' entity's transform will only ever change its childrens' world transforms
 		// so we always sync their world to their local
 		pCurrEntity->syncTransforms(true);	
@@ -436,7 +459,6 @@ bool EntityList::changeEntityZOrderInParent(
 	int& zOrder,
 	std::string* pMessage)
 {
-
 	std::unique_lock<std::shared_mutex> lock(pParent->m_Mutex);
 
 	if (!validateZOrder(zOrder, pParent->m_Children.size() - 1 /*size after removal*/, pMessage)) {
@@ -497,8 +519,8 @@ void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 
 	if (params.parentEntityId != ROOT_ENTITY_ID) {
 
-		IterT parentIter;
-		if (!getEntityIter(parentIter, params.parentEntityId)) {
+		IterT* pParentIter = getEntityIter(params.parentEntityId);
+		if (!pParentIter) {
 			std::cerr << "Parent entity id " << params.parentEntityId << " not found in m_EntityIterFromId map" << std::endl;
 
 			message = "No entity with a given ID of " + std::to_string(params.parentEntityId) + " found";
@@ -507,9 +529,8 @@ void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 			return;
 		}
 
-		pParentEntity = *parentIter;
+		pParentEntity = **pParentIter;
 	}
-
 
 	IterT listIter;
 	Entity* newEntity = new Entity(m_NextEntityId, params, pParentEntity);
@@ -518,6 +539,7 @@ void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 	if (!pReply->success) {
 
 		delete newEntity;
+		newEntity = nullptr;
 		strcpy(pReply->message, message.c_str());
 		return;
 	}
@@ -545,8 +567,8 @@ void EntityList::API_removeEntity(PlainReply* pReply, uint64_t entityId)
 	// tentatively set success string
 	std::string message = "";
 
-	IterT entityIter;
-	if (!getEntityIter(entityIter, entityId)) {
+	IterT* pEntityIter = getEntityIter(entityId);
+	if (!pEntityIter) {
 		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
 
 		message = "No entity with a given ID of " + std::to_string(entityId) + " found";
@@ -555,9 +577,9 @@ void EntityList::API_removeEntity(PlainReply* pReply, uint64_t entityId)
 		return;
 	}
 
-	Entity* pPluckedEntity = *entityIter;
+	Entity* pPluckedEntity = **pEntityIter;
 
-	pReply->success = removeEntityFromParent(pPluckedEntity->m_pParent, entityIter, &message);
+	pReply->success = removeEntityFromParent(pPluckedEntity->m_pParent, *pEntityIter, &message);
 
 	// delete entity and its children
 	deleteEntity(pPluckedEntity);
@@ -574,24 +596,24 @@ void EntityList::API_getEntityData(EntityDataReply* pReply, uint64_t entityId)
 
 	std::string message = "";
 
-	auto mapIter = m_EntityIterFromId.find(entityId);
 
-	// If not found in map
-	if (mapIter == m_EntityIterFromId.end()) {
+	IterT* pEntityIter = getEntityIter(entityId);
+	if (!pEntityIter) {
 		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
 
-		message += "No entity with a given ID of " + std::to_string(entityId) + " found";
+		message = "No entity with a given ID of " + std::to_string(entityId) + " found";
+		strcpy(pReply->message, message.c_str());
 		pReply->success = false;
+		return;
 	}
-	else {
-		IterT entityIter = mapIter->second;
-		Entity* pEntity = *entityIter;
 
-		// lock parent's list of children in shared mode
-		std::shared_lock<std::shared_mutex> entitiesLock(pEntity->m_pParent->m_Mutex);
-		pReply->entityData = pEntity->getData();
-		pReply->success = true;
-	}
+	Entity* pEntity = **pEntityIter;
+
+	// lock parent's list of children in shared mode
+	std::shared_lock<std::shared_mutex> entitiesLock(pEntity->m_pParent->m_Mutex);
+	pReply->entityData = pEntity->getData();
+	pReply->success = true;
+
 
 	if (message == "") {
 		message = "Entity with id " + std::to_string(entityId) + " found";
@@ -610,10 +632,11 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 
 	uint64_t entityId = params.entityId;
 
-	auto mapIter = m_EntityIterFromId.find(entityId);
+
+	IterT* pCurrLocation = getEntityIter(entityId);
 
 	// If not found in map
-	if (mapIter == m_EntityIterFromId.end()) {
+	if (!pCurrLocation) {
 		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
 
 		message = "No entity with a given ID of " + std::to_string(entityId) + " found";
@@ -621,9 +644,9 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 		pReply->success = false;
 		return;
 	}
-	
-	IterT& currLocation = mapIter->second;
-	Entity* pEntity = *currLocation;
+
+	IterT& entityIter = *pCurrLocation; // <- important: must be reference so that we modify the map's value of the iter for this entity
+	Entity* pEntity = *entityIter;
 
 	// Validate entity modify params
 	pReply->success = pEntity->validateModifyParams(params, &message);
@@ -633,10 +656,51 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 		return;
 	}
 
-	// Validate and handle Z order in one shot
-	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_Z_ORDER && params.zOrder != pEntity->m_zOrder) {
+	// Validate and handle reparenting in one shot
+	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_PARENT && params.parentEntityId != pEntity->m_pParent->m_Id) {
 
-		pReply->success = changeEntityZOrderInParent(pEntity->m_pParent, currLocation, params.zOrder, &message);
+		Entity* pNewParentEntity = nullptr;
+		if (params.parentEntityId == ROOT_ENTITY_ID) {
+			pNewParentEntity = &m_RootEntity;
+		}
+		else {
+			IterT* pNewParentIter = getEntityIter(params.parentEntityId);
+			if (!pNewParentIter) {
+				std::cerr << "Parent entity id " << params.parentEntityId << " not found in m_EntityIterFromId map" << std::endl;
+
+				message = "No parent entity with a given ID of " + std::to_string(params.parentEntityId) + " found";
+				strcpy(pReply->message, message.c_str());
+				pReply->success = false;
+				return;
+			}
+			pNewParentEntity = **pNewParentIter;
+
+			if (pNewParentEntity->isDecendantOf(pEntity)) {
+				std::cerr << "Parent entity id " << params.parentEntityId << " is a decendant of entity being modified" << params.entityId << std::endl;
+
+				message = "Can not make entity with id=" + std::to_string(params.entityId) + " a child of one of its decendants... entity id=" + std::to_string(params.parentEntityId);
+				strcpy(pReply->message, message.c_str());
+				pReply->success = false;
+				return;
+			}
+		}
+		
+		std::unique_lock<std::shared_mutex> lock(pEntity->m_Mutex);
+
+		removeEntityFromParent(pEntity->m_pParent, entityIter, &message);
+		pEntity->m_pParent = pNewParentEntity;
+
+		// note zOrder is read unconditionally here rather than checking ENTITY_DATA_MODIFIABLE_Z_ORDER
+		addChildToParent(pEntity, pNewParentEntity, params.zOrder, entityIter, &message);
+
+		// TODO: fix... FOR NOW: hardcode true or false
+		pEntity->syncTransforms(false);
+	}
+
+	// Validate and handle Z order in one shot
+	else if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_Z_ORDER && params.zOrder != pEntity->m_zOrder) {
+
+		pReply->success = changeEntityZOrderInParent(pEntity->m_pParent, entityIter, params.zOrder, &message);
 
 		if (!pReply->success)
 		{
@@ -654,15 +718,14 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 	strcpy(pReply->message, message.c_str());
 }
 
-bool EntityList::getEntityIter(IterT& entityIter, uint64_t entityId)
+EntityList::IterT* EntityList::getEntityIter(uint64_t entityId)
 {
 	auto mapIter = m_EntityIterFromId.find(entityId);
 
 	if (mapIter != m_EntityIterFromId.end()) {
-		entityIter = mapIter->second;
-		return true;
+		return &mapIter->second;
 	}
-	return false;
+	return nullptr;
 }
 
 void EntityList::deleteEntity(Entity* pEntity)

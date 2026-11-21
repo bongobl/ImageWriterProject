@@ -141,12 +141,12 @@ def getCameraTransform() -> iw.CameraTransformReplyMCPPayload:
     return communicateWithApp(iw.Command.GetCameraTransform, None, iw.TransformReply).toCameraMCPPayload()
 
 @mcp.tool()
-def addEntity2(
+def addEntity3(
     transform: Annotated[iw.TransformModelForEntityAdding, Field(description = f"the transform of this new entity")],
     color: Annotated[iw.ColorMCPPayload, Field(description = f"specifies the color to draw this shape")],
     zOrder: Annotated[int, Field(description = f"the Z order, {iw.Z_ORDER_DOC}")],
     shape: Annotated[iw.ShapeDataUnionMCPPayload, Field(description = iw.SHAPE_DATA_UNION_DOC)],
-    parentEntityId: Annotated[int, Field(description = f"the id of the entity that will be this new one's parent in the scene graph entity hierarchy, omit it for the entity to get added to the top level of the hierarchy")] = None,
+    parentEntityId: Annotated[int, Field(description = f"the id of the entity that will be this new one's parent in the scene graph entity hierarchy, set it to 0 to put it directly under the world")],
 ):
 
     """
@@ -158,7 +158,7 @@ def addEntity2(
     return communicateWithApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
 
 @mcp.tool()
-def modifyEntity(
+def modifyEntity0(
     entityId: Annotated[int, Field(description = "The id of the entity to modify")],
     shapeType: Annotated[iw.EntityTypeMCPPayload, Field(description = "an optional new shape to set for the entity")] = None,
     position: Annotated[iw.ModifyPositionModel, Field(description = "an optional new position of the transform to set for the entity")] = None,
@@ -170,6 +170,7 @@ def modifyEntity(
     trianglePoint1: Annotated[iw.Vec2MCPPayload, Field(description = "optional new 'point1' to set for a triangle entity")] = None,
     trianglePoint2: Annotated[iw.Vec2MCPPayload, Field(description = "optional new 'point2' to set for a triangle entity")] = None,
     trianglePoint3: Annotated[iw.Vec2MCPPayload, Field(description = "optional new 'point3' to set for a triangle entity")] = None,
+    parentEntityId: Annotated[int, Field(description = "The new parent of this entity, set it to 0 to put it directly under the world")] = None,
 ):
     """
     Use this function to modify various properties of existing entities given its id. All fields apart from 'entityId' are optional
@@ -179,7 +180,7 @@ def modifyEntity(
     """
 
     entityParams = iw.EntityData()
-    reply = entityParams.fromModifyEntityMCPPayload(entityId, shapeType, position, orientation, scale, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3)
+    reply = entityParams.fromModifyEntityMCPPayload(entityId, shapeType, position, orientation, scale, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3, parentEntityId)
     if not reply.success:
         return reply
 
