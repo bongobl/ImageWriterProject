@@ -138,7 +138,7 @@ public:
 
 private:
 
-	bool getEntityIter(IterT& entityIter, uint64_t entityId);
+	IterT* getEntityIter(uint64_t entityId);
 
 	void deleteEntity(Entity* pEntity);
 
