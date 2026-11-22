@@ -287,7 +287,7 @@ void Scene::updateState(float deltaTime)
 
 	m_Camera.updateComputedState(windowInitialExtents.y);
 	// Test just to make sure window updates every frame
-	m_EntityList.dummyUpdateShapes(deltaTime);
+	//m_EntityList.dummyUpdateShapes(deltaTime);
 }
 void Scene::render()
 {

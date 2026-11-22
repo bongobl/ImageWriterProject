@@ -229,28 +229,57 @@ void Entity::modify(EntityData params)
 				std::cerr << "Entity::modify(): Unknown type enum value of " << (unsigned int)m_Type << std::endl;
 				exit(1);
 		}
-		
 	}
 
 	// transform modifiers
-	bool localTransformModified = false;
+	Transform newTransform; // identity for SELF<*> modes
+	if (params.transformSpace == TRANSFORM_SPACE_LOCAL) {
+		newTransform = m_Transform;
+	}
+	else if (params.transformSpace == TRANSFORM_SPACE_WORLD){
+		newTransform = m_WorldTransform;
+	}
+
+	bool transformModified = false;
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_POSITION) {
 		bool asOffset = params.transformFieldApplyModes & TRANSFORM_APPLY_MODE_POSITION_AS_OFFSET;
-		m_Transform.position = asOffset ? (m_Transform.position + params.transform.position) : params.transform.position;
-		localTransformModified = true;
+		newTransform.position = asOffset ? (newTransform.position + params.transform.position) : params.transform.position;
+
+		if (params.transformSpace == TRANSFORM_SPACE_SELF_WITH_POSITION_OFFSET_IN_WORLD_UNITS) {
+			newTransform.position.x /= m_WorldTransform.scale;
+			newTransform.position.y /= m_WorldTransform.scale;
+		}
+
+		transformModified = true;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_ORIENTATION) {
 		bool asOffset = params.transformFieldApplyModes & TRANSFORM_APPLY_MODE_ORIENTATION_AS_OFFSET;
-		m_Transform.orientation = asOffset ? (m_Transform.orientation + params.transform.orientation) : params.transform.orientation;
-		localTransformModified = true;
+		newTransform.orientation = asOffset ? (newTransform.orientation + params.transform.orientation) : params.transform.orientation;
+		transformModified = true;
 	}
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_SCALE) {
 		bool asOffset = params.transformFieldApplyModes & TRANSFORM_APPLY_MODE_SCALE_AS_OFFSET;
-		m_Transform.scale = asOffset ? (m_Transform.scale * params.transform.scale) : params.transform.scale;
-		localTransformModified = true;
+		newTransform.scale = asOffset ? (newTransform.scale * params.transform.scale) : params.transform.scale;
+		transformModified = true;
 	}
-	if (localTransformModified) {
-		syncTransforms(true);
+	if (transformModified) {
+
+		
+		if (params.transformSpace == TRANSFORM_SPACE_SELF || params.transformSpace == TRANSFORM_SPACE_SELF_WITH_POSITION_OFFSET_IN_WORLD_UNITS) {
+			m_Transform = m_Transform * newTransform;
+		}
+		else if (params.transformSpace == TRANSFORM_SPACE_LOCAL) {
+			m_Transform = newTransform;
+		}
+		else if (params.transformSpace == TRANSFORM_SPACE_WORLD) {
+			m_WorldTransform = newTransform;
+		}
+		else {
+			std::cerr << "Entity::modify(): Unknown transformSpace enum value of " << params.transformSpace << std::endl;
+			exit(1);
+		}
+
+		syncTransforms(params.transformSpace != TRANSFORM_SPACE_WORLD);
 	}
 
 	if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_COLOR) {
@@ -694,8 +723,9 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 		addChildToParent(pEntity, pNewParentEntity, params.zOrder, entityIter, &message);
 
 		// TODO: fix... FOR NOW: hardcode true or false
-		pEntity->syncTransforms(false);
-	}
+		pEntity->syncTransforms(params.fieldsToModify & ENTITY_DATA_MODIFIABLE_REPARENT_PRESERVE_LOCAL_TRANSFORM);
+
+	} // END reparent
 
 	// Validate and handle Z order in one shot
 	else if (params.fieldsToModify & ENTITY_DATA_MODIFIABLE_Z_ORDER && params.zOrder != pEntity->m_zOrder) {

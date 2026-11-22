@@ -158,19 +158,20 @@ def addEntity3(
     return communicateWithApp(iw.Command.AddEntity, entityParams, iw.AddEntityReply).toMCPPayload()
 
 @mcp.tool()
-def modifyEntity0(
+def modifyEntity3(
     entityId: Annotated[int, Field(description = "The id of the entity to modify")],
     shapeType: Annotated[iw.EntityTypeMCPPayload, Field(description = "an optional new shape to set for the entity")] = None,
     position: Annotated[iw.ModifyPositionModel, Field(description = "an optional new position of the transform to set for the entity")] = None,
     orientation: Annotated[iw.ModifyOrientationModel, Field(description = "an optional new orientation of the transform to set for the entity")] = None,
     scale: Annotated[iw.ModifyScaleModel, Field(description = "an optional new scale of the transform to set for the entity")] = None,
+    transformSpace: Annotated[iw.TransformSpaceModelForModifying, Field(description = iw.MODIFY_TRANSFORM_DESC)] = None, 
     color: Annotated[iw.ColorMCPPayload, Field(description = "an optional new color to set for the entity")] = None,
     zOrder: Annotated[int, Field(description = f"an optional new zOrder to set for the entity, {iw.Z_ORDER_DOC}")] = None,
     halfExtents: Annotated[iw.Vec2MCPPayload, Field(description = "optional new half extents to set for an ellipse/rectangle entity")] = None,
     trianglePoint1: Annotated[iw.Vec2MCPPayload, Field(description = "optional new 'point1' to set for a triangle entity")] = None,
     trianglePoint2: Annotated[iw.Vec2MCPPayload, Field(description = "optional new 'point2' to set for a triangle entity")] = None,
     trianglePoint3: Annotated[iw.Vec2MCPPayload, Field(description = "optional new 'point3' to set for a triangle entity")] = None,
-    parentEntityId: Annotated[int, Field(description = "The new parent of this entity, set it to 0 to put it directly under the world")] = None,
+    newParent: Annotated[iw.ReparentModel, Field(description = "an optional new parent of this entity")] = None,
 ):
     """
     Use this function to modify various properties of existing entities given its id. All fields apart from 'entityId' are optional
@@ -180,12 +181,15 @@ def modifyEntity0(
     """
 
     entityParams = iw.EntityData()
-    reply = entityParams.fromModifyEntityMCPPayload(entityId, shapeType, position, orientation, scale, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3, parentEntityId)
+    reply = entityParams.fromModifyEntityMCPPayload(
+        entityId, shapeType, position, orientation, scale, transformSpace, color, zOrder, 
+        halfExtents, trianglePoint1, trianglePoint2, trianglePoint3, 
+        newParent)
+
     if not reply.success:
         return reply
 
     return communicateWithApp(iw.Command.ModifyEntity, entityParams, iw.PlainReply).toMCPPayload()
-    #return iw.PlainReplyMCPPayload(success=True, message=f"{entityParams}")
 
 @mcp.tool()
 def getEntityData(

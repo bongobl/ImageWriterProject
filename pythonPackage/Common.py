@@ -71,7 +71,19 @@ class Transform(ctypes.Structure):
         self.scale = payload.scale 
 
 TransformApplyModeModel = Literal["absolute", "offset"]
+TransformSpaceModelForEntityAdding = Literal["local", "world"]
+TransformSpaceModelForModifying = Literal["self", "self-positionOffsetInWorldUnits", "local", "world"]
 
+MODIFY_TRANSFORM_DESC = (
+    "The space in which to apply the new transform properties if being modified, required only if either position/rotation/scale are provided"
+    "Choose 'self' for this transform to be applied completely in the entity's own transform space, "
+    "useful for moving the entity along one of its own axes. "
+    "Choose 'self-positionOffsetInWorldUnits' for this transform to be applied in the entity's own transform space "
+    "with the positional offset being applied in world units, "
+    "useful for moving the entity along one of its own axes in world units. "
+    "Choose 'local' for this transform to be applied in the space of the entity's parent. "
+    "Choose 'world' to apply it in world space"
+)
 class TransformApplyModes(IntEnum):
     NONE = 0x0
     POSITION_AS_OFFSET = 1 << 0x0
@@ -81,7 +93,7 @@ class TransformApplyModes(IntEnum):
 class ModifyPositionModel(BaseModel):
     value: Vec2MCPPayload = Field(..., description="positional value used for modification")
     applyMode: TransformApplyModeModel = Field(..., description="choose 'absolute' to override the current position, choose 'offset' to add to it")
-
+    
 class ModifyOrientationModel(BaseModel):
     value: float = Field(..., description="orientation value used for modification")
     applyMode: TransformApplyModeModel = Field(..., description="choose 'absolute' to override the current orientation, choose 'offset' to add to it")
@@ -91,13 +103,11 @@ class ModifyScaleModel(BaseModel):
     applyMode: TransformApplyModeModel = Field(..., description="choose 'absolute' to override the current scale, choose 'offset' to apply this one to the current scale")
 
 
-TransformSpaceModelForEntityAdding = Literal["local", "world"]
-TransformSpaceModelForModifying = Literal["self", "local", "world"]
-
 class TransformSpace(IntEnum):
     SELF = 0
-    LOCAL = 1
-    WORLD = 2
+    SELF_WITH_POSITION_OFFSET_IN_WORLD_UNITS = 1
+    LOCAL = 2
+    WORLD = 3
 
 class TransformModelForEntityAdding(BaseModel):
     value: TransformMCPPayload = Field(..., description = "the transform value itself")
@@ -162,7 +172,7 @@ class ScreenSpaceControls(ctypes.Structure):
         self.rotate = rotate
         self.zoom = zoom
 
-######## Entities ########
+######## Entity shapes (types) ########
 
 EntityTypeMCPPayload = Literal["null", "ellipse", "rectangle", "triangle"]
 
@@ -253,6 +263,12 @@ ShapeDataUnionMCPPayload = Annotated[
     Field(discriminator="kind"),
 ]
 
+TransformPreservationMode = Literal["local", "world"]
+
+class ReparentModel(BaseModel):
+    entityId: int = Field(..., description="entity id of the new parent, set it to 0 to put it directly under the world")
+    preserveTransform: TransformPreservationMode = Field(..., description="choose 'local' to preserve the child entity's local transform, choose 'world' to preserve its world transform")
+
 class EntityDataModifiable(IntEnum):
     NONE = 0
     TYPE = 1 << 0x0
@@ -266,6 +282,7 @@ class EntityDataModifiable(IntEnum):
     TRIANGLE_POINT_2 = 1 << 0x8
     TRIANGLE_POINT_3 = 1 << 0x9
     PARENT = 1 << 0x10
+    REPARENT_PRESERVE_LOCAL_TRANSFORM = 1 << 0x11
 
 class ShapeDataUnion(ctypes.Union):
     _fields_ = [
@@ -378,12 +395,13 @@ class EntityData(ctypes.Structure):
         self.transformSpace = TransformSpace.LOCAL if (transformMod.space == "local") else TransformSpace.WORLD
 
     # modification
-    def fromModifyEntityMCPPayload(self, entityId, shapeType, positionMod, orientationMod, scaleMod, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3, parentEntityId):
+    def fromModifyEntityMCPPayload(self, entityId, shapeType, positionMod, orientationMod, scaleMod, transformSpaceMod, color, zOrder, halfExtents, trianglePoint1, trianglePoint2, trianglePoint3, newParentMod):
      
         self.entityId = ctypes.c_uint64(entityId)
 
         errorsMessages = []
 
+        # validate shape arguments
         if shapeType is not None:
             self.fieldsToModify |= EntityDataModifiable.TYPE
             match shapeType:
@@ -413,6 +431,11 @@ class EntityData(ctypes.Structure):
 
                     self.entityType = EntityType.TRIANGLE
 
+        # validate transform arguments
+        if positionMod is not None or orientationMod is not None or scaleMod is not None:
+            if transformSpaceMod is None:
+                errorsMessages.append("'transformSpace' must be provided if modifying any transform properties (position, rotation, scale)")
+
         if len(errorsMessages) > 0:
             return PlainReplyMCPPayload(success=False, message="\n".join(errorsMessages))
 
@@ -431,6 +454,17 @@ class EntityData(ctypes.Structure):
             self.transform.scale = ctypes.c_float(scaleMod.value)
             self.transformFieldApplyModes |=  TransformApplyModes.SCALE_AS_OFFSET if (scaleMod.applyMode == "offset") else TransformApplyModes.NONE
 
+        if transformSpaceMod is not None:
+            match transformSpaceMod:
+                case "self":
+                    self.transformSpace = TransformSpace.SELF 
+                case "self-positionOffsetInWorldUnits":
+                    self.transformSpace = TransformSpace.SELF_WITH_POSITION_OFFSET_IN_WORLD_UNITS 
+                case "local":
+                    self.transformSpace = TransformSpace.LOCAL 
+                case "world":
+                    self.transformSpace = TransformSpace.WORLD
+                
         if color is not None:
             self.fieldsToModify |= EntityDataModifiable.COLOR
             self.color.fromMCPPayload(color)
@@ -455,15 +489,14 @@ class EntityData(ctypes.Structure):
             self.fieldsToModify |= EntityDataModifiable.TRIANGLE_POINT_3
             self.triangle.point3.fromMCPPayload(trianglePoint3)
 
-        if parentEntityId is not None:
+        if newParentMod is not None:
             self.fieldsToModify |= EntityDataModifiable.PARENT
-            self.parentEntityId = ctypes.c_uint64(parentEntityId)
+            self.fieldsToModify |=  EntityDataModifiable.REPARENT_PRESERVE_LOCAL_TRANSFORM if (newParentMod.preserveTransform == "local") else EntityDataModifiable.NONE
+            self.parentEntityId = ctypes.c_uint64(newParentMod.entityId)
 
         return PlainReplyMCPPayload(success=True, message="")
 
-         
-            
-        
+              
 
 # Replies ====================================================================================
 
