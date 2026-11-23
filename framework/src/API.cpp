@@ -352,7 +352,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveAllEntities(HImage
     return pInstanceData->pfnCore_Scene_RemoveAllEntities(*pInstanceData, pReply);
 }
 
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_MakeSnapshot(HImageWriterInstance instance, PlainReply* pReply, HSnapshot* pSnapshot)
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_MakeSnapshot(HImageWriterInstance instance, PlainReply* pReply, HSnapshot* pSnapshot, uint8_t transformSpace)
 {
     if (!instance.pData) {
         fprintf(stderr, "ImageWriter_Scene_GetSnapshot: instance.pData was null\n");
@@ -374,7 +374,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_MakeSnapshot(HImageWrite
     SnapshotData* pSnapshotData = (SnapshotData*)pSnapshot->pData;
     *pSnapshotData = {};
 
-    bool result = pInstanceData->pfnCore_Scene_MakeSnapshot(*pInstanceData, pReply, pSnapshotData);
+    bool result = pInstanceData->pfnCore_Scene_MakeSnapshot(*pInstanceData, pReply, pSnapshotData, transformSpace);
     if (!result) {
         // Note: no need to free pSnapshotData->pEntitiesData, if it failed in Core then it's Core's job to clean up its allocations
         free(pSnapshotData);

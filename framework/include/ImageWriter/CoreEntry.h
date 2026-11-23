@@ -24,4 +24,4 @@ extern "C" __declspec(dllexport) bool scene_modifyEntity(InstanceData instanceDa
 extern "C" __declspec(dllexport) bool scene_getEntityData(InstanceData instanceData, EntityDataReply* pReply, EntityQuerySpec querySpec);
 extern "C" __declspec(dllexport) bool scene_removeEntity(InstanceData instanceData, PlainReply* pReply, uint64_t entityId);
 extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData instanceData, PlainReply* pReply);
-extern "C" __declspec(dllexport) bool scene_makeSnapshot(InstanceData instanceData, PlainReply* pReply, SnapshotData* pSnapshot);
+extern "C" __declspec(dllexport) bool scene_makeSnapshot(InstanceData instanceData, PlainReply* pReply, SnapshotData* pSnapshot, uint8_t transformSpace);

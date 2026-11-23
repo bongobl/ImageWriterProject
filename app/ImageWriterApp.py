@@ -149,10 +149,18 @@ def runNetworkService():
 
                         case iw.Command.GetSceneSnapshot:
                             
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(ctypes.c_uint8))
+                            if not status:
+                                # print error message and return to listening state
+                                print(errorMessage)
+                                break
+
+                            transformSpace = ctypes.c_uint8.from_buffer_copy(paramsBuffer)
+
                             # capture atomic snapshot of scene at this moment
                             frameworkReply = iw.PlainReply()
                             snapshot = iw.Snapshot()
-                            framework.MakeSnapshot(frameworkReply, snapshot)
+                            framework.MakeSnapshot(frameworkReply, snapshot, transformSpace)
 
                             # if the snapshot was not successfully produced, do nothing else
                             # here and return to listening mode, client will have also received the

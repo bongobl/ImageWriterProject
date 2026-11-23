@@ -103,5 +103,5 @@ public:
 	EntityList* getEntityList();
 	Camera* getCamera();
 
-	void makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply);
+	void makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply, uint8_t transformSpace);
 };

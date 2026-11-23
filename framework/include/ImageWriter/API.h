@@ -47,7 +47,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_ModifyEntity(HImageWrite
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_GetEntityData(HImageWriterInstance instance, EntityDataReply* pReply, EntityQuerySpec querySpec);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveEntity(HImageWriterInstance instance, PlainReply* pReply, uint64_t entityId);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_RemoveAllEntities(HImageWriterInstance instance, PlainReply* pReply);
-extern "C" __declspec(dllexport) bool ImageWriter_Scene_MakeSnapshot(HImageWriterInstance instance, PlainReply* pReply, HSnapshot* pSnapshot);
+extern "C" __declspec(dllexport) bool ImageWriter_Scene_MakeSnapshot(HImageWriterInstance instance, PlainReply* pReply, HSnapshot* pSnapshot, uint8_t transformSpace);
 extern "C" __declspec(dllexport) bool ImageWriter_Scene_DisposeSnapshot(HSnapshot* pSnapshot, PlainReply* pReply);
 
 // snapshot API

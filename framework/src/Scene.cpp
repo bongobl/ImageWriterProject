@@ -348,7 +348,7 @@ Camera* Scene::getCamera()
 	return &m_Camera;
 }
 
-void Scene::makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply)
+void Scene::makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply, uint8_t transformSpace)
 {
 	// Lock camera and entities mutexes so that snapshot is atomic
 	std::scoped_lock lock(m_Camera.m_TransformMutex, m_EntityList.m_RootEntity.m_Mutex);
@@ -368,7 +368,9 @@ void Scene::makeSnapshot(SnapshotData* pSnapshotData, PlainReply* pReply)
 
 		uint64_t index = 0;
 		for (auto iter = entityIterFromId.begin(); iter != entityIterFromId.end(); ++iter, ++index) {
-			pSnapshotData->pEntitiesData[index] = (*iter->second)->getData({.transformSpace = TRANSFORM_SPACE_LOCAL});
+			Entity* pCurrEntity = *(iter->second);
+			EntityQuerySpec querySpec = { .entityId = pCurrEntity->m_Id, .transformSpace = transformSpace };
+			pSnapshotData->pEntitiesData[index] = pCurrEntity->getData(querySpec);
 		}
 	}
 	

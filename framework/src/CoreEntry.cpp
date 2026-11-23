@@ -319,7 +319,7 @@ extern "C" __declspec(dllexport) bool scene_removeAllEntities(InstanceData insta
 	return pReply->success = true;
 }
 
-extern "C" __declspec(dllexport) bool scene_makeSnapshot(InstanceData instanceData, PlainReply* pReply, SnapshotData* pSnapshot)
+extern "C" __declspec(dllexport) bool scene_makeSnapshot(InstanceData instanceData, PlainReply* pReply, SnapshotData* pSnapshot, uint8_t transformSpace)
 {
 	if (!instanceData.pCoreData) {
 		std::cerr << "Core entry scene_makeSnapshot(): instanceData.pCoreData was null" << std::endl;
@@ -339,6 +339,6 @@ extern "C" __declspec(dllexport) bool scene_makeSnapshot(InstanceData instanceDa
 		return false;
 	}
 
-	pCoreData->m_pScene->makeSnapshot(pSnapshot, pReply);
+	pCoreData->m_pScene->makeSnapshot(pSnapshot, pReply, transformSpace);
 	return pReply->success;
 }

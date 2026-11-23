@@ -194,7 +194,7 @@ def modifyEntity3(
 @mcp.tool()
 def getEntityData0(
     entityId: Annotated[int, Field(description = "The id of the entity to get info on")],
-    transformSpace: Annotated[iw.TransformSpaceModel, Field(description = "choose 'local' to obtain the transform in local space, and 'world' to obtain the transform in world space'")]
+    transformSpace: Annotated[iw.TransformSpaceModel, Field(description = "choose 'local' to obtain the transform in local space, and 'world' to obtain it in world space'")]
 ):
     """
     Returns data on an entity given its id
@@ -206,14 +206,17 @@ def getEntityData0(
     return communicateWithApp(iw.Command.GetEntityData, querySpec, iw.EntityDataReply).toMCPPayload()
 
 @mcp.tool()
-def queryScene():
+def queryScene0(
+    transformSpace: Annotated[iw.TransformSpaceModel, Field(description = "choose 'local' to obtain all the entity transforms in local space, and 'world' to obtain them in world space'")]
+):
     
     """
     Return the scene's current state containing the camera transform and data on all entities
     """
 
     # tell app to make a snapshot of the scene, it will immediately return to us the number of entities
-    fetchNumEntitiesReply = communicateWithApp(iw.Command.GetSceneSnapshot, None, iw.NumEntitiesReply, disconnectAtEnd = False)
+    transformSpaceRaw = ctypes.c_uint8(iw.TransformSpace.LOCAL if (transformSpace == "local") else iw.TransformSpace.WORLD)
+    fetchNumEntitiesReply = communicateWithApp(iw.Command.GetSceneSnapshot, transformSpaceRaw, iw.NumEntitiesReply, disconnectAtEnd = False)
 
     if not fetchNumEntitiesReply.success:
         disconnectFromImageWriter() # prev call to communicateWithApp did not disconnect so we must call it manually here

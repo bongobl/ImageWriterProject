@@ -29,7 +29,7 @@ typedef bool (*PfnCore_Scene_ModifyEntity)(InstanceData, PlainReply*, EntityData
 typedef bool (*PfnCore_Scene_GetEntityData)(InstanceData, EntityDataReply*, EntityQuerySpec);
 typedef bool (*PfnCore_Scene_RemoveEntity)(InstanceData, PlainReply*, uint16_t);
 typedef bool (*PfnCore_Scene_RemoveAllEntities)(InstanceData, PlainReply*);
-typedef bool (*PfnCore_Scene_MakeSnapshot)(InstanceData, PlainReply*, SnapshotData*);
+typedef bool (*PfnCore_Scene_MakeSnapshot)(InstanceData, PlainReply*, SnapshotData*, uint8_t);
 
 
 

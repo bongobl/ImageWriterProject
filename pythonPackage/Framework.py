@@ -76,7 +76,7 @@ class Framework(ctypes.Structure):
         self.runtimeLib.ImageWriter_Scene_RemoveAllEntities.restype = ctypes.c_bool
         
         # Snapshot
-        self.runtimeLib.ImageWriter_Scene_MakeSnapshot.argtypes = [Framework, ctypes.POINTER(PlainReply), ctypes.POINTER(Snapshot)]
+        self.runtimeLib.ImageWriter_Scene_MakeSnapshot.argtypes = [Framework, ctypes.POINTER(PlainReply), ctypes.POINTER(Snapshot), c_uint8]
         self.runtimeLib.ImageWriter_Scene_MakeSnapshot.restype = ctypes.c_bool
 
         self.runtimeLib.ImageWriter_Scene_DisposeSnapshot.argtypes = [ctypes.POINTER(Snapshot), ctypes.POINTER(PlainReply)]
@@ -168,8 +168,8 @@ class Framework(ctypes.Structure):
         return self.runtimeLib.ImageWriter_Scene_RemoveAllEntities(self, ctypes.byref(outReply))
 
     # snapshot
-    def MakeSnapshot(self, outReply, outSnapshot):
-        return self.runtimeLib.ImageWriter_Scene_MakeSnapshot(self, ctypes.byref(outReply), ctypes.byref(outSnapshot))
+    def MakeSnapshot(self, outReply, outSnapshot, transformSpaceIn):
+        return self.runtimeLib.ImageWriter_Scene_MakeSnapshot(self, ctypes.byref(outReply), ctypes.byref(outSnapshot), transformSpaceIn)
 
     def DisposeSnapshot(self, outReply, outSnapshot):
         return self.runtimeLib.ImageWriter_Scene_DisposeSnapshot(ctypes.byref(outSnapshot), ctypes.byref(outReply))
