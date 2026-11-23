@@ -317,9 +317,11 @@ void Entity::updateDummy(float deltaTime)
 		pCurrEntity->updateDummy(deltaTime);
 	}
 }
-EntityData Entity::getData()
+EntityData Entity::getData(EntityQuerySpec querySpec)
 {
 	uint64_t parentId = m_pParent ? m_pParent->m_Id : ROOT_ENTITY_ID;
+
+	Transform transformToUse = querySpec.transformSpace == TRANSFORM_SPACE_LOCAL ? m_Transform : m_WorldTransform;
 	switch (m_Type) {
 		case Type::Undefined:
 			std::cerr << "Entity::getData(): Entity type was 'None' " << std::endl;
@@ -327,7 +329,7 @@ EntityData Entity::getData()
 		case Type::Null:
 			return {
 				.entityType = ENTITY_TYPE_NULL,
-				.transform = m_Transform,
+				.transform = transformToUse,
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.entityId = m_Id,
@@ -336,7 +338,7 @@ EntityData Entity::getData()
 		case Type::Ellipse:
 			return {
 				.entityType = ENTITY_TYPE_ELLIPSE,
-				.transform = m_Transform,
+				.transform = transformToUse,
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.ellipse = ellipse,
@@ -347,7 +349,7 @@ EntityData Entity::getData()
 		case Type::Rectangle:
 			return {
 				.entityType = ENTITY_TYPE_RECTANGLE,
-				.transform = m_Transform,
+				.transform = transformToUse,
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.rectangle = rectangle,
@@ -357,7 +359,7 @@ EntityData Entity::getData()
 		case Type::Triangle: {
 			return {
 				.entityType = ENTITY_TYPE_TRIANGLE,
-				.transform = m_Transform,
+				.transform = transformToUse,
 				.color = m_Color,
 				.zOrder = m_zOrder,
 				.triangle = triangle,
@@ -619,18 +621,17 @@ void EntityList::API_removeEntity(PlainReply* pReply, uint64_t entityId)
 	strcpy(pReply->message, message.c_str());
 }
 
-void EntityList::API_getEntityData(EntityDataReply* pReply, uint64_t entityId)
+void EntityList::API_getEntityData(EntityDataReply* pReply, EntityQuerySpec querySpec)
 {
 	std::shared_lock<std::shared_mutex> mapLock(m_EntityIterFromIdMutex);
 
 	std::string message = "";
 
-
-	IterT* pEntityIter = getEntityIter(entityId);
+	IterT* pEntityIter = getEntityIter(querySpec.entityId);
 	if (!pEntityIter) {
-		std::cerr << "Entity id " << entityId << " not found in m_EntityIterFromId map" << std::endl;
+		std::cerr << "Entity id " << querySpec.entityId << " not found in m_EntityIterFromId map" << std::endl;
 
-		message = "No entity with a given ID of " + std::to_string(entityId) + " found";
+		message = "No entity with a given ID of " + std::to_string(querySpec.entityId) + " found";
 		strcpy(pReply->message, message.c_str());
 		pReply->success = false;
 		return;
@@ -640,12 +641,12 @@ void EntityList::API_getEntityData(EntityDataReply* pReply, uint64_t entityId)
 
 	// lock parent's list of children in shared mode
 	std::shared_lock<std::shared_mutex> entitiesLock(pEntity->m_pParent->m_Mutex);
-	pReply->entityData = pEntity->getData();
+	pReply->entityData = pEntity->getData(querySpec);
 	pReply->success = true;
 
 
 	if (message == "") {
-		message = "Entity with id " + std::to_string(entityId) + " found";
+		message = "Entity with id " + std::to_string(querySpec.entityId) + " found";
 	}
 
 	strcpy(pReply->message, message.c_str());

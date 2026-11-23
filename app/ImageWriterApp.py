@@ -132,17 +132,17 @@ def runNetworkService():
                             
                         case iw.Command.GetEntityData:
                             
-                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(ctypes.c_uint64))
+                            status, errorMessage = iw.receiveMessage(buffer = paramsBuffer, connection = connToClient, size = ctypes.sizeof(iw.EntityQuerySpec))
                             if not status:
                                 # print error message and return to listening state
                                 print(errorMessage)
                                 break
                             
-                            entityId = ctypes.c_uint64.from_buffer_copy(paramsBuffer)
-                            print(f"Getting data on entity with id {entityId.value}")
+                            querySpec = iw.EntityQuerySpec.from_buffer_copy(paramsBuffer)
+                            print(f"Getting data on entity: {querySpec}")
 
                             reply = iw.EntityDataReply()
-                            framework.GetEntityData(reply, entityId)
+                            framework.GetEntityData(reply, querySpec)
 
                             if not sendReplyToApp(reply):
                                 break;
@@ -280,7 +280,7 @@ def sendReplyToApp(reply) -> bool:
 if __name__ == "__main__":
 
     # create UI
-    window = iw.Window(name = "ImageWriter App", windowSize="1920x1480")   
+    window = iw.Window(name = "ImageWriter App", windowSize="960x740")   
 
     serviceThread = threading.Thread(target = runNetworkService)
     serviceThread.start()

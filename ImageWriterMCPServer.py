@@ -192,15 +192,18 @@ def modifyEntity3(
     return communicateWithApp(iw.Command.ModifyEntity, entityParams, iw.PlainReply).toMCPPayload()
 
 @mcp.tool()
-def getEntityData(
+def getEntityData0(
     entityId: Annotated[int, Field(description = "The id of the entity to get info on")],
+    transformSpace: Annotated[iw.TransformSpaceModel, Field(description = "choose 'local' to obtain the transform in local space, and 'world' to obtain the transform in world space'")]
 ):
     """
     Returns data on an entity given its id
     """
 
-    entityIdRaw = ctypes.c_uint64(entityId)
-    return communicateWithApp(iw.Command.GetEntityData, entityIdRaw, iw.EntityDataReply).toMCPPayload()
+    querySpec = iw.EntityQuerySpec()
+    querySpec.fromMCPArgs(entityId, transformSpace)
+
+    return communicateWithApp(iw.Command.GetEntityData, querySpec, iw.EntityDataReply).toMCPPayload()
 
 @mcp.tool()
 def queryScene():

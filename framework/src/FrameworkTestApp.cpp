@@ -61,7 +61,7 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 	PlainReply plainReply;
 	EntityDataReply entityDataReply = {};
 	system("pause");
-	if (ImageWriter_Scene_GetEntityData(instance, &entityDataReply, 26))
+	if (ImageWriter_Scene_GetEntityData(instance, &entityDataReply, { .entityId = 26 }))
 	{
 		Vec2 entity26Position = entityDataReply.entityData.transform.position;
 		std::cerr << "Found entity: pos = (" << entity26Position.x << ", " << entity26Position.y << ")" << std::endl;
@@ -73,7 +73,7 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 	{
 		std::cerr << "ImageWriter: " << plainReply.message << std::endl;
 	}
-	if (!ImageWriter_Scene_GetEntityData(instance, &entityDataReply, 26))
+	if (!ImageWriter_Scene_GetEntityData(instance, &entityDataReply, { .entityId = 26 }))
 	{
 		std::cerr << "Corrent not-found entity: " << entityDataReply.message << std::endl;
 	}
@@ -303,7 +303,7 @@ int main(void)
 	// Create an isolated window with a handle value of 0
 	int windowHwnd = 0;
 	ImageWriter_Scene_Init(instance, windowHwnd, { .gridViewMode = GRID_VIEW_MODE_BACKGROUND });
-	std::thread imageWriterThread(runEntityParentingTest, instance);
+	std::thread imageWriterThread(runShapesLatticeTest, instance);
 
 
 	auto prevTime = std::chrono::steady_clock::now();

@@ -43,7 +43,7 @@ def runShapesLatticeTest():
     plainReply = iw.PlainReply();
     entityDataReply = iw.EntityDataReply()
     input("Press Enter")
-    if imageWriter.GetEntityData(entityDataReply, 26):
+    if imageWriter.GetEntityData(entityDataReply, iw.EntityQuerySpec(entityId=26)):
         entity26Pos = entityDataReply.entityData.transform.position;
         print(f"Found entity: pos = ({entity26Pos.x}, {entity26Pos.y})")
     else:
@@ -52,7 +52,7 @@ def runShapesLatticeTest():
     if not imageWriter.RemoveEntity(plainReply, 26):
         print(f"ImageWriter: {plainReply.message.decode('utf-8')}")
 
-    if not imageWriter.GetEntityData(entityDataReply, 26):
+    if not imageWriter.GetEntityData(entityDataReply, iw.EntityQuerySpec(entityId=26)):
         print(f"Corrent not-found entity: {entityDataReply.message.decode('utf-8')}")
 
     input("Press Enter")
@@ -191,9 +191,9 @@ if __name__ == "__main__":
 
     ttt = iw.Transform()
     # create UI
-    window = iw.Window(name = "My Test App", windowSize="1920x1480")    
+    window = iw.Window(name = "My Test App", windowSize="960x740")    
     
-    apiThread = threading.Thread(target = runEntityParentingTest)
+    apiThread = threading.Thread(target = runShapesLatticeTest)
     apiThread.start()
 
     # run UI

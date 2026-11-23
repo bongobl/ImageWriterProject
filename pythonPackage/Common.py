@@ -71,7 +71,7 @@ class Transform(ctypes.Structure):
         self.scale = payload.scale 
 
 TransformApplyModeModel = Literal["absolute", "offset"]
-TransformSpaceModelForEntityAdding = Literal["local", "world"]
+TransformSpaceModel = Literal["local", "world"]
 TransformSpaceModelForModifying = Literal["self", "self-positionOffsetInWorldUnits", "local", "world"]
 
 MODIFY_TRANSFORM_DESC = (
@@ -111,7 +111,7 @@ class TransformSpace(IntEnum):
 
 class TransformModelForEntityAdding(BaseModel):
     value: TransformMCPPayload = Field(..., description = "the transform value itself")
-    space: TransformSpaceModelForEntityAdding = Field(..., description=
+    space: TransformSpaceModel = Field(..., description=
         "choose 'local' for this transform to be applied in the space of the entity's parent"
         "choose 'world' to apply it in world space, if no parent is specified, the transform"
         "will get applied in world space regardless of the space requested"
@@ -496,7 +496,18 @@ class EntityData(ctypes.Structure):
 
         return PlainReplyMCPPayload(success=True, message="")
 
-              
+class EntityQuerySpec(ctypes.Structure):
+    _fields_ = [
+        ("entityId", ctypes.c_uint64),
+        ("transformSpace", ctypes.c_uint8)
+    ]
+
+    def __str__(self):
+        return f"(EntityQuerySpec: entityId = {self.entityId}, transformSpace = 0x{self.transformSpace:x})"
+
+    def fromMCPArgs(self, entityId, transformSpaceMod):
+        self.entityId = ctypes.c_uint64(entityId)
+        self.transformSpace = TransformSpace.LOCAL if (transformSpaceMod == "local") else TransformSpace.WORLD
 
 # Replies ====================================================================================
 

@@ -98,6 +98,11 @@ struct EntityData {
     uint8_t transformSpace = TRANSFORM_SPACE_LOCAL;  // stores TransformSpace
 };
 
+struct EntityQuerySpec {
+    uint64_t entityId = ROOT_ENTITY_ID;
+    uint8_t transformSpace = TRANSFORM_SPACE_LOCAL;  // stores TransformSpace
+};
+
 // Replies
 struct PlainReply {
     bool success = false;

@@ -66,7 +66,7 @@ class Framework(ctypes.Structure):
         self.runtimeLib.ImageWriter_Scene_ModifyEntity.argtypes = [Framework, ctypes.POINTER(PlainReply), EntityData]
         self.runtimeLib.ImageWriter_Scene_ModifyEntity.restype = ctypes.c_bool
 
-        self.runtimeLib.ImageWriter_Scene_GetEntityData.argtypes = [Framework, ctypes.POINTER(EntityDataReply), c_uint64]
+        self.runtimeLib.ImageWriter_Scene_GetEntityData.argtypes = [Framework, ctypes.POINTER(EntityDataReply), EntityQuerySpec]
         self.runtimeLib.ImageWriter_Scene_GetEntityData.restype = ctypes.c_bool
 
         self.runtimeLib.ImageWriter_Scene_RemoveEntity.argtypes = [Framework, ctypes.POINTER(PlainReply), c_uint64]
@@ -158,8 +158,8 @@ class Framework(ctypes.Structure):
     def ModifyEntity(self, outReply, params):
         return self.runtimeLib.ImageWriter_Scene_ModifyEntity(self, ctypes.byref(outReply), params)
 
-    def GetEntityData(self, outReply, entityId):
-        return self.runtimeLib.ImageWriter_Scene_GetEntityData(self, ctypes.byref(outReply), entityId)
+    def GetEntityData(self, outReply, querySpec):
+        return self.runtimeLib.ImageWriter_Scene_GetEntityData(self, ctypes.byref(outReply), querySpec)
 
     def RemoveEntity(self, outReply, entityId):
         return self.runtimeLib.ImageWriter_Scene_RemoveEntity(self, ctypes.byref(outReply), entityId)
