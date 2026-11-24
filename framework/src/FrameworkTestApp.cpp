@@ -75,7 +75,7 @@ void runShapesLatticeTest(HImageWriterInstance instance)
 	}
 	if (!ImageWriter_Scene_GetEntityData(instance, &entityDataReply, { .entityId = 26 }))
 	{
-		std::cerr << "Corrent not-found entity: " << entityDataReply.message << std::endl;
+		std::cerr << "Correct not-found entity: " << entityDataReply.message << std::endl;
 	}
 
 	system("pause");

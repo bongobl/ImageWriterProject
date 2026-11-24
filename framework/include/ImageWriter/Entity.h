@@ -44,8 +44,10 @@ struct Entity {
 
 		sf::Shader m_VertexShader;
 
+		sf::Shader m_TransformsVertexShader;
+		sf::VertexArray m_TransformsVerts;
+
 		DrawUtils();
-		EntityGeometry* getGeometryForEntity(Entity::Type type);
 	};
 
 	Type m_Type;
@@ -73,6 +75,9 @@ public:
 	
 	Entity(uint64_t id, EntityData entityData, Entity* pParent);
 	Entity(const Entity& other) = delete;
+
+	Transform getTransform(bool wantLocal) const;
+
 	void applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const;
 	bool validateModifyParams(EntityData params, std::string* pMessage) const;
 	void modify(EntityData params);
@@ -127,7 +132,7 @@ public:
 
 
 	void dummyUpdateShapes(float deltaTime);
-	void drawShapes(sf::RenderWindow& window, const Camera& camera);
+	void draw(sf::RenderWindow& window, const Camera& camera);
 	void deleteAllEntities();
 
 
@@ -142,6 +147,8 @@ private:
 	IterT* getEntityIter(uint64_t entityId);
 
 	void deleteEntity(Entity* pEntity);
+
+	void drawTransforms(sf::RenderWindow& window, const Camera& camera);
 
 	// Brute force Z order setting
 	void realignAllEntityZOrders(std::list<Entity*>& currSiblings);

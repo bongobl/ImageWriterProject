@@ -53,7 +53,7 @@ def runShapesLatticeTest():
         print(f"ImageWriter: {plainReply.message.decode('utf-8')}")
 
     if not imageWriter.GetEntityData(entityDataReply, iw.EntityQuerySpec(entityId=26)):
-        print(f"Corrent not-found entity: {entityDataReply.message.decode('utf-8')}")
+        print(f"Correct not-found entity: {entityDataReply.message.decode('utf-8')}")
 
     input("Press Enter")
     if not imageWriter.RemoveAllEntities(plainReply):

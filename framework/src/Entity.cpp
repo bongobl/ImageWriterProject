@@ -36,7 +36,8 @@ static bool validateZOrder(int& zOrder, int numEntities, std::string* pMessage)
 Entity::DrawUtils::DrawUtils() :
 	m_EllipseVerts(sf::PrimitiveType::TriangleFan, 100),
 	m_RectangleVerts(sf::PrimitiveType::TriangleStrip, 4),
-	m_TriangleVerts(sf::PrimitiveType::Triangles, 3)
+	m_TriangleVerts(sf::PrimitiveType::Triangles, 3),
+	m_TransformsVerts(sf::PrimitiveType::Lines, 0)
 {
 
 	m_RectangleVerts[0].position = sf::Vector2f(1, 1);
@@ -60,27 +61,13 @@ Entity::DrawUtils::DrawUtils() :
 		std::cerr << "Vertex shader not found" << std::endl;
 		exit(1);
 	}
+
+	if (!m_TransformsVertexShader.loadFromFile("transformsShader.vert", sf::Shader::Type::Vertex)) {
+		std::cerr << "Vertex shader not found" << std::endl;
+		exit(1);
+	}
 }
 
-EntityGeometry* Entity::DrawUtils::getGeometryForEntity(Entity::Type type)
-{
-	switch (type) {
-	case Entity::Type::Undefined:
-		std::cerr << "Entity::getGeometryForEntity(): Entity type was 'Undefined' " << std::endl;
-		exit(1);
-	case Entity::Type::Null:
-		return nullptr;
-	case Entity::Type::Ellipse:
-		return &m_EllipseVerts;
-	case Entity::Type::Rectangle:
-		return &m_RectangleVerts;
-	case Entity::Type::Triangle:
-		return &m_TriangleVerts;
-	}
-	std::cerr << "Entity::getGeometryForEntity(): Unknown type enum value of " << (unsigned int)type << std::endl;
-	exit(1);
-	return nullptr;
-}
 Entity::Entity(uint64_t id, EntityData entityData, Entity* pParent) :
 	m_Type((Type)entityData.entityType),
 	m_Color(entityData.color),
@@ -121,6 +108,11 @@ Entity::Entity(uint64_t id, EntityData entityData, Entity* pParent) :
 		// the caller should guard against this case
 		exit(1);
 	}
+}
+
+Transform Entity::getTransform(bool wantLocal) const {
+	std::shared_lock<std::shared_mutex> lock(m_Mutex);
+	return wantLocal ? m_Transform : m_WorldTransform;
 }
 
 void Entity::applyCustomDrawingProperties(EntityGeometry& geometry, sf::Shader& vertexShader) const
@@ -375,16 +367,42 @@ EntityData Entity::getData(EntityQuerySpec querySpec)
 
 void Entity::draw(sf::RenderWindow& window, DrawUtils& drawUtils) const
 {
+
+	std::shared_lock<std::shared_mutex> lock(m_Mutex);
+
 	drawUtils.m_VertexShader.setUniform("worldFromModel", sf::Glsl::Mat4(sf::fromCore(m_WorldTransform)));
 	drawUtils.m_VertexShader.setUniform("color", sf::Glsl::Vec4(sf::fromCore(m_Color)));
 
-	// draw current
-	EntityGeometry* pEntityGeometry = drawUtils.getGeometryForEntity(m_Type);
+	switch (m_Type) {
+		case Type::Undefined:
+			std::cerr << "Entity::applyCustomDrawingProperties(): Entity type was 'Undefined' " << std::endl;
+			exit(1);
+		case Type::Null:
+			break;
+		case Type::Ellipse:
+			drawUtils.m_VertexShader.setUniform("scaleOffset", sf::fromCore(ellipse.halfExtents));
+			drawUtils.m_EllipseVerts.draw(window, drawUtils.m_VertexShader);
+			break;
+		case Type::Rectangle:
+			drawUtils.m_VertexShader.setUniform("scaleOffset", sf::fromCore(rectangle.halfExtents));
+			drawUtils.m_RectangleVerts.draw(window, drawUtils.m_VertexShader);
+			break;
+		case Type::Triangle: {
+			EntityGeometry& triangleDrawable = drawUtils.m_TriangleVerts;
+			{
+				std::unique_lock<std::shared_mutex> lock(triangleDrawable.m_Mutex);
+				triangleDrawable[0].position = sf::fromCore(triangle.point1);
+				triangleDrawable[1].position = sf::fromCore(triangle.point2);
+				triangleDrawable[2].position = sf::fromCore(triangle.point3);
+			}
+			drawUtils.m_VertexShader.setUniform("scaleOffset", sf::Glsl::Vec2(1, 1));
 
-	// draw if there is geometry to draw
-	if (pEntityGeometry) {
-		applyCustomDrawingProperties(*pEntityGeometry, drawUtils.m_VertexShader);
-		pEntityGeometry->draw(window, drawUtils.m_VertexShader);
+			triangleDrawable.draw(window, drawUtils.m_VertexShader);
+			break;
+		}
+		default:
+			std::cerr << "Entity::draw(): Unknown type enum value of " << (unsigned int)m_Type << std::endl;
+			exit(1);
 	}
 	
 	// Note this doesn't respect Z order of parent among siblings
@@ -405,8 +423,14 @@ bool Entity::isDecendantOf(Entity* pElder)
 	}
 	return false;
 }
+
 void Entity::syncTransforms(bool preserveLocal)
 {
+
+	// Note: unlike many other entity recursive functions, this one doesn't lock 'this'
+	// one but rather locks its children to perform its recursive calls. This allows the
+	// top level caller to define its own sync context.
+
 	if (m_Id == ROOT_ENTITY_ID) {
 		return;
 	}
@@ -424,9 +448,9 @@ void Entity::syncTransforms(bool preserveLocal)
 	for (auto iter = m_Children.begin(); iter != m_Children.end(); ++iter) {
 		Entity* pCurrEntity = *iter;
 
-		//std::unique_lock<std::shared_mutex> lock(pCurrEntity->m_Mutex);
 		// changing 'this' entity's transform will only ever change its childrens' world transforms
 		// so we always sync their world to their local
+		std::unique_lock<std::shared_mutex> lock(pCurrEntity->m_Mutex);
 		pCurrEntity->syncTransforms(true);	
 	}
 }
@@ -435,7 +459,7 @@ EntityList::EntityList() :
 	m_NextEntityId(ROOT_ENTITY_ID + 1),
 	m_RootEntity(ROOT_ENTITY_ID, { .entityType = ENTITY_TYPE_NULL }, nullptr)
 {
-	
+
 }
 
 EntityList::~EntityList()
@@ -517,19 +541,16 @@ void EntityList::dummyUpdateShapes(float deltaTime) {
 	m_RootEntity.updateDummy(deltaTime);
 }
 
-void EntityList::drawShapes(sf::RenderWindow& window, const Camera& camera) {
-
-	std::shared_lock<std::shared_mutex> lock(m_RootEntity.m_Mutex);
-
+void EntityList::draw(sf::RenderWindow& window, const Camera& camera) 
+{
 	// homogFromWorld is the same for all entities
 	m_DrawUtils.m_VertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
 
-	for (auto iter = m_RootEntity.m_Children.begin(); iter != m_RootEntity.m_Children.end(); ++iter) {
-		const Entity* pCurrEntity = *iter;
+	// draw all entities
+	m_RootEntity.draw(window, m_DrawUtils);
 
-		pCurrEntity->draw(window, m_DrawUtils);
-		
-	}
+	// Draw transforms
+	drawTransforms(window, camera);
 }
 
 void EntityList::deleteAllEntities() 
@@ -541,7 +562,6 @@ void EntityList::deleteAllEntities()
 
 void EntityList::API_addEntity(AddEntityReply* pReply, EntityData params)
 {
-
 	std::unique_lock<std::shared_mutex> lock(m_EntityIterFromIdMutex);
 
 	std::string message = "";
@@ -749,6 +769,7 @@ void EntityList::API_modifyEntity(PlainReply* pReply, EntityData params)
 	strcpy(pReply->message, message.c_str());
 }
 
+// Private
 EntityList::IterT* EntityList::getEntityIter(uint64_t entityId)
 {
 	auto mapIter = m_EntityIterFromId.find(entityId);
@@ -780,7 +801,35 @@ void EntityList::deleteEntity(Entity* pEntity)
 	}
 }
 
-// Private
+void EntityList::drawTransforms(sf::RenderWindow& window, const Camera& camera)
+{
+	std::unique_lock<std::shared_mutex> lock(m_EntityIterFromIdMutex);
+	size_t numEntities = m_EntityIterFromId.size();
+	if (m_DrawUtils.m_TransformsVerts.getVertexCount() != numEntities * 4) {
+		m_DrawUtils.m_TransformsVerts.resize(numEntities * 4);
+	}
+	
+	size_t iEntity = 0;
+	for (auto iter = m_EntityIterFromId.begin(); iter != m_EntityIterFromId.end(); ++iter, ++iEntity) {
+		Entity* pCurrEntity = *(iter->second);
+
+		Transform transform = pCurrEntity->getTransform(false);
+		for (int indexInGroup = 0; indexInGroup < 4; ++indexInGroup) {
+
+			int iVert = iEntity * 4 + indexInGroup;
+			m_DrawUtils.m_TransformsVerts[iVert].position = sf::fromCore(transform.position);
+			m_DrawUtils.m_TransformsVerts[iVert].texCoords.x = sf::degrees(transform.orientation).asRadians();
+		}
+	}
+
+	m_DrawUtils.m_TransformsVertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
+	m_DrawUtils.m_TransformsVertexShader.setUniform("cameraScale", camera.getTransform().scale);
+
+	sf::RenderStates states;
+	states.shader = &m_DrawUtils.m_TransformsVertexShader;
+	window.draw(m_DrawUtils.m_TransformsVerts, states);
+}
+
 void EntityList::realignAllEntityZOrders(std::list<Entity*>& currSiblings)
 {
 	int zOrder = 0;

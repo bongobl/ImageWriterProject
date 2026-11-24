@@ -130,6 +130,7 @@ add_custom_command(TARGET ImageWriterAPI POST_BUILD
 set(RUNTIME_FILES
     "${APP_DIR}/gridShader.vert"
     "${APP_DIR}/entityShader.vert"
+    "${APP_DIR}/transformsShader.vert"
 )
 
 foreach(file ${RUNTIME_FILES})
@@ -138,7 +139,7 @@ foreach(file ${RUNTIME_FILES})
 
     # IDE running directory
     add_custom_command(
-        TARGET ImageWriterAPI POST_BUILD
+        TARGET ImageWriterCore POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${file}"
             "${CMAKE_CURRENT_BINARY_DIR}/${filename}"
@@ -147,7 +148,7 @@ foreach(file ${RUNTIME_FILES})
 
     # target directory
     add_custom_command(
-        TARGET ImageWriterAPI POST_BUILD
+        TARGET ImageWriterCore POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${file}"
             "$<TARGET_FILE_DIR:ImageWriterAPI>/${filename}"

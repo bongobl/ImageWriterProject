@@ -286,8 +286,9 @@ void Scene::updateState(float deltaTime)
 	}
 
 	m_Camera.updateComputedState(windowInitialExtents.y);
+
 	// Test just to make sure window updates every frame
-	//m_EntityList.dummyUpdateShapes(deltaTime);
+	m_EntityList.dummyUpdateShapes(deltaTime);
 }
 void Scene::render()
 {
@@ -302,7 +303,7 @@ void Scene::render()
 	}
 	
 	// draw rest of scene
-	m_EntityList.drawShapes(*m_pWindow, m_Camera);
+	m_EntityList.draw(*m_pWindow, m_Camera);
 
 	// Grid foreground mode
 	if (m_RenderConfig.gridViewMode == GRID_VIEW_MODE_FOREGROUND)
