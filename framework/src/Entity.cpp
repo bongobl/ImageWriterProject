@@ -541,7 +541,7 @@ void EntityList::dummyUpdateShapes(float deltaTime) {
 	m_RootEntity.updateDummy(deltaTime);
 }
 
-void EntityList::draw(sf::RenderWindow& window, const Camera& camera) 
+void EntityList::draw(sf::RenderWindow& window, const Camera& camera, const RenderConfig& renderConfig)
 {
 	// homogFromWorld is the same for all entities
 	m_DrawUtils.m_VertexShader.setUniform("homogFromWorld", camera.getComputedState().glsl_homogFromWorld);
@@ -550,7 +550,9 @@ void EntityList::draw(sf::RenderWindow& window, const Camera& camera)
 	m_RootEntity.draw(window, m_DrawUtils);
 
 	// Draw transforms
-	drawTransforms(window, camera);
+	if (renderConfig.showTransforms) {
+		drawTransforms(window, camera);
+	}
 }
 
 void EntityList::deleteAllEntities() 

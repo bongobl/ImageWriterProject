@@ -1,4 +1,5 @@
 #pragma once
+#include <ImageWriter/API.h>
 #include <ImageWriter/Common.h>
 #include <SFML/Graphics.hpp>
 #include <list>
@@ -6,9 +7,8 @@
 #include <shared_mutex>
 #include <mutex>
 #include <cstdint>
+
 class Camera;
-class EntityGeometry;
-struct Entity;
 
 struct EntityGeometry : public sf::VertexArray {
 	mutable std::shared_mutex m_Mutex;
@@ -132,7 +132,7 @@ public:
 
 
 	void dummyUpdateShapes(float deltaTime);
-	void draw(sf::RenderWindow& window, const Camera& camera);
+	void draw(sf::RenderWindow& window, const Camera& camera, const RenderConfig& renderConfig);
 	void deleteAllEntities();
 
 

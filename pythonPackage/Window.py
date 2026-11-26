@@ -31,6 +31,17 @@ class Window(tk.Tk):
         self.bottomFrame = tk.Frame(self, width=150)
         self.bottomFrame.pack(pady=20)
 
+        # Show transforms button
+        self.showTransformsButton = tk.Button(
+            self.bottomFrame, 
+            text="Show Transforms",
+            command=self.onClickedShowTransformsButton,
+            font=("Helvetica", 16, "bold"),
+            padx=5,
+            pady=2
+        )
+        self.showTransformsButton.grid(row=0, column=0, padx = (0, 20))
+
         # Clear scene button
         self.clearSceneButton = tk.Button(
             self.bottomFrame, 
@@ -40,11 +51,11 @@ class Window(tk.Tk):
             padx=5,
             pady=2
         )
-        self.clearSceneButton.grid(row=0, column=0)
+        self.clearSceneButton.grid(row=0, column=1)
 
         # Grid view mode label
         self.gridViewLabel = tk.Label(self.bottomFrame, text="Grid view:", font=("Helvetica", 16, "bold"))
-        self.gridViewLabel.grid(row=0, column=1, padx = (100, 5))
+        self.gridViewLabel.grid(row=0, column=2, padx = (50, 5))
 
         # Grid view mode option menu
         self.gridViewModeOptions = ["None", "Foreground", "Background"]
@@ -60,7 +71,7 @@ class Window(tk.Tk):
         )
         self.gridViewModeOptionMenu.config(width=12, font=("Helvetica", 16))
         self.gridViewModeOptionMenu["menu"].config(font=("Helvetica", 16))
-        self.gridViewModeOptionMenu.grid(row=0, column=2, padx=5)
+        self.gridViewModeOptionMenu.grid(row=0, column=3, padx=5)
 
         # update to make canvas live and then obtain canvas id
         self.update()
@@ -120,6 +131,11 @@ class Window(tk.Tk):
 
         # reset for next frame  so we don't double use it
         self.mouseScrollDelta = 0
+
+    def onClickedShowTransformsButton(self):
+        self.framework.renderConfig.showTransforms = not self.framework.renderConfig.showTransforms
+        self.showTransformsButton.config(text="Hide transforms" if self.framework.renderConfig.showTransforms else "Show transforms")
+        self.framework.UpdateRenderConfig()
 
     def onClickedClearSceneButton(self):
         reply = PlainReply()

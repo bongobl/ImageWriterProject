@@ -360,7 +360,7 @@ extern "C" __declspec(dllexport) bool ImageWriter_Scene_MakeSnapshot(HImageWrite
         strcpy(pReply->message, "App did not call ImageWriter_Scene_GetSnapshot() from its underlying framework correctly");
         return false;
     }
-
+    
     if (!pSnapshot) {
         fprintf(stderr, "ImageWriter_Scene_GetSnapshot: pSnapshot was null\n");
         pReply->success = false;

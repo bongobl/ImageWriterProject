@@ -303,7 +303,7 @@ void Scene::render()
 	}
 	
 	// draw rest of scene
-	m_EntityList.draw(*m_pWindow, m_Camera);
+	m_EntityList.draw(*m_pWindow, m_Camera, m_RenderConfig);
 
 	// Grid foreground mode
 	if (m_RenderConfig.gridViewMode == GRID_VIEW_MODE_FOREGROUND)

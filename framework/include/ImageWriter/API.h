@@ -25,6 +25,7 @@ enum GridViewMode {
 
 struct RenderConfig {
     int gridViewMode;
+    bool showTransforms;
 };
 
 // instance

@@ -11,10 +11,12 @@ class GridViewMode(IntEnum):
 class RenderConfig(ctypes.Structure):
     _fields_ = [
         ("gridViewMode", ctypes.c_int),
+        ("showTransforms", ctypes.c_bool),
     ]
 
     def __init__(self):
         self.gridViewMode = GridViewMode.BACKGROUND
+        self.showTransforms = False
 
 class Framework(ctypes.Structure):
     _fields_ = [
